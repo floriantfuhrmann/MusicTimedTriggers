@@ -1,6 +1,7 @@
 package eu.florian_fuhrmann.musictimedtriggers.utils.configurations
 
 import com.godaddy.android.colorpicker.HsvColor
+import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.*
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries.*
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.utils.ConfigurationColor
@@ -77,6 +78,9 @@ abstract class Configuration {
                     visibleWhen,
                     showAlphaBar != null && showAlphaBar.showAlphaBar
                 )
+            }
+            Keyframes::class.java -> {
+                KeyframesConfigurationEntry(this, field, configurable, visibleWhen, context)
             }
             else -> {
                 ErrorConfigurationEntry(this, field, configurable)
