@@ -4,6 +4,8 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.configuration.ConfigurationDialog
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
+
 /**
  * The Base for all placed Triggers. Every object represents a Trigger that is actually placed in a Sequence (Song).
  */
@@ -68,12 +70,15 @@ abstract class AbstractPlacedTrigger(
             DialogManager.openDialog(
                 ConfigurationDialog(
                     configuration = configuration,
+                    context = PlacedTriggerConfigurationContext(this),
                     heading = "Configuring Placed Trigger ${name()}",
                     showCancelButton = false
                 )
             )
         }
     }
+
+    class PlacedTriggerConfigurationContext(val placedTrigger: AbstractPlacedTrigger) : ConfigurationContext()
 
     companion object {
         const val DEFAULT_TRIGGER_DURATION = 1.0

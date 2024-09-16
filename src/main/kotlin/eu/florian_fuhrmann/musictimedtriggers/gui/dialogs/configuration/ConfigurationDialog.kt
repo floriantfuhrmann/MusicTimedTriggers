@@ -10,6 +10,8 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.components.CloseDialogButton
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.components.DialogFrame
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.EmptyConfigurationContext
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Text
@@ -22,6 +24,7 @@ import org.jetbrains.jewel.ui.component.Text
  */
 class ConfigurationDialog(
     val configuration: Configuration,
+    val context: ConfigurationContext = EmptyConfigurationContext(),
     private val heading: String,
     private val showCancelButton: Boolean = false,
     val onDone: (Configuration) -> Unit = {},
@@ -52,7 +55,7 @@ class ConfigurationDialog(
                 Text("$heading:")
             }
             Row {
-                ConfigurationBox(configuration)
+                ConfigurationBox(configuration, context)
             }
         }
     }
