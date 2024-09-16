@@ -1,0 +1,3 @@
+package eu.florian_fuhrmann.musictimedtriggers.utils
+
+object IconsDummy

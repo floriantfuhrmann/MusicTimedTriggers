@@ -1,0 +1,216 @@
+package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer
+
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.funct.MoveTriggersFunct
+import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.utils.ConfigurationColor
+import java.awt.*
+import kotlin.math.roundToInt
+
+object TimelineSequenceRenderer {
+
+    // array contains from y coordinate for every sequence line (same index in this array as in TriggerSequence#lines)
+    private var linesFromY: IntArray = IntArray(0)
+    private var linesHeight: IntArray = IntArray(0)
+
+    fun getSequenceLineFromY(lineIndex: Int) = linesFromY[lineIndex]
+    fun getSequenceLineHeight(lineIndex: Int) = linesHeight[lineIndex]
+
+    /**
+     * Finds which Sequence Line is at the [y] coordinate by checking fromY for every line
+     */
+    fun getSequenceLineAt(y: Int): TriggerSequenceLine? {
+        //get sequence
+        val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: return null
+        //check in reverse order on which sequence line the y coordinate is
+        for (i in linesFromY.indices.reversed()) {
+            if(y >= linesFromY[i]) {
+                return sequence.lines[i]
+            }
+        }
+        //y is so small, that no sequence line matches
+        return null
+    }
+
+    /**
+     * Finds the index of the Sequence Line at the [y] coordinate by checking fromY for every line
+     */
+    fun getSequenceLineIndexAt(y: Int): Int? {
+        //check in reverse order on which sequence line the y coordinate is
+        for (i in linesFromY.indices.reversed()) {
+            if(y >= linesFromY[i]) {
+                return i
+            }
+        }
+        //y is so small, that no sequence line matches
+        return null
+    }
+
+    fun drawSequence(
+        g: Graphics2D,
+        x: Int,
+        y: Int,
+        width: Int, //total width of the content drawn
+        height: Int, //total height of the content drawn
+        sequence: TriggerSequence
+    ) {
+        //reset linesFromY array
+        linesFromY = IntArray(sequence.lines.size)
+        linesHeight = IntArray(sequence.lines.size)
+        //calculate times
+        val fromTime = TimelineBackgroundRenderer.xToTime(0)
+        val toTime = TimelineBackgroundRenderer.xToTime(width)
+        //calculate heights
+        val heightOfSeparatorLines = sequence.lines.size - 1
+        val heightForSequenceLines = height - heightOfSeparatorLines
+        val heightPerSequenceLine = heightForSequenceLines.toDouble() / sequence.lines.size
+        //draw separator lines only
+        var currentY = y.toDouble()
+        sequence.lines.forEachIndexed { index, _ ->
+            //draw separator if not first line
+            val separatorY = currentY.roundToInt()
+            if(index != 0) {
+                g.color = Color.white
+                g.drawLine(0, separatorY, width, separatorY)
+                currentY += 1 // add height of separator line
+            }
+            currentY += heightPerSequenceLine // add height of sequence line
+        }
+        //draw triggers and rest of sequence line on top
+        currentY = y.toDouble()
+        sequence.lines.forEachIndexed { index, line ->
+            //calculate y coordinate of separator
+            val separatorY = currentY.roundToInt()
+            if(index != 0) {
+                currentY += 1 // add height of separator line
+            }
+            //draw sequence line
+            val fromY = if(index != 0) {
+                separatorY + 1
+            } else {
+                separatorY
+            }
+            currentY += heightPerSequenceLine // add height of sequence line
+            val toY = currentY.roundToInt() - 1
+            val lineHeight = toY - fromY + 1
+            drawSequenceLine(g, 0, fromY, width, lineHeight, fromTime, toTime, line)
+            linesFromY[index] = fromY
+            linesHeight[index] = lineHeight
+        }
+    }
+
+    private fun drawSequenceLine(
+        g: Graphics2D,
+        x: Int,
+        y: Int,
+        width: Int,
+        height: Int,
+        fromTime: Double,
+        toTime: Double,
+        line: TriggerSequenceLine
+    ) {
+        //draw sequence triggers
+        var currentTriggerIndex = line.getIndexOfTriggerAtOrIndexOfTriggerAfter(fromTime)
+        while (true) {
+            //get trigger at index
+            val trigger = line.getTriggerByIndex(currentTriggerIndex)
+            //make sure the trigger exists and is still in bounds
+            if(trigger == null || trigger.startTime >= toTime) break
+            currentTriggerIndex++
+            //calculate trigger x coordinates
+            val triggerX1 = TimelineBackgroundRenderer.timeToX(trigger.startTime)
+            val triggerX2 = TimelineBackgroundRenderer.timeToX(trigger.endTime)
+            //draw that trigger
+            drawTrigger(
+                g,
+                triggerX1,
+                y,
+                triggerX2 - triggerX1 + 1,
+                height,
+                trigger
+            )
+        }
+        //draw sequence name / label
+        RenderUtils.drawStringOnRect(
+            g,
+            0,
+            y,
+            line.name,
+            Color(0, 0, 0, 128),
+            Color.white,
+            paddingLeft = 3,
+            paddingTop = 0,
+            paddingRight = 3,
+            paddingBottom = 0
+        )
+    }
+
+    private fun drawTrigger(
+        g: Graphics2D,
+        x: Int,
+        y: Int,
+        width: Int,
+        height: Int,
+        trigger: AbstractPlacedTrigger
+    ) {
+        if(MoveTriggersFunct.isVisuallySelected(trigger)) {
+            drawTrigger(
+                g,
+                x,
+                y,
+                width,
+                height,
+                trigger.triggerTemplate.configuration.color,
+                trigger.name(),
+                overrideBorderColor = Color.white,
+                borderWidth = 5f
+            )
+        } else {
+            drawTrigger(
+                g,
+                x,
+                y,
+                width,
+                height,
+                trigger.triggerTemplate.configuration.color,
+                trigger.name()
+            )
+        }
+    }
+
+    fun drawTrigger(
+        g: Graphics2D,
+        x: Int,
+        y: Int,
+        width: Int,
+        height: Int,
+        triggerConfigColor: ConfigurationColor,
+        name: String,
+        overrideBorderColor: Color? = null,
+        borderWidth: Float = 2f
+    ) {
+        //get text color and background color
+        val textColor = if(triggerConfigColor.red * 0.299 + triggerConfigColor.green * 0.587 + triggerConfigColor.blue * 0.114 > 186) {
+            Color.black
+        } else {
+            Color.white
+        }
+        val backgroundColor = Color(triggerConfigColor.red, triggerConfigColor.green, triggerConfigColor.blue, 192)
+        val borderColor = overrideBorderColor ?: Color(triggerConfigColor.red, triggerConfigColor.green, triggerConfigColor.blue, 255)
+        g.color = backgroundColor
+        val arcDiameter = (height / 2).coerceAtMost(16)
+        g.fillRoundRect(x, y, width - 1, height - 1, arcDiameter, arcDiameter)
+        g.color = borderColor
+        val restoreStroke = g.stroke
+        g.stroke = BasicStroke(borderWidth)
+        g.drawRoundRect(x, y, width - 1, height - 1, arcDiameter, arcDiameter)
+        g.stroke = restoreStroke
+        g.color = textColor
+        g.setClip(x, y, width, height)
+        RenderUtils.drawStringVerticallyCentered(g, x + 3, y, height, name)
+        g.clip = null
+    }
+
+}
