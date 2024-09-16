@@ -7,27 +7,24 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.openNewEditDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.Collapsible
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.DoubleField
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SimpleIconButton
-import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggerType
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
-import eu.florian_fuhrmann.musictimedtriggers.utils.IconsDummy
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.*
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Dropdown
-import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.SelectableIconButton
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.util.thenIf
 import java.lang.reflect.Field
 
 class KeyframesConfigurationEntry(
@@ -104,7 +101,10 @@ class KeyframesConfigurationEntry(
                     }
                     // Keyframe List
                     val keyframes = field.get(configuration) as Keyframes
-                    keyframes.keyframesList.forEach {
+                    keyframes.keyframesList.forEachIndexed { index, keyframe ->
+                        // Check whether first / last
+                        val isFirst = index == 0
+                        val isLast = index == keyframes.keyframesList.size - 1
                         // Separator Line
                         Row(
                             modifier = Modifier.padding(top = 5.dp).fillMaxWidth().height(1.dp)
@@ -118,14 +118,17 @@ class KeyframesConfigurationEntry(
                             Column(
                                 modifier = Modifier.fillMaxWidth().weight(1f)
                             ) {
-                                DoubleField(it.position)
+                                DoubleField(
+                                    enabled = !(isFirst || isLast), // First and Last Keyframes have to be exactly at beginning / ending
+                                    initialValue = keyframe.position
+                                )
                             }
                             Spacer(Modifier.width(3.dp))
                             // Value
                             Column(
                                 modifier = Modifier.fillMaxWidth().weight(1f)
                             ) {
-                                DoubleField(it.value)
+                                DoubleField(keyframe.value)
                             }
                             Spacer(Modifier.width(3.dp))
                             // Actions Button
@@ -158,24 +161,30 @@ class KeyframesConfigurationEntry(
                                             modifier = Modifier.padding(start = 5.dp, end = 5.dp)
                                         ) {
                                             // Insert Above Option
-                                            DropdownOptionRow(onClick = {
-                                                println("TODO: INSERT Above") // todo
-                                                dropdownExpanded = false
-                                            }) {
+                                            DropdownOptionRow(
+                                                enabled = !isFirst,
+                                                onClick = {
+                                                    println("TODO: INSERT Above") // todo
+                                                    dropdownExpanded = false
+                                                }) {
                                                 Text("Insert Above")
                                             }
                                             // Insert Bellow Option
-                                            DropdownOptionRow(onClick = {
-                                                println("TODO: INSERT BELLOW") // todo
-                                                dropdownExpanded = false
-                                            }) {
+                                            DropdownOptionRow(
+                                                enabled = !isLast,
+                                                onClick = {
+                                                    println("TODO: INSERT BELLOW") // todo
+                                                    dropdownExpanded = false
+                                                }) {
                                                 Text("Insert Bellow")
                                             }
                                             // Delete Option
-                                            DropdownOptionRow(onClick = {
-                                                println("TODO: DELETE") // todo
-                                                dropdownExpanded = false
-                                            }) {
+                                            DropdownOptionRow(
+                                                enabled = !(isFirst || isLast),
+                                                onClick = {
+                                                    println("TODO: DELETE") // todo
+                                                    dropdownExpanded = false
+                                                }) {
                                                 Text(text = "Delete", color = MainUiState.theme.errorTextColor())
                                             }
                                         }
@@ -200,20 +209,29 @@ enum class PositionDisplayFormat(val displayName: String) {
 
 @Composable
 private fun DropdownOptionRow(
-    onClick: () -> Unit, content: @Composable () -> Unit
+    enabled: Boolean = true, onClick: () -> Unit, content: @Composable () -> Unit
 ) {
     Row {
-        SelectableIconButton(
+        SelectableIconButton(enabled = enabled,
             selected = false,
             onClick = onClick,
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).pointerHoverIcon(PointerIcon.Hand)
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
+                .thenIf(enabled) { pointerHoverIcon(PointerIcon.Hand) }
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start,
                 modifier = Modifier.fillMaxHeight().padding(5.dp)
             ) {
-                Column(modifier = Modifier.padding(start = 5.dp).fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(start = 5.dp).alpha(
+                        if (enabled) {
+                            1f
+                        } else {
+                            0.5f
+                        }
+                    ).fillMaxWidth()
+                ) {
                     content()
                 }
             }
