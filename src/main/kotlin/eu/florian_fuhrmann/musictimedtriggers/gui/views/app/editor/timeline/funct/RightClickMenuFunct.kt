@@ -25,17 +25,18 @@ object RightClickMenuFunct {
                     //init menu
                     val menu = JPopupMenu()
                     //get clicked trigger
-                    val clickedTrigger = MoveTriggersFunct.getClickedTriggerAt(e.x, e.y)
+                    val triggerAtResult = MoveTriggersFunct.getTriggerAt(e.x, e.y)
+                    val clickedTrigger = triggerAtResult?.trigger
                     if(clickedTrigger != null) {
                         //make sure the clicked trigger is selected
-                        if(!MoveTriggersFunct.isSelected(clickedTrigger.trigger)) {
-                            MoveTriggersFunct.selectTrigger(clickedTrigger.trigger, e.isShiftDown)
+                        if(!MoveTriggersFunct.isSelected(clickedTrigger)) {
+                            MoveTriggersFunct.selectTrigger(clickedTrigger, e.isShiftDown)
                         }
                         //Edit Option
                         menu.add(JMenuItem("Edit").apply {
                             addActionListener {
                                 //open edit dialog for the clicked trigger
-                                clickedTrigger.trigger.openEditDialog()
+                                clickedTrigger.openEditDialog()
                             }
                         })
                         //Delete Option

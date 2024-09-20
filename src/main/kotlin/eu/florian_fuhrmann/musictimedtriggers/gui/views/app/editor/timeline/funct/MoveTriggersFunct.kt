@@ -3,14 +3,17 @@ package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.fun
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer.durationToWidth
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer.xToTime
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.updateCursor
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedIntensityTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
+import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
 import java.awt.Color
 import java.awt.Graphics2D
@@ -54,6 +57,9 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
     // Hover Variables:
     // which part of any trigger is currently hovered or null if no trigger is hovered
     var hoveredTriggerPart: TriggerPart? = null
+    var hoveredTrigger: AbstractPlacedTrigger? = null
+    var hoveredLineIndex: Int? = null
+    var hoveredKeyframe: Keyframes.Keyframe? = null
 
     val mouseListener: MouseListener =
         object : MouseListener {
@@ -64,8 +70,8 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
                 // only proceed if no audio is playing
                 if (currentAudioPlayer.value?.playing?.value != false) return
                 // get trigger clicked on and on which part was clicked
-                val clickedOnResult = getClickedTriggerAt(e.x, e.y)
-                if (clickedOnResult == null) {
+                val triggerAtResult = getTriggerAt(e.x, e.y)
+                if (triggerAtResult == null) {
                     // user clicked outside any trigger
                     // ensure clicked bellow seconds grid header
                     if(e.y > TimelineRenderer.currentSecondsGridHeight) {
@@ -74,13 +80,13 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
                     }
                 } else {
                     // user clicked on a trigger
-                    val trigger = clickedOnResult.trigger
+                    val trigger = triggerAtResult.trigger
                     // make sure that trigger is selected
                     if (!isSelected(trigger)) {
                         selectTrigger(trigger, e.isShiftDown)
                     }
                     // start trigger moving
-                    startMoving(e, clickedOnResult.part, clickedOnResult.lineIndex, trigger)
+                    startMoving(e, triggerAtResult.part, triggerAtResult.lineIndex, trigger)
                 }
             }
 
@@ -124,18 +130,41 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
     private const val OUTSIDE_EDGE_CLICK_WIDTH = 5
     private const val INSIDE_EDGE_CLICK_WIDTH = 8
 
-    data class ClickedOnTriggerResult(
+    data class TriggerAtResult(
         val trigger: AbstractPlacedTrigger,
         val lineIndex: Int,
         val part: TriggerPart,
+        val keyframe: Keyframes.Keyframe? = null,
     )
-
     enum class TriggerPart { Start, Middle, End }
 
-    fun getClickedTriggerAt(
+    /**
+     * Finds trigger, lineIndex, trigger part (and keyframe) at [x], [y]
+     * position. Intended for finding hovered/clicked trigger at pointer
+     * position.
+     */
+    fun getTriggerAt(
         x: Int,
         y: Int,
-    ): ClickedOnTriggerResult? {
+    ): TriggerAtResult? {
+        // first check whether any keyframes of the currently hovered trigger are at the pointer position. if so that
+        // trigger inherits "being under pointer" even when pointer position is technically on another line.
+        val currentlyHoveredTrigger = hoveredTrigger
+        val currentlyHoveredPart = hoveredTriggerPart
+        val currentlyHoveredLineIndex = hoveredLineIndex
+        if (currentlyHoveredTrigger != null && currentlyHoveredTrigger is AbstractPlacedIntensityTrigger && currentlyHoveredPart != null && currentlyHoveredLineIndex != null) {
+            // get trigger at pointer position
+            val keyframeAt = getKeyframeAt(x, y, currentlyHoveredTrigger, currentlyHoveredLineIndex)
+            // because a keyframe of the currently hovered trigger is at pointer position, the old info is returned
+            if (keyframeAt != null) {
+                return TriggerAtResult(
+                    trigger = currentlyHoveredTrigger,
+                    lineIndex = currentlyHoveredLineIndex,
+                    part = currentlyHoveredPart,
+                    keyframe = keyframeAt
+                )
+            }
+        }
         // get clicked line and time
         val lineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(y) ?: return null
         val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: return null
@@ -154,18 +183,50 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
         val distanceToEnd = durationToWidth(abs(trigger.endTime - time))
         val triggerThirdWidth = durationToWidth(trigger.duration) / 3.0
         // find on which part of the trigger the user clicked
-        return if (distanceToStart < edgeWidth && (!clickedOnTrigger || distanceToStart < triggerThirdWidth)) {
+        val triggerPartAt = if (distanceToStart < edgeWidth && (!clickedOnTrigger || distanceToStart < triggerThirdWidth)) {
             // clicked on start
-            ClickedOnTriggerResult(trigger, lineIndex, TriggerPart.Start)
+            TriggerPart.Start
         } else if (distanceToEnd < edgeWidth && (!clickedOnTrigger || distanceToEnd < triggerThirdWidth)) {
             // clicked on end
-            ClickedOnTriggerResult(trigger, lineIndex, TriggerPart.End)
+            TriggerPart.End
         } else if (clickedOnTrigger) {
             // click on the trigger
-            ClickedOnTriggerResult(trigger, lineIndex, TriggerPart.Middle)
+            TriggerPart.Middle
         } else {
             // clicked outside of trigger
             return null
+        }
+        // also find keyframe when trigger is intensity trigger
+        return if (trigger is AbstractPlacedIntensityTrigger) {
+            TriggerAtResult(trigger, lineIndex, triggerPartAt, getKeyframeAt(x, y, trigger, lineIndex))
+        } else {
+            TriggerAtResult(trigger, lineIndex, triggerPartAt)
+        }
+    }
+
+    /**
+     * Find's the keyframe at [x], [y] pointer position. This method expects the
+     * hovered trigger at this position and the triggers line index is already
+     * known.
+     *
+     * @param x pointer x
+     * @param y pointer y
+     * @param intensityTrigger hovered trigger, which has the keyframe candidates
+     * @param triggersLineIndex line index of the line on which [intensityTrigger] is placed
+     * @return the keyframe at [x], [y] or null, when no keyframe is at [x], [y]
+     */
+    private fun getKeyframeAt(x: Int, y: Int, intensityTrigger: AbstractPlacedIntensityTrigger, triggersLineIndex: Int): Keyframes.Keyframe? {
+        // calculate trigger x and width
+        val triggerX1 = TimelineBackgroundRenderer.timeToX(intensityTrigger.startTime)
+        val triggerX2 = TimelineBackgroundRenderer.timeToX(intensityTrigger.endTime)
+        val triggerWidth = triggerX2 - triggerX1
+        // lookup line y and height
+        val lineY = TimelineSequenceRenderer.getSequenceLineFromY(triggersLineIndex)
+        val lineHeight = TimelineSequenceRenderer.getSequenceLineHeight(triggersLineIndex)
+        // find keyframe, which contains x, y point
+        return intensityTrigger.keyframes().keyframesList.find {
+            val keyframeShape = TimelineSequenceRenderer.getKeyframeShape(triggerX1, lineY, triggerWidth, lineHeight, it)
+            keyframeShape.contains(x, y)
         }
     }
 
@@ -212,13 +273,53 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
         e: MouseEvent,
         updateCursorIfRequired: Boolean = true,
     ) {
-        val clickedOnResult = getClickedTriggerAt(e.x, e.y)
-        if (clickedOnResult?.part != hoveredTriggerPart) {
-            hoveredTriggerPart = clickedOnResult?.part
-            if (updateCursorIfRequired) {
-                updateCursor()
-            }
+        // find trigger, which would be clicked at current mouse position
+        val triggerAtResult = getTriggerAt(e.x, e.y)
+        // init vars storing whether to update cursor/rerender
+        var updateCursor = false
+        var redraw = false
+        // update hovered line
+        if(triggerAtResult?.lineIndex != hoveredLineIndex) {
+            hoveredLineIndex = triggerAtResult?.lineIndex
         }
+        // updated hovered trigger
+        if(triggerAtResult?.trigger != hoveredTrigger) {
+            // update value
+            hoveredTrigger = triggerAtResult?.trigger
+            // when hovered trigger changes a redraw is needed
+            redraw = true
+        }
+        // update which part of trigger is hovered and cursor
+        if (triggerAtResult?.part != hoveredTriggerPart) {
+            // update value
+            hoveredTriggerPart = triggerAtResult?.part
+            // update cursor (because depending on hovered part another cursor icon should be displayed)
+            updateCursor = true
+        }
+        // update hovered keyframe
+        if(triggerAtResult?.keyframe != hoveredKeyframe) {
+            // update value
+            hoveredKeyframe = triggerAtResult?.keyframe
+            // redraw needed to render keyframe as hovered
+            redraw = true
+        }
+        // redraw timeline and update cursor (if needed)
+        if(redraw) {
+            redrawTimeline()
+        }
+        if(updateCursor && updateCursorIfRequired) {
+            updateCursor()
+        }
+    }
+
+    fun isTriggerHovered(trigger: AbstractPlacedTrigger) = trigger == hoveredTrigger
+    fun isKeyframeHovered(keyframe: Keyframes.Keyframe) = keyframe == hoveredKeyframe
+
+    private fun resetHovered() {
+        hoveredTriggerPart = null
+        hoveredTrigger = null
+        hoveredLineIndex = null
+        hoveredKeyframe = null
     }
 
     // Trigger Selection Box
@@ -227,7 +328,7 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
         // only start selection when audio player is not playing
         if (currentAudioPlayer.value?.playing?.value != false) return
         // set to no trigger hovered
-        hoveredTriggerPart = null
+        resetHovered()
         // only keep others when shift is pressed
         if (!e.isShiftDown) {
             alreadySelectedTriggers.clear()

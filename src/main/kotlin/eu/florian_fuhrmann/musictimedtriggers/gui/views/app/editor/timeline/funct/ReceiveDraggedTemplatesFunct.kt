@@ -100,10 +100,10 @@ object ReceiveDraggedTemplatesFunct {
                             lineHeight,
                             template.getTriggerTemplate().configuration.color,
                             template.name.value,
-                            if(ghostPossible) {
-                                Color.green
+                            style = if(ghostPossible) {
+                                TimelineSequenceRenderer.TriggerStateStyle.GhostValid
                             } else {
-                                Color.red
+                                TimelineSequenceRenderer.TriggerStateStyle.GhostInvalid
                             }
                         )
                         //render conflict indicator
