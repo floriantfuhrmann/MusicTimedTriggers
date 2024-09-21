@@ -2,10 +2,15 @@ package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.ren
 
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.Spectrogram
+import java.awt.BasicStroke
+import java.awt.Color
 import java.awt.Graphics
+import java.awt.Graphics2D
 import kotlin.math.roundToInt
 
 object TimelineBackgroundRenderer {
+
+    private const val DEBUG_IMAGE_PARTS = false
 
     // If double leads to too quirky behavior maybe consider BigDecimal instead (https://www.baeldung.com/java-bigdecimal-biginteger)
 
@@ -178,54 +183,56 @@ object TimelineBackgroundRenderer {
         if(dstPixelsPerSecond <= 0) throw IllegalArgumentException("dstPixelsPerSecond <= 0 (dstPixelsPerSecond=$dstPixelsPerSecond)")
         if(dstX2 < dstX1) throw IllegalArgumentException("dstX2 < dstX1 (dstX2=$dstX2, dstX1=$dstX1)")
         //get first image part
-        val firstImgPartIndex = (startX / Spectrogram.MIN_IMAGE_WIDTH).coerceAtMost(spectrogram.imagesCount - 1)
-        val firstImgPart = spectrogram.images[firstImgPartIndex]!!
+        val currentImgPartIndex = (startX / Spectrogram.MIN_IMAGE_WIDTH).coerceAtMost(spectrogram.imagesCount - 1)
+        val currentImgPartBufferedImage = spectrogram.images[currentImgPartIndex]!!
         //calculate start and end x coords on first image
-        val partStartX = startX - firstImgPartIndex * Spectrogram.MIN_IMAGE_WIDTH
-        val partEndX = endX - firstImgPartIndex * Spectrogram.MIN_IMAGE_WIDTH
+        val partStartX = startX - currentImgPartIndex * Spectrogram.MIN_IMAGE_WIDTH
+        val partEndX = endX - currentImgPartIndex * Spectrogram.MIN_IMAGE_WIDTH
         //make sure part end x is in bounds (part start x is automatically in bonds because the image part is selected
         // depending on start x)
-        if(partEndX > firstImgPart.width) {
+        if(partEndX > currentImgPartBufferedImage.width) {
             //Calculating from overlap time:
             //calculate overlap time
-            val overlapTime: Double = (partEndX - firstImgPart.width) / imgPixelsPerSecond
+            val overlapTime: Double = (partEndX - currentImgPartBufferedImage.width) / imgPixelsPerSecond
             val firstImageDstX2 = dstX2 - (overlapTime * dstPixelsPerSecond).roundToInt()
             //draw first image
             g.drawImage(
-                firstImgPart,
-                dstX1,
-                yOffset,
-                firstImageDstX2,
-                yOffset + height,
-                partStartX,
-                0,
-                firstImgPart.width,
-                firstImgPart.height,
+                currentImgPartBufferedImage,
+                dstX1, // dx1
+                yOffset, // dy1
+                firstImageDstX2, // dx2
+                yOffset + height, // dy2
+                partStartX, // sx1
+                0, // sy1
+                currentImgPartBufferedImage.width, // sx2
+                currentImgPartBufferedImage.height, // sy2
                 null
             )
+            //draw debug box
+            drawDebugImgPartBox(g, currentImgPartIndex, partStartX, currentImgPartBufferedImage.width, dstX1, firstImageDstX2, yOffset, height)
             //recursively call render to draw the rest of the spectrogram with the next images
             //calculate new from time by calculating the time position of the first pixel of the next image
-            val newFromTime: Double = ((firstImgPartIndex + 1) * Spectrogram.MIN_IMAGE_WIDTH) / imgPixelsPerSecond
+            val newFromTime: Double = ((currentImgPartIndex + 1) * Spectrogram.MIN_IMAGE_WIDTH) / imgPixelsPerSecond
             render(
-                g,
-                spectrogram,
-                totalDuration,
+                g = g,
+                spectrogram = spectrogram,
+                totalDuration = totalDuration,
                 //new start x coordinate is the absolute coordinate of the first pixel on the image after the first image
-                (firstImgPartIndex + 1) * Spectrogram.MIN_IMAGE_WIDTH,
-                endX,
-                newFromTime, //old: fromTime + partUtilizedTime
-                toTime,
-                firstImageDstX2,
-                dstX2,
-                yOffset,
-                height,
-                dstPixelsPerSecond,
-                imgPixelsPerSecond
+                startX = (currentImgPartIndex + 1) * Spectrogram.MIN_IMAGE_WIDTH,
+                endX = endX,
+                fromTime = newFromTime, //old: fromTime + partUtilizedTime
+                toTime = toTime,
+                dstX1 = firstImageDstX2,
+                dstX2 = dstX2,
+                yOffset = yOffset,
+                height = height,
+                dstPixelsPerSecond = dstPixelsPerSecond,
+                imgPixelsPerSecond = imgPixelsPerSecond
             )
         } else {
             //draw this image (first image is the only image which needs to be drawn)
             g.drawImage(
-                firstImgPart,
+                currentImgPartBufferedImage,
                 dstX1,
                 yOffset,
                 dstX2,
@@ -233,10 +240,49 @@ object TimelineBackgroundRenderer {
                 partStartX,
                 0,
                 partEndX + 1, // is +1 really correct here? couldn't that be out of bounds?
-                firstImgPart.height,
+                currentImgPartBufferedImage.height,
                 null
             )
+            //draw debug box
+            drawDebugImgPartBox(g, currentImgPartIndex, partStartX, partEndX + 1, dstX1, dstX2, yOffset, height)
         }
+    }
+
+    private fun drawDebugImgPartBox(
+        g: Graphics,
+        partIndex: Int,
+        sourceX1: Int,
+        sourceX2: Int,
+        destinationX1: Int,
+        destinationX2: Int,
+        destinationY: Int,
+        destinationHeight: Int
+    ) {
+        if (!DEBUG_IMAGE_PARTS) {
+            return
+        }
+        //draw debug text
+        RenderUtils.drawStringOnRect(
+            g,
+            destinationX1 + 1,
+            destinationY,
+            "source part #$partIndex (from $sourceX1 to $sourceX2) rendered from $destinationX1 to $destinationX2",
+            Color.black,
+            Color.white,
+            1
+        )
+        //draw debug box
+        g.color = when (partIndex % 3) {
+            0 -> Color.red
+            1 -> Color.green
+            2 -> Color.blue
+            else -> throw IllegalStateException("any number mod 3 should not result in any number other then 0, 1 or 2")
+        }
+        val g2d = g as Graphics2D
+        val restoreStroke = g2d.stroke
+        g2d.stroke = BasicStroke(2.5f)
+        g.drawRect(destinationX1 + 1, destinationY, destinationX2 - destinationX1 - 2, destinationHeight)
+        g.stroke = restoreStroke
     }
 
 }
