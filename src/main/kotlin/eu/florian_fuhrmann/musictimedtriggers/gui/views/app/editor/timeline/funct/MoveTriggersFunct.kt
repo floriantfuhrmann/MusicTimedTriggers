@@ -81,12 +81,19 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
                 } else {
                     // user clicked on a trigger
                     val trigger = triggerAtResult.trigger
-                    // make sure that trigger is selected
-                    if (!isSelected(trigger)) {
-                        selectTrigger(trigger, e.isShiftDown)
+                    // check if also clicked on a keyframe
+                    if (triggerAtResult.keyframe != null) {
+                        // is so start moving keyframe
+                        require(trigger is AbstractPlacedIntensityTrigger) { "Only intensity triggers can have keyframes" }
+                        startMovingKeyframe(e, triggerAtResult.keyframe, trigger, triggerAtResult.lineIndex)
+                    } else {
+                        // make sure that the clicked trigger is selected
+                        if (!isSelected(trigger)) {
+                            selectTrigger(trigger, e.isShiftDown)
+                        }
+                        // start trigger moving
+                        startMoving(e, triggerAtResult.part, triggerAtResult.lineIndex, trigger)
                     }
-                    // start trigger moving
-                    startMoving(e, triggerAtResult.part, triggerAtResult.lineIndex, trigger)
                 }
             }
 
@@ -96,6 +103,8 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
                     endSelection(e)
                 } else if (moving) {
                     endMove(e)
+                } else if (isMovingKeyframe) {
+                    endKeyframeMove(e)
                 }
             }
 
@@ -112,6 +121,8 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
                     updateSelection(e)
                 } else if (moving) {
                     updateMove(e)
+                } else if (isMovingKeyframe) {
+                    updateKeyframeMove(e)
                 }
             }
 
@@ -121,6 +132,8 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
                     updateSelection(e)
                 } else if (moving) {
                     updateMove(e)
+                } else if (isMovingKeyframe) {
+                    updateKeyframeMove(e)
                 } else if (currentAudioPlayer.value?.playing?.value == false) {
                     updateTriggerHover(e)
                 }
@@ -300,8 +313,9 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
         if(triggerAtResult?.keyframe != hoveredKeyframe) {
             // update value
             hoveredKeyframe = triggerAtResult?.keyframe
-            // redraw needed to render keyframe as hovered
+            // redraw needed to render keyframe as hovered and also update cursor so correct cursor is shown for hovered keyframe
             redraw = true
+            updateCursor = true
         }
         // redraw timeline and update cursor (if needed)
         if(redraw) {
@@ -685,4 +699,81 @@ object MoveTriggersFunct { // 'Funct' should be renamed to 'Handler' imo
         // update cursor
         updateCursor()
     }
+
+    // Keyframe Movement
+
+    private const val KEYFRAME_MIN_DISTANCE_SECONDS = 0.05 // 50ms
+    val isMovingKeyframe: Boolean
+        get() = currentlyMovedKeyframe != null
+    private var currentlyMovedKeyframe: Keyframes.Keyframe? = null
+    private var currentlyMovedKeyframeParent: AbstractPlacedIntensityTrigger? = null
+    private var currentlyMovedKeyframeMoveMinTime = 0.0
+    private var currentlyMovedKeyframeMoveMaxTime = 0.0
+    private var currentlyMovedKeyframeLineYOffset = 0
+    private var currentlyMovedKeyframeLineHeight = 0
+
+    fun startMovingKeyframe(
+        event: MouseEvent,
+        keyframe: Keyframes.Keyframe,
+        parentTrigger: AbstractPlacedIntensityTrigger,
+        parentTriggerLineIndex: Int
+    ) {
+        // set currently moved keyframe and parent
+        currentlyMovedKeyframe = keyframe
+        currentlyMovedKeyframeParent = parentTrigger
+        // lookup line y and height
+        currentlyMovedKeyframeLineYOffset = TimelineSequenceRenderer.getSequenceLineFromY(parentTriggerLineIndex)
+        currentlyMovedKeyframeLineHeight = TimelineSequenceRenderer.getSequenceLineHeight(parentTriggerLineIndex)
+        // calculate min and max time this trigger may be moved to
+        when(val keyframeIndex = parentTrigger.keyframes().keyframesList.indexOf(keyframe)) {
+            0 -> {
+                currentlyMovedKeyframeMoveMinTime = parentTrigger.startTime
+                currentlyMovedKeyframeMoveMaxTime = parentTrigger.startTime
+            }
+            parentTrigger.keyframes().keyframesList.size - 1 -> {
+                currentlyMovedKeyframeMoveMinTime = parentTrigger.endTime
+                currentlyMovedKeyframeMoveMaxTime = parentTrigger.endTime
+            }
+            else -> {
+                // get previous and next keyframe
+                val previousKeyframe = parentTrigger.keyframes().keyframesList[keyframeIndex - 1]
+                val nextKeyframe = parentTrigger.keyframes().keyframesList[keyframeIndex + 1]
+                // calculate min and max time this keyframe may be moved to
+                currentlyMovedKeyframeMoveMinTime = previousKeyframe.absoluteSecondPosition(parentTrigger) + KEYFRAME_MIN_DISTANCE_SECONDS
+                currentlyMovedKeyframeMoveMaxTime = nextKeyframe.absoluteSecondPosition(parentTrigger) - KEYFRAME_MIN_DISTANCE_SECONDS
+                // set keyframe min and max time to current keyframe time position if min is not smaller than max
+                if(currentlyMovedKeyframeMoveMinTime >= currentlyMovedKeyframeMoveMaxTime) {
+                    currentlyMovedKeyframeMoveMinTime = keyframe.absoluteSecondPosition(parentTrigger)
+                    currentlyMovedKeyframeMoveMaxTime = currentlyMovedKeyframeMoveMinTime
+                }
+            }
+        }
+        // update cursor
+        updateCursor()
+        // do first update
+        updateKeyframeMove(event)
+    }
+
+    private fun updateKeyframeMove(e: MouseEvent) {
+        val keyframe = currentlyMovedKeyframe ?: return
+        val keyframeParent = currentlyMovedKeyframeParent ?: return
+        // get cursor time
+        val cursorTime = xToTime(e.x).coerceIn(currentlyMovedKeyframeMoveMinTime, currentlyMovedKeyframeMoveMaxTime)
+        // calculate new position and set it
+        keyframe.position = Keyframes.Keyframe.fromAbsoluteSecondPositionToProportion(cursorTime, keyframeParent)
+        // calculate new keyframe value and set it
+        keyframe.value = (1.0 - (e.y - currentlyMovedKeyframeLineYOffset).toDouble() / currentlyMovedKeyframeLineHeight).coerceIn(0.0, 1.0)
+        // redraw timeline to show keyframe move
+        redrawTimeline()
+    }
+
+    fun endKeyframeMove(e: MouseEvent) {
+        updateKeyframeMove(e)
+        // end moving keyframe
+        currentlyMovedKeyframe = null
+        currentlyMovedKeyframeParent = null
+        // update cursor
+        updateCursor()
+    }
+
 }
