@@ -76,21 +76,14 @@ class KeyframesConfigurationEntry(
             }
 
             /**
-             * Inserts a new Keyframe at [insertionIndex] and moves all existing
-             * Keyframes with index >= [insertionIndex] back. The new Keyframe will be
-             * placed in the middle of previous and next Keyframe. Thus, **this method
-             * assumes the insertion index is not 0 or last index**.
+             * Inserts a new Keyframe at [insertionIndex] and recreates Keyframe Config
+             * Items
              *
              * @param insertionIndex index the new Keyframe should have
              */
             fun insertAtIndex(insertionIndex: Int) {
-                // Create new Keyframe between existing Keyframes
-                val newKeyframe = Keyframes.Keyframe(
-                    (keyframesObj.keyframesList[insertionIndex - 1].position + keyframesObj.keyframesList[insertionIndex].position) / 2,
-                    (keyframesObj.keyframesList[insertionIndex - 1].value + keyframesObj.keyframesList[insertionIndex].value) / 2
-                )
-                // Add newly created Keyframe to keyframeList in underlying object
-                keyframesObj.keyframesList.add(insertionIndex, newKeyframe)
+                // Insert a new Keyframe at the given index in underlying object
+                keyframesObj.insertNewAtIndex(insertionIndex)
                 // Recreate Keyframe Config Items so UI updates
                 recreateKeyframeConfigItems()
             }

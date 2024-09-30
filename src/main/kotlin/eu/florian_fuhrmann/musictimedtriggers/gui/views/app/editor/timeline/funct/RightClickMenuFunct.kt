@@ -3,8 +3,10 @@ package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.fun
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.renamesequenceline.RenameSequenceLineDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer.getSequenceLineAt
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedIntensityTrigger
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import javax.swing.JMenuItem
@@ -24,10 +26,35 @@ object RightClickMenuFunct {
                 if(line != null) {
                     //init menu
                     val menu = JPopupMenu()
-                    //get clicked trigger
+                    //get clicked trigger / keyframe
                     val triggerAtResult = MoveTriggersFunct.getTriggerAt(e.x, e.y)
                     val clickedTrigger = triggerAtResult?.trigger
-                    if(clickedTrigger != null) {
+                    //check whether keyframe was clicked
+                    if(clickedTrigger != null && clickedTrigger is AbstractPlacedIntensityTrigger && triggerAtResult.keyframe != null) {
+                        //get clicked keyframe and index
+                        val clickedKeyframe = triggerAtResult.keyframe
+                        val clickedKeyframeIndex = clickedTrigger.keyframes().findIndex(clickedKeyframe)
+                        //Insert Left Option
+                        menu.add(JMenuItem("Insert Left").apply {
+                            //only enable if keyframe can be inserted at index
+                            isEnabled = clickedTrigger.keyframes().canInsertAt(clickedKeyframeIndex, clickedTrigger.duration)
+                            addActionListener {
+                                // insert new keyframe and redraw timeline, so the new keyframe is shown
+                                clickedTrigger.keyframes().insertNewAtIndex(clickedKeyframeIndex)
+                                redrawTimeline()
+                            }
+                        })
+                        //Insert Right Option
+                        menu.add(JMenuItem("Insert Right").apply {
+                            //only enable if keyframe can be inserted at index
+                            isEnabled = clickedTrigger.keyframes().canInsertAt(clickedKeyframeIndex + 1, clickedTrigger.duration)
+                            addActionListener {
+                                // insert new keyframe and redraw timeline, so the new keyframe is shown
+                                clickedTrigger.keyframes().insertNewAtIndex(clickedKeyframeIndex + 1)
+                                redrawTimeline()
+                            }
+                        })
+                    } else if(clickedTrigger != null) {
                         //make sure the clicked trigger is selected
                         if(!MoveTriggersFunct.isSelected(clickedTrigger)) {
                             MoveTriggersFunct.selectTrigger(clickedTrigger, e.isShiftDown)
