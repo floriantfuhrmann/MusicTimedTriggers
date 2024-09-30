@@ -74,6 +74,31 @@ class Keyframes(
         return index > 0 && index < keyframesList.size - 1
     }
 
+    /**
+     * Calculates the intensity at a given proportional position by
+     * interpolating between keyframes.
+     */
+    fun intensityAt(proportionalPosition: Double): Double {
+        // require that the proportional position is in the range [0, 1]
+        require(proportionalPosition in 0.0..1.0) { "Proportional position must be in range [0, 1]" }
+        // search for keyframe using built-in binary search
+        val foundIndex = keyframesList.binarySearch { it.position.compareTo(proportionalPosition) }
+        // check whether keyframe was found at exact position
+        if (foundIndex >= 0) {
+            // return value of found keyframe
+            return keyframesList[foundIndex].value
+        } else {
+            // calculate index of keyframes before and after the position
+            val beforeIndex = -foundIndex - 2 // equal to: actual insertion index - 1
+            val afterIndex = beforeIndex + 1
+            // calculate relative position between keyframes
+            val relativePositionBetweenKeyframes =
+                (proportionalPosition - keyframesList[beforeIndex].position) / (keyframesList[afterIndex].position - keyframesList[beforeIndex].position)
+            // interpolate value between keyframes
+            return keyframesList[beforeIndex].value + relativePositionBetweenKeyframes * (keyframesList[afterIndex].value - keyframesList[beforeIndex].value)
+        }
+    }
+
     companion object {
         /** Dummy Keyframes, which should not be modified. */
         val DUMMY_KEYFRAMES = create()

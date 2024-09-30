@@ -22,15 +22,15 @@ class PlacedPrintIntensityTrigger(
     override fun name() = "Placed Intensity (${template().config().name})"
 
     override fun on(timePosition: Double) {
-        println("Intensity ON ($timePosition)")
+        println("Intensity ON ($timePosition) => ${intensity(timePosition)}")
     }
 
     override fun update(timePosition: Double) {
-        println("Intensity UPDATE ($timePosition)")
+        println("Intensity UPDATE ($timePosition) => ${intensity(timePosition)}")
     }
 
     override fun off(timePosition: Double) {
-        println("Intensity OFF ($timePosition)")
+        println("Intensity OFF ($timePosition) => ${intensity(timePosition)}")
     }
 
     companion object {

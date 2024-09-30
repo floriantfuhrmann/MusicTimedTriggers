@@ -13,4 +13,18 @@ abstract class AbstractPlacedIntensityTrigger(
 
     abstract fun keyframes(): Keyframes
 
+    /**
+     * Returns the intensity at the given time position correcting out of
+     * bounds times.
+     *
+     * @param timePosition time position in seconds
+     * @return intensity at the given time position
+     */
+    fun intensity(timePosition: Double): Double {
+        // calculate proportional position
+        val proportionalPosition = (inBoundsTime(timePosition) - startTime) / duration
+        // return intensity at proportional position
+        return keyframes().intensityAt(proportionalPosition)
+    }
+
 }
