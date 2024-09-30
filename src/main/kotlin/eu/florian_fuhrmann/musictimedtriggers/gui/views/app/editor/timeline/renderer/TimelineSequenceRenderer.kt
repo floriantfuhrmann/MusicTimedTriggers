@@ -208,14 +208,22 @@ object TimelineSequenceRenderer {
         // get background color
         val backgroundColor = Color(
             triggerColor.red, triggerColor.green, triggerColor.blue, if (keyframes != null) {
-                64
+                if (hovered) {
+                    92
+                } else {
+                    64
+                }
             } else {
-                192
+                if (hovered) {
+                    224
+                } else {
+                    192
+                }
             }
         )
         // get border color and width
         val borderColor = style.overrideBorderColor ?: Color(triggerColor.red, triggerColor.green, triggerColor.blue, 255)
-        val borderWidth = style.overrideBorderWidth ?: if(hovered) { 2f } else { 1f }
+        val borderWidth = style.overrideBorderWidth ?: if(hovered) { 2.5f } else { 1f }
         // get arc diameter
         val arcDiameter = if (keyframes != null) {
             1
@@ -225,6 +233,14 @@ object TimelineSequenceRenderer {
         // fill background
         g.color = backgroundColor
         g.fillRoundRect(x, y, width - 1, height - 1, arcDiameter, arcDiameter)
+        // draw intensity
+        if(keyframes != null) {
+            val intensityPoly = getTriggerIntensityPolygone(g, x, y, width, height, keyframes)
+            g.color = Color(triggerColor.red, triggerColor.green, triggerColor.blue, 128)
+            g.fillPolygon(intensityPoly)
+            g.color = Color(triggerColor.red, triggerColor.green, triggerColor.blue, 255)
+            g.drawPolygon(intensityPoly)
+        }
         // draw border
         g.color = borderColor
         val restoreStroke = g.stroke
@@ -242,7 +258,25 @@ object TimelineSequenceRenderer {
         }
     }
 
-    fun drawKeyframes(
+    private fun getTriggerIntensityPolygone(
+        g: Graphics2D,
+        x: Int,
+        y: Int,
+        width: Int,
+        height: Int, keyframes: Keyframes
+    ): Polygon {
+        val polygon = Polygon()
+        polygon.addPoint(x, y + height - 1)
+        keyframes.keyframesList.forEach {
+            val keyframeX = (x + it.position * (width - 1)).roundToInt()
+            val keyframeY = (y + (1 - it.value) * (height - 1)).roundToInt()
+            polygon.addPoint(keyframeX, keyframeY)
+        }
+        polygon.addPoint(x + width - 1, y + height - 1)
+        return polygon
+    }
+
+    private fun drawKeyframes(
         g: Graphics2D,
         x: Int,
         y: Int,
