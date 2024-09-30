@@ -308,12 +308,12 @@ object TimelineSequenceRenderer {
         triggerHeight: Int,
         keyframe: Keyframes.Keyframe
     ): Polygon {
-        val halfHeight = (triggerHeight / 8.0).roundToInt().coerceAtMost(10)
-        val kfX = (triggerX + keyframe.position * triggerWidth).roundToInt()
-        val kfY = (triggerY + (1 - keyframe.value) * triggerHeight).roundToInt()
+        val halfHeight = (triggerHeight / 8.0).coerceIn(5.0, 7.0)
+        val kfX = (triggerX + keyframe.position * triggerWidth)
+        val kfY = (triggerY + (1 - keyframe.value) * triggerHeight)
         return Polygon(
-            intArrayOf(kfX - halfHeight, kfX, kfX + halfHeight, kfX),
-            intArrayOf(kfY, kfY - halfHeight, kfY, kfY + halfHeight),
+            intArrayOf((kfX - halfHeight).roundToInt(), kfX.roundToInt(), (kfX + halfHeight).roundToInt(), kfX.roundToInt()),
+            intArrayOf(kfY.roundToInt(), (kfY - halfHeight).roundToInt(), kfY.roundToInt(), (kfY + halfHeight).roundToInt()),
             4
         )
     }
