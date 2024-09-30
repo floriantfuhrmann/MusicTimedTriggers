@@ -75,6 +75,10 @@ class Keyframes(
     }
 
     companion object {
+        /** Dummy Keyframes, which should not be modified. */
+        val DUMMY_KEYFRAMES = create()
+
+        /** Creates a new Keyframes object with two default Keyframes at 0 and 1. */
         fun create() = Keyframes(
             keyframesList = mutableListOf(
                 Keyframe(0.0, 0.0),

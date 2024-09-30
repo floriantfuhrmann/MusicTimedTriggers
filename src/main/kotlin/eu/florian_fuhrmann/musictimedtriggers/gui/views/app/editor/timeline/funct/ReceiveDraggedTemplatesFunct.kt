@@ -9,6 +9,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.rend
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
+import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.event.MouseEvent
@@ -104,6 +105,11 @@ object ReceiveDraggedTemplatesFunct {
                                 TimelineSequenceRenderer.TriggerStateStyle.GhostValid
                             } else {
                                 TimelineSequenceRenderer.TriggerStateStyle.GhostInvalid
+                            },
+                            keyframes = if(template.getTriggerTemplate().getType().isIntensity) {
+                                Keyframes.DUMMY_KEYFRAMES
+                            } else {
+                                null
                             }
                         )
                         //render conflict indicator
