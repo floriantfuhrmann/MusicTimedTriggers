@@ -54,6 +54,16 @@ object RightClickMenuFunct {
                                 redrawTimeline()
                             }
                         })
+                        //Delete Option
+                        menu.add(JMenuItem("Delete").apply {
+                            //only enable when not first or last index
+                            isEnabled = clickedTrigger.keyframes().canRemoveAt(clickedKeyframeIndex)
+                            addActionListener {
+                                //delete keyframe and redraw timeline
+                                clickedTrigger.keyframes().removeAtIndex(clickedKeyframeIndex)
+                                redrawTimeline()
+                            }
+                        })
                     } else if(clickedTrigger != null) {
                         //make sure the clicked trigger is selected
                         if(!MoveTriggersFunct.isSelected(clickedTrigger)) {

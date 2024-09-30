@@ -51,6 +51,29 @@ class Keyframes(
         return nextPosition - prevPosition > minPositionDifference * 2
     }
 
+    /**
+     * Removes the Keyframe at [index].
+     *
+     * @param index index of the Keyframe to remove
+     */
+    fun removeAtIndex(index: Int) {
+        //prevent removing first or last keyframe
+        require(index > 0) { "Can not remove first keyframe" }
+        require(index < keyframesList.size - 1) { "Can not remove last keyframe" }
+        //remove keyframe
+        keyframesList.removeAt(index)
+    }
+
+    /**
+     * Checks whether a Keyframe can be removed at [index]. (Only allowed when
+     * not first or last Keyframe)
+     *
+     * @param index index of the Keyframe to remove
+     */
+    fun canRemoveAt(index: Int): Boolean {
+        return index > 0 && index < keyframesList.size - 1
+    }
+
     companion object {
         fun create() = Keyframes(
             keyframesList = mutableListOf(
