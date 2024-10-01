@@ -119,6 +119,13 @@ abstract class AbstractTriggerTemplate(
                         group
                     )
                 }
+                TriggerType.PRINT_INTENSITY -> {
+                    PrintIntensityTriggerTemplate(
+                        uuid,
+                        PrintIntensityTriggerTemplate.TemplateConfiguration.fromJson(json.get("configuration").asJsonObject),
+                        group
+                    )
+                }
             }
         }
 
@@ -136,6 +143,13 @@ abstract class AbstractTriggerTemplate(
                     TestGreetingTriggerTemplate(
                         uuid,
                         TestGreetingTriggerTemplateConfiguration(),
+                        group
+                    )
+                }
+                TriggerType.PRINT_INTENSITY -> {
+                    PrintIntensityTriggerTemplate(
+                        uuid,
+                        PrintIntensityTriggerTemplate.TemplateConfiguration(),
                         group
                     )
                 }

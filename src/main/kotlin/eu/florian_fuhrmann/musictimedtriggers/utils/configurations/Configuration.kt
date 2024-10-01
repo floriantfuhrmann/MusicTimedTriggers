@@ -1,6 +1,7 @@
 package eu.florian_fuhrmann.musictimedtriggers.utils.configurations
 
 import com.godaddy.android.colorpicker.HsvColor
+import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.*
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries.*
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.utils.ConfigurationColor
@@ -11,18 +12,18 @@ abstract class Configuration {
     @Transient
     var entries: List<AbstractConfigurationEntry<out Any>>? = null
 
-    fun createOrGetEntries(): List<AbstractConfigurationEntry<out Any>> {
+    fun createOrGetEntries(context: ConfigurationContext): List<AbstractConfigurationEntry<out Any>> {
         if(entries == null) {
-            entries = createEntries()
+            entries = createEntries(context)
         }
         return entries!!
     }
 
-    private fun createEntries(): List<AbstractConfigurationEntry<out Any>> {
+    private fun createEntries(context: ConfigurationContext): List<AbstractConfigurationEntry<out Any>> {
         return getAllFields().mapNotNull { field ->
             val configurable = field.annotations.find { it.annotationClass == Configurable::class } as? Configurable
             if (configurable != null && field.trySetAccessible()) {
-                createConfigurationEntry(field, configurable)
+                createConfigurationEntry(field, configurable, context)
             } else {
                 null
             }
@@ -39,7 +40,7 @@ abstract class Configuration {
         return result
     }
 
-    private fun createConfigurationEntry(field: Field, configurable: Configurable): AbstractConfigurationEntry<out Any> {
+    private fun createConfigurationEntry(field: Field, configurable: Configurable, context: ConfigurationContext): AbstractConfigurationEntry<out Any> {
         //find custom checkers
         val customCheckers = field.annotations.filter {
             it.annotationClass == RequireCustom::class
@@ -77,6 +78,9 @@ abstract class Configuration {
                     visibleWhen,
                     showAlphaBar != null && showAlphaBar.showAlphaBar
                 )
+            }
+            Keyframes::class.java -> {
+                KeyframesConfigurationEntry(this, field, configurable, visibleWhen, context)
             }
             else -> {
                 ErrorConfigurationEntry(this, field, configurable)

@@ -40,14 +40,20 @@ fun updateCursor() {
                 MoveTriggersFunct.TriggerPart.End -> Cursor.E_RESIZE_CURSOR
             },
         )
+    } else if(MoveTriggersFunct.isMovingKeyframe) {
+        setCursor(Cursor.MOVE_CURSOR)
     } else if (currentAudioPlayer.value?.playing?.value == false && MoveTriggersFunct.hoveredTriggerPart != null) {
-        setCursor(
-            when (MoveTriggersFunct.hoveredTriggerPart) {
-                MoveTriggersFunct.TriggerPart.Start -> Cursor.W_RESIZE_CURSOR
-                MoveTriggersFunct.TriggerPart.End -> Cursor.E_RESIZE_CURSOR
-                else -> Cursor.HAND_CURSOR
-            },
-        )
+        if(MoveTriggersFunct.hoveredKeyframe != null) {
+            setCursor(Cursor.HAND_CURSOR)
+        } else {
+            setCursor(
+                when (MoveTriggersFunct.hoveredTriggerPart) {
+                    MoveTriggersFunct.TriggerPart.Start -> Cursor.W_RESIZE_CURSOR
+                    MoveTriggersFunct.TriggerPart.End -> Cursor.E_RESIZE_CURSOR
+                    else -> Cursor.HAND_CURSOR
+                }
+            )
+        }
     } else {
         setCursor(Cursor.DEFAULT_CURSOR)
     }
