@@ -102,7 +102,7 @@ class Spectrogram(val project: Project, private val audioFile: File, private val
     }
 
     companion object {
-        const val MIN_IMAGE_WIDTH = 10000
+        const val MIN_IMAGE_WIDTH = 5000
 
         /**
          * Returns a new Spectrogram or null if audio file is invalid
