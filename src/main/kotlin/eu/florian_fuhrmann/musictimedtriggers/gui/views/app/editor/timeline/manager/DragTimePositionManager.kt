@@ -9,10 +9,11 @@ import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPla
 import eu.florian_fuhrmann.musictimedtriggers.utils.os.OsUtils
 import java.awt.event.*
 
-/*
-this object should handle the functionality of dragging the time position of the current song with the middle mouse button
+/**
+ * Object that handles the dragging of the time position of the current
+ * song with the middle mouse button
  */
-object DragTimePositionFunct {
+object DragTimePositionManager {
 
     var restartPlaybackAfterDragEnd = false
     var secondsGridHovered = false
@@ -20,17 +21,19 @@ object DragTimePositionFunct {
     private var lastX = 0
     private var draggingButton = 0
 
-    //checks is spectrogram and audioplayer are not null (otherwise time position dragging does not make sense)
-    private fun isReady(): Boolean {
-        return ProjectManager.currentProject?.currentSong?.spectrogram != null && currentAudioPlayer.value != null
-    }
+    /**
+     * checks if spectrogram and audioplayer are not null (otherwise dragging
+     * time position doesn't make sense)
+     */
+    private fun isReady() =
+        ProjectManager.currentProject?.currentSong?.spectrogram != null && currentAudioPlayer.value != null
 
     val mouseListener: MouseListener = object : MouseListener {
         override fun mouseClicked(e: MouseEvent?) {}
         override fun mousePressed(e: MouseEvent?) {
             //check if already dragging and e is not null and ready
-            if(draggingTimePosition || e == null || !isReady()) return
-            if(e.button == 2 || (e.button == 1 && e.y <= TimelineRenderer.currentSecondsGridHeight)) {
+            if (draggingTimePosition || e == null || !isReady()) return
+            if (e.button == 2 || (e.button == 1 && e.y <= TimelineRenderer.currentSecondsGridHeight)) {
                 //start dragging
                 draggingTimePosition = true
                 draggingButton = e.button
@@ -40,25 +43,27 @@ object DragTimePositionFunct {
                 updateCursor()
             }
         }
+
         override fun mouseReleased(e: MouseEvent?) {
-            if(e == null || !isReady()) return
-            if(e.button == draggingButton) {
+            if (e == null || !isReady()) return
+            if (e.button == draggingButton) {
                 //end dragging
                 draggingTimePosition = false
-                if(restartPlaybackAfterDragEnd) {
+                if (restartPlaybackAfterDragEnd) {
                     ProjectManager.currentProject?.currentSong?.play()
                 }
                 updateCursor()
             }
         }
+
         override fun mouseEntered(e: MouseEvent?) {}
         override fun mouseExited(e: MouseEvent?) {}
     }
     val mouseMotionListener: MouseMotionListener = object : MouseMotionListener {
         override fun mouseDragged(e: MouseEvent?) {
-            if(draggingTimePosition && e != null && isReady()) {
+            if (draggingTimePosition && e != null && isReady()) {
                 val deltaX = e.x - lastX
-                if(deltaX != 0) {
+                if (deltaX != 0) {
                     lastX = e.x
                     currentAudioPlayer.value?.apply {
                         secondPosition -= deltaX.toDouble() / TimelineBackgroundRenderer.destinationPixelsPerSecond
@@ -67,10 +72,11 @@ object DragTimePositionFunct {
                 }
             }
         }
+
         override fun mouseMoved(e: MouseEvent?) {
-            if(e == null || !isReady()) return
+            if (e == null || !isReady()) return
             val newSecondsGridHovered = e.y < TimelineRenderer.currentSecondsGridHeight
-            if(newSecondsGridHovered != secondsGridHovered) {
+            if (newSecondsGridHovered != secondsGridHovered) {
                 secondsGridHovered = newSecondsGridHovered
                 updateCursor()
             }
@@ -79,8 +85,8 @@ object DragTimePositionFunct {
     const val WHEEL_ROTATION_MULTIPLIER = 5
     val mouseWheelListener: MouseWheelListener = object : MouseWheelListener {
         override fun mouseWheelMoved(e: MouseWheelEvent?) {
-            if(e == null || !isReady()) return
-            if(OsUtils.isMacOs && !e.isShiftDown) return // on macOS shift down indicates horizontal
+            if (e == null || !isReady()) return
+            if (OsUtils.isMacOs && !e.isShiftDown) return // on macOS shift down indicates horizontal
             currentAudioPlayer.value?.apply {
                 secondPosition += WHEEL_ROTATION_MULTIPLIER * (e.preciseWheelRotation / TimelineBackgroundRenderer.destinationPixelsPerSecond)
             }

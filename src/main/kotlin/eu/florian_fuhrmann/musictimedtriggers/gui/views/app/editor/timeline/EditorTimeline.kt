@@ -27,9 +27,9 @@ private var panel: JPanel? = null
  * Updates the Cursor icon by setting the cursor of the JPanel
  */
 fun updateCursor() {
-    if (DragTimePositionFunct.draggingTimePosition) {
+    if (DragTimePositionManager.draggingTimePosition) {
         setCursor(Cursor.MOVE_CURSOR)
-    } else if (DragTimePositionFunct.secondsGridHovered) {
+    } else if (DragTimePositionManager.secondsGridHovered) {
         setCursor(Cursor.HAND_CURSOR)
     } else if (MoveTriggersManager.moving) {
         setCursor(
@@ -108,8 +108,8 @@ fun EditorTimeline() {
                         }
                     }
                 // add listeners
-                (panel as JPanel).addMouseListener(DragTimePositionFunct.mouseListener)
-                (panel as JPanel).addMouseMotionListener(DragTimePositionFunct.mouseMotionListener)
+                (panel as JPanel).addMouseListener(DragTimePositionManager.mouseListener)
+                (panel as JPanel).addMouseMotionListener(DragTimePositionManager.mouseMotionListener)
                 (panel as JPanel).addMouseListener(ReceiveDraggedTemplatesManger.mouseListener)
                 (panel as JPanel).addMouseListener(RightClickMenuManager.mouseListener)
                 (panel as JPanel).addMouseListener(MoveTriggersManager.mouseListener)
@@ -117,7 +117,7 @@ fun EditorTimeline() {
                 (panel as JPanel).addMouseListener(TriggerSelectionManager.mouseListener)
                 (panel as JPanel).addMouseMotionListener(TriggerSelectionManager.mouseMotionListener)
                 (panel as JPanel).addMouseListener(TimelineFocusManager.mouseListener)
-                (panel as JPanel).addMouseWheelListener(DragTimePositionFunct.mouseWheelListener)
+                (panel as JPanel).addMouseWheelListener(DragTimePositionManager.mouseWheelListener)
                 // return panel
                 panel as JPanel
             }
