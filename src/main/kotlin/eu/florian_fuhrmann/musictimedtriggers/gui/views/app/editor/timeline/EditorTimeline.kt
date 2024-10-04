@@ -111,7 +111,7 @@ fun EditorTimeline() {
                 (panel as JPanel).addMouseListener(DragTimePositionFunct.mouseListener)
                 (panel as JPanel).addMouseMotionListener(DragTimePositionFunct.mouseMotionListener)
                 (panel as JPanel).addMouseListener(ReceiveDraggedTemplatesFunct.mouseListener)
-                (panel as JPanel).addMouseListener(RightClickMenuFunct.mouseListener)
+                (panel as JPanel).addMouseListener(RightClickMenuManager.mouseListener)
                 (panel as JPanel).addMouseListener(MoveTriggersFunct.mouseListener)
                 (panel as JPanel).addMouseMotionListener(MoveTriggersFunct.mouseMotionListener)
                 (panel as JPanel).addMouseListener(TimelineFocusManager.mouseListener)
