@@ -9,7 +9,7 @@ import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.funct.*
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.*
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.titlebar.titleBarDropdownOpened
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
@@ -86,7 +86,8 @@ fun EditorTimeline() {
             !titleBarDropdownOpened.value && !DialogManager.anyAlerts.value
         }
     }
-    TimelineFocusFunct.focusManager = LocalFocusManager.current
+    // set focus manager, so it can be used for manual focus handling
+    TimelineFocusManager.focusManager = LocalFocusManager.current
     // only show when the panel should be visible
     if (panelVisible) {
         SwingPanel(
@@ -113,7 +114,7 @@ fun EditorTimeline() {
                 (panel as JPanel).addMouseListener(RightClickMenuFunct.mouseListener)
                 (panel as JPanel).addMouseListener(MoveTriggersFunct.mouseListener)
                 (panel as JPanel).addMouseMotionListener(MoveTriggersFunct.mouseMotionListener)
-                (panel as JPanel).addMouseListener(TimelineFocusFunct.mouseListener)
+                (panel as JPanel).addMouseListener(TimelineFocusManager.mouseListener)
                 (panel as JPanel).addMouseWheelListener(DragTimePositionFunct.mouseWheelListener)
                 // return panel
                 panel as JPanel

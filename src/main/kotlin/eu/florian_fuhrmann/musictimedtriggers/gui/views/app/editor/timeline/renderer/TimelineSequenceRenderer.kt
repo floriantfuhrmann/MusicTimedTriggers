@@ -1,6 +1,6 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer
 
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.funct.MoveTriggersFunct
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.MoveTriggersFunct
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedIntensityTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger

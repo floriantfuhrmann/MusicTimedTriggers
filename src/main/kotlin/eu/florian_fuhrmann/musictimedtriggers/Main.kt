@@ -16,8 +16,8 @@ import androidx.compose.ui.window.application
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.IntUiThemes
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.App
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.funct.MoveTriggersFunct
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.funct.TimelineFocusFunct
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.MoveTriggersFunct
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.TimelineFocusManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.titlebar.TitleBarView
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
@@ -77,7 +77,7 @@ fun main() {
                 title = "ToDo: Title",
                 onKeyEvent = {
                     // because Compose can't seem to pass KeyEvents to Swing Component Timeline Keyboard Presses need to be handled by Window
-                    if (!TimelineFocusFunct.timelineFocused) return@DecoratedWindow false
+                    if (!TimelineFocusManager.timelineFocused) return@DecoratedWindow false
                     if (it.type != KeyEventType.KeyUp) return@DecoratedWindow false
                     if (it.key == Key.Backspace || it.key == Key.Delete) {
                         MoveTriggersFunct.deleteSelectedTriggers()

@@ -1,9 +1,9 @@
-package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.funct
+package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager
 
 import androidx.compose.ui.focus.FocusManager
 import java.awt.event.*
 
-object TimelineFocusFunct {
+object TimelineFocusManager {
     var focusManager: FocusManager? = null
     var timelineFocused = false
         private set
@@ -13,6 +13,7 @@ object TimelineFocusFunct {
             override fun mouseClicked(e: MouseEvent?) {}
 
             override fun mousePressed(e: MouseEvent?) {
+                // clicked on timeline, so it should gain focus
                 timelineGainedFocus()
             }
 
@@ -24,7 +25,7 @@ object TimelineFocusFunct {
         }
 
     fun timelineGainedFocus() {
-        // because Compose's Focus System does not recognize SwiftPanels being focused, we manually clear focus when Timeline should gain focus
+        // because Composes' Focus System does not recognize SwiftPanels being focused, we manually clear focus when Timeline should gain focus
         focusManager?.clearFocus()
         timelineFocused = true
     }

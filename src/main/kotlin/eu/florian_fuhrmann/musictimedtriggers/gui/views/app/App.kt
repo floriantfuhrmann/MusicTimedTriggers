@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.TriggerBrowser
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.SongEditor
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.funct.TimelineFocusFunct
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.TimelineFocusManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.overlay.Overlay
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.sidebar.Sidebar
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
@@ -40,8 +40,8 @@ fun App() {
         modifier =
             Modifier
                 .onPointerEvent(eventType = PointerEventType.Press) { _ ->
-                    // when a click is detected by Compose anywhere on the App that leads to the Timeline losing focus
-                    TimelineFocusFunct.timelineLostFocus()
+                    // when a click is detected by Compose anywhere on the App it should lead to the Timeline losing focus
+                    TimelineFocusManager.timelineLostFocus()
                 }.trackActivation(),
     ) {
         first(100.dp) {
