@@ -1,6 +1,7 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer
 
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.MoveTriggersFunct
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.MoveTriggersManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedIntensityTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
@@ -165,12 +166,12 @@ object TimelineSequenceRenderer {
             height,
             trigger.triggerTemplate.configuration.color,
             trigger.name(),
-            if (MoveTriggersFunct.isVisuallySelected(trigger)) {
+            if (TriggerSelectionManager.isVisuallySelected(trigger)) {
                 TriggerStateStyle.Selected
             } else {
                 TriggerStateStyle.Normal
             },
-            MoveTriggersFunct.isTriggerHovered(trigger),
+            MoveTriggersManager.isTriggerHovered(trigger),
             if (trigger is AbstractPlacedIntensityTrigger) {
                 trigger.keyframes()
             } else {
@@ -286,7 +287,7 @@ object TimelineSequenceRenderer {
     ) {
         keyframes.keyframesList.forEach {
             val keyframeRhombus = getKeyframeShape(x, y, width, height, it)
-            g.color = if(MoveTriggersFunct.isKeyframeHovered(it)) {
+            g.color = if(MoveTriggersManager.isKeyframeHovered(it)) {
                 Color.red
             } else {
                 Color.yellow

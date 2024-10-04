@@ -15,12 +15,16 @@ import java.awt.Graphics2D
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 
-/*
-this object should handle the functionality of receiving templates dragged from the templates browser
+/**
+ * Singleton object, which handles the functionality of receiving templates dragged from the templates browser
  */
-object ReceiveDraggedTemplatesFunct {
+object ReceiveDraggedTemplatesManger {
 
-    var insertPossible = true
+    /**
+     * Indicates if the insert of the dragged templates is possible (updated
+     * when drawing the drag indicator)
+     */
+    private var insertPossible = true
 
     val mouseListener: MouseListener = object : MouseListener {
         override fun mouseClicked(e: MouseEvent?) {}
@@ -34,6 +38,11 @@ object ReceiveDraggedTemplatesFunct {
         }
     }
 
+    /**
+     * Draws the dragged templates as ghost triggers on the timeline. Also
+     * draws a vertical line indicating if the insert is possible.
+     * And updates the insertPossible variable.
+     */
     fun drawDragIndicator(
         g: Graphics2D,
         width: Int, //total width of the content drawn
@@ -79,7 +88,7 @@ object ReceiveDraggedTemplatesFunct {
                         } else {
                             time
                         }
-                        //get longest duration the new trigger could have at time in this line
+                        //get the longest duration the new trigger could have at time in this line
                         var ghostTriggerDuration = line.getFreeDurationFrom(adjustedLineTime, true).coerceAtMost(AbstractPlacedTrigger.DEFAULT_TRIGGER_DURATION)
                         var ghostPossible = true
                         //make sure the trigger can be at least min MINIMUM_TRIGGER_DURATION seconds long

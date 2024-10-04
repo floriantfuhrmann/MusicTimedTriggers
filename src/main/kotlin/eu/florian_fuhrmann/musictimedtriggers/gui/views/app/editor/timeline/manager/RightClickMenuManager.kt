@@ -33,7 +33,7 @@ object RightClickMenuManager {
                 //init menu
                 val menu = JPopupMenu()
                 //get clicked trigger / keyframe
-                val triggerAtResult = MoveTriggersFunct.getTriggerAt(e.x, e.y)
+                val triggerAtResult = MoveTriggersManager.getTriggerAt(e.x, e.y)
                 val clickedTrigger = triggerAtResult?.trigger
                 //check whether keyframe was clicked
                 if(clickedTrigger != null && clickedTrigger is AbstractPlacedIntensityTrigger && triggerAtResult.keyframe != null) {
@@ -72,8 +72,8 @@ object RightClickMenuManager {
                     })
                 } else if(clickedTrigger != null) {
                     //make sure the clicked trigger is selected
-                    if(!MoveTriggersFunct.isSelected(clickedTrigger)) {
-                        MoveTriggersFunct.selectTrigger(clickedTrigger, e.isShiftDown)
+                    if(!TriggerSelectionManager.isSelected(clickedTrigger)) {
+                        TriggerSelectionManager.selectTrigger(clickedTrigger, e.isShiftDown)
                     }
                     //Edit Option
                     menu.add(JMenuItem("Edit").apply {
@@ -85,7 +85,7 @@ object RightClickMenuManager {
                     //Delete Option
                     menu.add(JMenuItem("Delete").apply {
                         addActionListener {
-                            MoveTriggersFunct.deleteSelectedTriggers()
+                            EditTriggersManager.deleteSelectedTriggers()
                         }
                     })
                 } else {

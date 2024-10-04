@@ -16,7 +16,7 @@ import androidx.compose.ui.window.application
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.IntUiThemes
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.App
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.MoveTriggersFunct
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.EditTriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.TimelineFocusManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.titlebar.TitleBarView
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -80,10 +80,10 @@ fun main() {
                     if (!TimelineFocusManager.timelineFocused) return@DecoratedWindow false
                     if (it.type != KeyEventType.KeyUp) return@DecoratedWindow false
                     if (it.key == Key.Backspace || it.key == Key.Delete) {
-                        MoveTriggersFunct.deleteSelectedTriggers()
+                        EditTriggersManager.editSelectedTrigger()
                         return@DecoratedWindow true
                     } else if (it.key == Key.Enter) {
-                        MoveTriggersFunct.editSelectedTrigger()
+                        EditTriggersManager.editSelectedTrigger()
                         return@DecoratedWindow true
                     }
                     return@DecoratedWindow false

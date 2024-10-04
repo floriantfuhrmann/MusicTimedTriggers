@@ -1,7 +1,8 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer
 
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.MoveTriggersFunct
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.ReceiveDraggedTemplatesFunct
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.MoveTriggersManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.ReceiveDraggedTemplatesManger
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
 import java.awt.Color
@@ -62,9 +63,9 @@ object TimelineRenderer {
             g.color = Color.red
             g.drawString("No Trigger Sequence", 20, 10)
         }
-        ReceiveDraggedTemplatesFunct.drawDragIndicator(g, width, height)
+        ReceiveDraggedTemplatesManger.drawDragIndicator(g, width, height)
         //draw selection
-        MoveTriggersFunct.drawSelectionBox(g)
+        TriggerSelectionManager.drawSelectionBox(g)
         //draw play head
         TimelineGridRenderer.drawPlayHead(
             g,

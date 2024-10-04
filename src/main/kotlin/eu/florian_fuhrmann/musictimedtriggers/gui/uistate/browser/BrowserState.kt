@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.Color
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.ReceiveDraggedTemplatesFunct
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.ReceiveDraggedTemplatesManger
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
@@ -338,7 +338,7 @@ class BrowserState(val project: Project) {
         draggingOnTimeline.value = false
         //handle drag destination if dragging stopped on timeline
         if(wasOnTimeline) {
-            ReceiveDraggedTemplatesFunct.receive()
+            ReceiveDraggedTemplatesManger.receive()
         }
     }
 

@@ -31,24 +31,24 @@ fun updateCursor() {
         setCursor(Cursor.MOVE_CURSOR)
     } else if (DragTimePositionFunct.secondsGridHovered) {
         setCursor(Cursor.HAND_CURSOR)
-    } else if (MoveTriggersFunct.moving) {
+    } else if (MoveTriggersManager.moving) {
         setCursor(
-            when (MoveTriggersFunct.movingPart) {
-                MoveTriggersFunct.TriggerPart.Start -> Cursor.W_RESIZE_CURSOR
-                MoveTriggersFunct.TriggerPart.Middle -> Cursor.MOVE_CURSOR
-                MoveTriggersFunct.TriggerPart.End -> Cursor.E_RESIZE_CURSOR
+            when (MoveTriggersManager.movingPart) {
+                MoveTriggersManager.TriggerPart.Start -> Cursor.W_RESIZE_CURSOR
+                MoveTriggersManager.TriggerPart.Middle -> Cursor.MOVE_CURSOR
+                MoveTriggersManager.TriggerPart.End -> Cursor.E_RESIZE_CURSOR
             },
         )
-    } else if(MoveTriggersFunct.isMovingKeyframe) {
+    } else if(MoveTriggersManager.isMovingKeyframe) {
         setCursor(Cursor.MOVE_CURSOR)
-    } else if (currentAudioPlayer.value?.playing?.value == false && MoveTriggersFunct.hoveredTriggerPart != null) {
-        if(MoveTriggersFunct.hoveredKeyframe != null) {
+    } else if (currentAudioPlayer.value?.playing?.value == false && MoveTriggersManager.hoveredTriggerPart != null) {
+        if(MoveTriggersManager.hoveredKeyframe != null) {
             setCursor(Cursor.HAND_CURSOR)
         } else {
             setCursor(
-                when (MoveTriggersFunct.hoveredTriggerPart) {
-                    MoveTriggersFunct.TriggerPart.Start -> Cursor.W_RESIZE_CURSOR
-                    MoveTriggersFunct.TriggerPart.End -> Cursor.E_RESIZE_CURSOR
+                when (MoveTriggersManager.hoveredTriggerPart) {
+                    MoveTriggersManager.TriggerPart.Start -> Cursor.W_RESIZE_CURSOR
+                    MoveTriggersManager.TriggerPart.End -> Cursor.E_RESIZE_CURSOR
                     else -> Cursor.HAND_CURSOR
                 }
             )
@@ -110,10 +110,12 @@ fun EditorTimeline() {
                 // add listeners
                 (panel as JPanel).addMouseListener(DragTimePositionFunct.mouseListener)
                 (panel as JPanel).addMouseMotionListener(DragTimePositionFunct.mouseMotionListener)
-                (panel as JPanel).addMouseListener(ReceiveDraggedTemplatesFunct.mouseListener)
+                (panel as JPanel).addMouseListener(ReceiveDraggedTemplatesManger.mouseListener)
                 (panel as JPanel).addMouseListener(RightClickMenuManager.mouseListener)
-                (panel as JPanel).addMouseListener(MoveTriggersFunct.mouseListener)
-                (panel as JPanel).addMouseMotionListener(MoveTriggersFunct.mouseMotionListener)
+                (panel as JPanel).addMouseListener(MoveTriggersManager.mouseListener)
+                (panel as JPanel).addMouseMotionListener(MoveTriggersManager.mouseMotionListener)
+                (panel as JPanel).addMouseListener(TriggerSelectionManager.mouseListener)
+                (panel as JPanel).addMouseMotionListener(TriggerSelectionManager.mouseMotionListener)
                 (panel as JPanel).addMouseListener(TimelineFocusManager.mouseListener)
                 (panel as JPanel).addMouseWheelListener(DragTimePositionFunct.mouseWheelListener)
                 // return panel
