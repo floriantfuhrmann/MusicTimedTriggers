@@ -1,4 +1,4 @@
-package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager
+package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers
 
 import androidx.compose.ui.focus.FocusManager
 import java.awt.event.*

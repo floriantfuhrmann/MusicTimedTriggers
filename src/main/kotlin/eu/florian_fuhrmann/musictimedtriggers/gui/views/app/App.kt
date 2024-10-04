@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.TriggerBrowser
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.SongEditor
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.TimelineFocusManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TimelineFocusManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.overlay.Overlay
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.sidebar.Sidebar
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi

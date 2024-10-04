@@ -1,8 +1,7 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer
 
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.MoveTriggersManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.ReceiveDraggedTemplatesManger
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.TriggerSelectionManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.ReceiveDraggedTemplatesManger
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
 import java.awt.Color

@@ -9,7 +9,7 @@ import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.manager.*
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.*
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.titlebar.titleBarDropdownOpened
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
