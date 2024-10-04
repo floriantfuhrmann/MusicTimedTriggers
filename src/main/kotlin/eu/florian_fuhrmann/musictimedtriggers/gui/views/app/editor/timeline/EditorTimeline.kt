@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
@@ -76,9 +75,7 @@ fun getPointerPointOnPanel(): Point {
  * Redraws the Timeline
  */
 fun redrawTimeline() {
-    // panel?.repaint()
-    // panel?.paintImmediately(panel!!.x, panel!!.y, panel!!.width, panel!!.height)
-    panel?.updateUI()
+    panel?.repaint()
 }
 
 @Composable
