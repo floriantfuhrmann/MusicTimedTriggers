@@ -17,7 +17,7 @@ class TriggerSequenceLine(
         //redraw timeline
         redrawTimeline()
         //save project
-        sequence.project.save()
+        // TODO
     }
 
     fun getTriggersCount() = triggers.size

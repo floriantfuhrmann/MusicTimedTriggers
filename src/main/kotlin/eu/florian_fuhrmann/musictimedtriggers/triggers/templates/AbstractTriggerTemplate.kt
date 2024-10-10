@@ -8,9 +8,9 @@ import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggerType
 import eu.florian_fuhrmann.musictimedtriggers.triggers.groups.TriggerTemplateGroup
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
+import eu.florian_fuhrmann.musictimedtriggers.utils.color.GenericColor
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.Configurable
-import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.utils.ConfigurationColor
 import java.util.*
 
 /**
@@ -65,7 +65,7 @@ abstract class AbstractTriggerTemplate(
                 if(!creating) {
                     ProjectManager.currentProject?.browserState?.updateTriggerTemplate(this)
                     //save project
-                    ProjectManager.currentProject?.save()
+                    // TODO
                 }
             }
         ))
@@ -161,7 +161,7 @@ abstract class AbstractTriggerTemplate(
 
 open class TriggerTemplateConfiguration(
     @Configurable("Color", "Color for this Trigger")
-    var color: ConfigurationColor = ConfigurationColor(0, 0, 0, 255)
+    var color: GenericColor = GenericColor(0, 0, 0, 255)
 ) : Configuration() {
     /**
      * Can be used to copy this TriggerTemplateConfiguration by setting vars to values from [source]

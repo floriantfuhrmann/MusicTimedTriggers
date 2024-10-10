@@ -25,7 +25,7 @@ class TriggerSequence(
         //redraw timeline
         redrawTimeline()
         //save project
-        project.save()
+        // TODO
     }
 
     fun newLine(insertIndex: Int) {
@@ -34,7 +34,7 @@ class TriggerSequence(
         //redraw timeline
         redrawTimeline()
         //save project
-        project.save()
+        // TODO
     }
 
     private var lastLineRemovedCounter = 0
@@ -53,7 +53,7 @@ class TriggerSequence(
         //redraw timeline
         redrawTimeline()
         //save project
-        project.save()
+        // TODO
     }
 
     fun findLineOf(trigger: AbstractPlacedTrigger): TriggerSequenceLine? {

@@ -18,6 +18,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.FilePathField
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.utils.color.GenericColor
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Text
@@ -37,7 +38,7 @@ class EditProjectDialog(val create: Boolean, val project: Project? = null) : Dia
                 ?.isEmpty() ?: true)
         }
         //Color
-        var selectedColor: HsvColor by remember { mutableStateOf(project?.projectColor ?: HsvColor.DEFAULT) }
+        var selectedColor: HsvColor by remember { mutableStateOf(project?.projectSettings?.projectColor?.toHsvColor() ?: HsvColor.DEFAULT) }
         //UI
         DialogFrame(
             rightButtons = {
@@ -49,11 +50,10 @@ class EditProjectDialog(val create: Boolean, val project: Project? = null) : Dia
                         DialogManager.closeDialog()
                         if(create) {
                             //create project
-                            ProjectManager.createProject(projectDirectory, selectedColor)
+                            ProjectManager.createProject(projectDirectory, GenericColor.fromHsvColor(selectedColor))
                         } else if(project != null) {
                             //update project
-                            project.projectColor = selectedColor
-                            project.save()
+                            TODO("Update and save project")
                         } else {
                             error("EditProjectDialog is not creating, but project is null")
                         }

@@ -3,32 +3,26 @@ package eu.florian_fuhrmann.musictimedtriggers.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.godaddy.android.colorpicker.HsvColor
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.unusedfiles.UnusedFilesDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.fromJson
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.toJson
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
-import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
 import java.io.File
-import java.nio.charset.StandardCharsets
 
-class Project(val projectDirectory: File, var projectColor: HsvColor, val triggersManager: TriggersManager) {
+class Project(
+    val projectDirectory: File,
+    val projectSettings: ProjectSettings,
+    val triggersManager: TriggersManager
+) {
 
     // Functions managing the Projects Files
 
     fun getProjectName(): String = projectDirectory.name
-
     fun getAudioDirectory(): File = File(projectDirectory, "Audio")
-
     fun getCacheDirectory(): File = File(projectDirectory, "Cache")
-
     fun isFileInsideProjectDirectory(file: File) =
         file.canonicalPath.startsWith(projectDirectory.canonicalPath + File.separator)
 
@@ -40,22 +34,18 @@ class Project(val projectDirectory: File, var projectColor: HsvColor, val trigge
                 song.audioFile == file
             }
         }?.toList()
-        if(unusedAudioFiles?.isNotEmpty() == true) {
+        if (unusedAudioFiles?.isNotEmpty() == true) {
             //Open UnusedFiles Dialog
             DialogManager.openDialog(UnusedFilesDialog(unusedAudioFiles))
         } else {
             //alert
-            DialogManager.alert(Alert(
-                title = "No unused files found",
-                text = "No unused Audio Files where found in ${getAudioDirectory().canonicalPath}",
-                onDismiss = {}
-            ))
+            DialogManager.alert(
+                Alert(title = "No unused files found",
+                    text = "No unused Audio Files where found in ${getAudioDirectory().canonicalPath}",
+                    onDismiss = {})
+            )
         }
     }
-
-    // Functions managing the Triggers
-
-    // ...
 
     // Functions managing the Projects Songs
 
@@ -68,7 +58,7 @@ class Project(val projectDirectory: File, var projectColor: HsvColor, val trigge
             add(song)
         }
         //save project
-        save()
+        // TODO
     }
     fun moveSong(fromIndex: Int, toIndex: Int) {
         //update songs list
@@ -76,7 +66,7 @@ class Project(val projectDirectory: File, var projectColor: HsvColor, val trigge
             add(toIndex, removeAt(fromIndex))
         }
         //save project
-        save()
+        // SAVE
     }
     fun deleteSong(song: Song) {
         //remove song
@@ -84,7 +74,7 @@ class Project(val projectDirectory: File, var projectColor: HsvColor, val trigge
             remove(song)
         }
         //save project
-        save()
+        // TODO
         //alert
         DialogManager.alert(Alert(
             title = "Song deleted",
@@ -99,7 +89,7 @@ class Project(val projectDirectory: File, var projectColor: HsvColor, val trigge
         //refresh ui
         redrawTimeline()
         //save project
-        save()
+        // TODO
     }
     fun openSong(song: Song) {
         println("Opening Song ${song.name}...")
@@ -119,63 +109,63 @@ class Project(val projectDirectory: File, var projectColor: HsvColor, val trigge
 
     // UI States
 
-    var browserState: BrowserState? = null
+    lateinit var browserState: BrowserState
 
     // Functions to Save and Load Project
 
-    fun save() {
-        //create json
-        val json = toJson()
-        //write json to file
-        val file = File(projectDirectory, ProjectManager.PROJECT_JSON_FILE_NAME)
-        file.writeText(text = GSON_PRETTY.toJson(json), charset = StandardCharsets.UTF_8)
-        //verbose
-        println("Project saved to file")
-    }
+//    fun save() {
+//        //create json
+//        val json = toJson()
+//        //write json to file
+//        val file = File(projectDirectory, ProjectManager.PROJECT_JSON_FILE_NAME)
+//        file.writeText(text = GSON_PRETTY.toJson(json), charset = StandardCharsets.UTF_8)
+//        //verbose
+//        println("Project saved to file")
+//    }
 
-    private fun toJson(): JsonObject {
-        //create json
-        val json = JsonObject()
-        //add color
-        json.add("color", projectColor.toJson())
-        //add triggers manager
-        json.add("triggersManager", triggersManager.toJson())
-        //add songs
-        val songsJsonArray = JsonArray()
-        songs.forEach { songsJsonArray.add(it.toJson()) }
-        json.add("songs", songsJsonArray)
-        //add ui state
-        json.add("uiBrowserState", browserState!!.toJson())
-        //return
-        return json
-    }
+//    private fun toJson(): JsonObject {
+//        //create json
+//        val json = JsonObject()
+//        //add color
+//        json.add("color", projectColor.toJson())
+//        //add triggers manager
+//        json.add("triggersManager", triggersManager.toJson())
+//        //add songs
+//        val songsJsonArray = JsonArray()
+//        songs.forEach { songsJsonArray.add(it.toJson()) }
+//        json.add("songs", songsJsonArray)
+//        //add ui state
+//        json.add("uiBrowserState", browserState!!.toJson())
+//        //return
+//        return json
+//    }
 
     companion object {
-        fun fromJson(projectDirectory: File, json: JsonObject): Project {
-            //get color
-            val color: HsvColor = HsvColor.fromJson(json.get("color").asJsonObject)
-            //get triggers manager
-            val triggersManager = if(json.has("triggersManager")) {
-                TriggersManager.fromJson(json.get("triggersManager").asJsonObject)
-            } else {
-                TriggersManager.create()
-            }
-            //create project instance
-            val project = Project(projectDirectory, color, triggersManager)
-            //set songs
-            if(json.has("songs")) {
-                project.songs = json.get("songs").asJsonArray.map {
-                    Song.fromJson(project, it.asJsonObject)
-                }
-            }
-            //set ui state
-            project.browserState = if (json.has("uiBrowserState")) {
-                BrowserState.fromJson(project, json.get("uiBrowserState").asJsonObject)
-            } else {
-                BrowserState.create(project)
-            }
-            //return project
-            return project
-        }
+//        fun fromJson(projectDirectory: File, json: JsonObject): Project {
+//            //get color
+//            val color: HsvColor = HsvColor.fromJson(json.get("color").asJsonObject)
+//            //get triggers manager
+//            val triggersManager = if(json.has("triggersManager")) {
+//                TriggersManager.fromJson(json.get("triggersManager").asJsonObject)
+//            } else {
+//                TriggersManager.create()
+//            }
+//            //create project instance
+//            val project = Project(projectDirectory, color, triggersManager)
+//            //set songs
+//            if(json.has("songs")) {
+//                project.songs = json.get("songs").asJsonArray.map {
+//                    Song.fromJson(project, it.asJsonObject)
+//                }
+//            }
+//            //set ui state
+//            project.browserState = if (json.has("uiBrowserState")) {
+//                BrowserState.fromJson(project, json.get("uiBrowserState").asJsonObject)
+//            } else {
+//                BrowserState.create(project)
+//            }
+//            //return project
+//            return project
+//        }
     }
 }

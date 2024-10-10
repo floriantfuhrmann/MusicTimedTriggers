@@ -2,9 +2,9 @@ package eu.florian_fuhrmann.musictimedtriggers.utils.configurations
 
 import com.godaddy.android.colorpicker.HsvColor
 import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
+import eu.florian_fuhrmann.musictimedtriggers.utils.color.GenericColor
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.*
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries.*
-import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.utils.ConfigurationColor
 import java.lang.reflect.Field
 
 abstract class Configuration {
@@ -68,7 +68,7 @@ abstract class Configuration {
                 val intRange = field.annotations.find { it.annotationClass == RequireIntRange::class } as? RequireIntRange
                 StringConfigurationEntry(this, field, configurable, customCheckers, visibleWhen, intRange)
             }
-            java.awt.Color::class.java, androidx.compose.ui.graphics.Color::class.java, HsvColor::class.java, ConfigurationColor::class.java -> {
+            java.awt.Color::class.java, androidx.compose.ui.graphics.Color::class.java, HsvColor::class.java, GenericColor::class.java -> {
                 val showAlphaBar = field.annotations.find { it.annotationClass == ShowAlphaBar::class } as? ShowAlphaBar
                 ColorConfigurationEntry(
                     this,

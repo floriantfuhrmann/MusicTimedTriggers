@@ -6,24 +6,126 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.ReceiveDraggedTemplatesManger
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
-import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggerType
+import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.groups.TriggerTemplateGroup
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
+import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
 import eu.florian_fuhrmann.musictimedtriggers.windowState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.*
 
-class BrowserState(val project: Project) {
+/**
+ * Stores state of trigger templates browser, like selected and opened
+ * groups. Used for UI and to store the state of the browser to file. Also
+ * provides functions to manipulate the state. Does not have a reference
+ * to the parent project only to the projects triggers manager.
+ *
+ * @param triggersManager TriggersManager of the project this browser state
+ *    is for
+ */
+class BrowserState(
+    private val triggersManager: TriggersManager
+) {
+
+    // Saving and Loading
+
+    companion object {
+        private const val SAVE_FILE_NAME = "trigger_browser_ui_state.json"
+
+        fun create(triggersManager: TriggersManager): BrowserState {
+            //create instance of new browser state
+            val browserState = BrowserState(triggersManager)
+            //add all groups from triggers manager to browser state
+            browserState.allGroups.value = triggersManager.getAllTemplateGroups().map {
+                BrowserGroup(it.uuid, it.name) //create instance of BrowserGroup
+            }
+            //return
+            return browserState
+        }
+
+        private fun fromJson(triggersManager: TriggersManager, json: JsonObject): BrowserState {
+            //create instance of new browser state
+            val browserState = BrowserState(triggersManager)
+            //init temporary map of browser groups
+            val tempGroupMap: MutableMap<UUID, BrowserGroup> = mutableMapOf()
+            //add all groups from triggers manager to browser state
+            browserState.allGroups.value = triggersManager.getAllTemplateGroups().map {
+                val browserGroup = BrowserGroup(it.uuid, it.name) //create instance of BrowserGroup
+                tempGroupMap[it.uuid] = browserGroup //save in map
+                browserGroup
+            }
+            //fill opened groups
+            browserState.openedGroups.value = json.get("openedGroups").asJsonArray.mapNotNull {
+                tempGroupMap[UUID.fromString(it.asString)] //take from map, so it is the same instance as in allGroups
+            }
+            //set selected group
+            if(json.has("selectedGroup")) {
+                //set selected group on browser state
+                val selectedGroupUuid = UUID.fromString(json.get("selectedGroup").asString)
+                browserState.selectedGroup.value = tempGroupMap[selectedGroupUuid]
+                //update trigger templates on browser state
+                browserState.updateAllGroupTriggers(triggersManager.getTemplateGroup(selectedGroupUuid))
+            }
+            //return
+            return browserState
+        }
+
+        /**
+         * Load the browser state from the project directory.
+         * If the file does not exist, a new browser state is created.
+         * @param projectDirectory the project directory
+         * @param triggersManager the triggers manager of the project
+         */
+        fun loadFromFile(projectDirectory: File, triggersManager: TriggersManager): BrowserState {
+            // get json file in project directory
+            val file = File(projectDirectory, SAVE_FILE_NAME)
+            // fallback to create new browser state if file does not exist
+            if (!file.exists()) {
+                return create(triggersManager)
+            }
+            // read json file and deserialize from json
+            val jsonString = file.readText()
+            val json = JsonParser.parseString(jsonString).asJsonObject
+            return fromJson(triggersManager, json)
+        }
+    }
+
+    /**
+     * Save the browser state to the project directory.
+     * @param projectDirectory the parent projects' project directory
+     */
+    fun saveToFile(projectDirectory: File) {
+        val json = toJson()
+        val file = File(projectDirectory, SAVE_FILE_NAME)
+        file.writeText(GSON_PRETTY.toJson(toJson()))
+    }
+
+    private fun toJson(): JsonObject {
+        val json = JsonObject()
+        //add opened groups
+        val openedGroupUuidsJsonArray = JsonArray()
+        openedGroups.value.forEach {
+            openedGroupUuidsJsonArray.add(JsonPrimitive(it.uuid.toString()))
+        }
+        json.add("openedGroups", openedGroupUuidsJsonArray)
+        //add selected group
+        if(selectedGroup.value != null) {
+            json.add("selectedGroup", JsonPrimitive(selectedGroup.value!!.uuid.toString()))
+        }
+        return json
+    }
 
     var currentCoroutineScope: CoroutineScope? = null
 
-    //State
+    // State
     var openedGroups: MutableState<List<BrowserGroup>> = mutableStateOf(emptyList())
     var selectedGroup: MutableState<BrowserGroup?> = mutableStateOf(null)
     var allGroups: MutableState<List<BrowserGroup>> = mutableStateOf(emptyList())
@@ -38,7 +140,7 @@ class BrowserState(val project: Project) {
 
     fun getSelectedTriggerTemplateGroup(): TriggerTemplateGroup? {
         if(selectedGroup.value == null) return null
-        return project.triggersManager.getTemplateGroup(selectedGroup.value!!.uuid)
+        return triggersManager.getTemplateGroup(selectedGroup.value!!.uuid)
     }
 
     /**
@@ -65,11 +167,11 @@ class BrowserState(val project: Project) {
             //set selected group (so the newly opened group is also selected)
             selectedGroup.value = browserGroup
             //update trigger templates
-            updateAllGroupTriggers(project.triggersManager.getTemplateGroup(browserGroup.uuid)!!)
+            updateAllGroupTriggers(triggersManager.getTemplateGroup(browserGroup.uuid)!!)
             //also make sure initially no triggers are selected
             unselectAllTemplates()
             //save project
-            ProjectManager.currentProject?.save()
+            // TODO
         }
     }
 
@@ -80,7 +182,7 @@ class BrowserState(val project: Project) {
         openedGroups.value = openedGroups.value.toMutableList().apply {
             add(toIndex, removeAt(fromIndex))
             //save project
-            ProjectManager.currentProject?.save()
+            // TODO
         }
     }
 
@@ -97,7 +199,7 @@ class BrowserState(val project: Project) {
             unselectAllTemplates()
         }
         //save project
-        ProjectManager.currentProject?.save()
+        // TODO
     }
 
     /**
@@ -108,11 +210,11 @@ class BrowserState(val project: Project) {
             //set selected group
             selectedGroup.value = browserGroup
             //update trigger templates
-            updateAllGroupTriggers(project.triggersManager.getTemplateGroup(browserGroup.uuid)!!)
+            updateAllGroupTriggers(triggersManager.getTemplateGroup(browserGroup.uuid)!!)
             //and make sure no templates are selected anymore
             unselectAllTemplates()
             //save project
-            ProjectManager.currentProject?.save()
+            // TODO
         }
     }
 
@@ -128,7 +230,7 @@ class BrowserState(val project: Project) {
         //and select the new group
         selectedGroup.value = browserGroup
         //update trigger templates
-        updateAllGroupTriggers(project.triggersManager.getTemplateGroup(browserGroup.uuid)!!)
+        updateAllGroupTriggers(triggersManager.getTemplateGroup(browserGroup.uuid)!!)
         //also make sure no templates are selected
         unselectAllTemplates()
         //no need to save the project because that will be done anyway (because not only the ui changed)
@@ -293,7 +395,7 @@ class BrowserState(val project: Project) {
 
     fun paste() {
         val targetGroup = getSelectedTriggerTemplateGroup() ?: return
-        project.triggersManager.addTriggerTemplates(clipboard.map {
+        triggersManager.addTriggerTemplates(clipboard.map {
             //update group for trigger template in clipboard
             it.group = targetGroup
             //return trigger template
@@ -356,63 +458,6 @@ class BrowserState(val project: Project) {
         draggingOnTimeline.value = false
         //drag indicator no longer needs to be shown
         redrawTimeline()
-    }
-
-    // Saving and Loading
-
-    fun toJson(): JsonObject {
-        val json = JsonObject()
-        //add opened groups
-        val openedGroupUuidsJsonArray = JsonArray()
-        openedGroups.value.forEach {
-            openedGroupUuidsJsonArray.add(JsonPrimitive(it.uuid.toString()))
-        }
-        json.add("openedGroups", openedGroupUuidsJsonArray)
-        //add selected group
-        if(selectedGroup.value != null) {
-            json.add("selectedGroup", JsonPrimitive(selectedGroup.value!!.uuid.toString()))
-        }
-        return json
-    }
-
-    companion object {
-        fun fromJson(project: Project, json: JsonObject): BrowserState {
-            //create instance of new browser state
-            val browserState = BrowserState(project)
-            //init temporary map of browser groups
-            val tempGroupMap: MutableMap<UUID, BrowserGroup> = mutableMapOf()
-            //add all groups from triggers manager to browser state
-            browserState.allGroups.value = project.triggersManager.getAllTemplateGroups().map {
-                val browserGroup = BrowserGroup(it.uuid, it.name) //create instance of BrowserGroup
-                tempGroupMap[it.uuid] = browserGroup //save in map
-                browserGroup
-            }
-            //fill opened groups
-            browserState.openedGroups.value = json.get("openedGroups").asJsonArray.mapNotNull {
-                tempGroupMap[UUID.fromString(it.asString)] //take from map, so it is the same instance as in allGroups
-            }
-            //set selected group
-            if(json.has("selectedGroup")) {
-                //set selected group on browser state
-                val selectedGroupUuid = UUID.fromString(json.get("selectedGroup").asString)
-                browserState.selectedGroup.value = tempGroupMap[selectedGroupUuid]
-                //update trigger templates on browser state
-                browserState.updateAllGroupTriggers(project.triggersManager.getTemplateGroup(selectedGroupUuid))
-            }
-            //return
-            return browserState
-        }
-
-        fun create(project: Project): BrowserState {
-            //create instance of new browser state
-            val browserState = BrowserState(project)
-            //add all groups from triggers manager to browser state
-            browserState.allGroups.value = project.triggersManager.getAllTemplateGroups().map {
-                BrowserGroup(it.uuid, it.name) //create instance of BrowserGroup
-            }
-            //return
-            return browserState
-        }
     }
 
 }
