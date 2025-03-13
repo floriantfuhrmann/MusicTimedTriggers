@@ -224,13 +224,13 @@ class BrowserState(
     fun newGroup(triggerTemplateGroup: TriggerTemplateGroup) {
         //create browser group (because it's a new group there is no instance for it yet)
         val browserGroup = BrowserGroup.fromTriggerTemplateGroup(triggerTemplateGroup)
-        //add to all and opened groups
+        //add to all groups list and opened groups list
         allGroups.value = allGroups.value.toMutableList().apply { add(browserGroup) }
         openedGroups.value = openedGroups.value.toMutableList().apply { add(browserGroup) }
         //and select the new group
         selectedGroup.value = browserGroup
         //update trigger templates
-        updateAllGroupTriggers(triggersManager.getTemplateGroup(browserGroup.uuid)!!)
+        updateAllGroupTriggers(triggerTemplateGroup)
         //also make sure no templates are selected
         unselectAllTemplates()
         //no need to save the project because that will be done anyway (because not only the ui changed)

@@ -57,7 +57,7 @@ object ProjectManager {
         // load browser ui state from file
         val browserState = BrowserState.loadFromFile(projectDirectory, triggersManager)
         // create project instance
-        val project = Project(projectDirectory, projectSettings, TriggersManager.create())
+        val project = Project(projectDirectory, projectSettings, triggersManager)
         // set projects browser ui state
         project.browserState = browserState
         //make sure cache directory exists

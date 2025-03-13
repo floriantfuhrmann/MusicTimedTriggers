@@ -31,7 +31,7 @@ class TriggerTemplateGroup(
      */
     fun saveToFile(projectDirectory: File) {
         //get file
-        val file = File(projectDirectory, TEMPLATE_GROUPS_DIRECTORY_NAME + File.separator + "$uuid.json")
+        val file = getTemplateGroupFileInProjectDirectory(projectDirectory, uuid)
         //save json to file
         file.writeText(GSON_PRETTY.toJson(toJson()))
     }
@@ -62,14 +62,17 @@ class TriggerTemplateGroup(
         }
 
         /**
-         * Load trigger template group from json file inside the trigger templates
-         * directory inside the project directory.
+         * Get the file for the trigger template group with the given uuid in the project directory.
          */
-        fun loadFromFile(projectDirectory: File, uuid: UUID): TriggerTemplateGroup {
-            //get file
-            val file = File(projectDirectory, TEMPLATE_GROUPS_DIRECTORY_NAME + File.separator + "$uuid.json")
+        fun getTemplateGroupFileInProjectDirectory(projectDirectory: File, uuid: UUID) =
+            File(projectDirectory, TEMPLATE_GROUPS_DIRECTORY_NAME + File.separator + "$uuid.json")
+
+        /**
+         * Reads json from file and deserializes trigger template group.
+         */
+        fun loadFromFile(templateGroupJsonFile: File, uuid: UUID): TriggerTemplateGroup {
             //load json from file
-            val json = JsonParser.parseString(file.readText()).asJsonObject
+            val json = JsonParser.parseString(templateGroupJsonFile.readText()).asJsonObject
             //deserialize template group from json
             return fromJson(uuid, json)
         }
