@@ -71,7 +71,7 @@ class Project(
             add(song)
         }
         //save project
-        // TODO: save songlist to file
+        saveSonglistToFile()
     }
 
     /**
@@ -84,7 +84,7 @@ class Project(
             add(toIndex, removeAt(fromIndex))
         }
         //save project
-        // TODO: save songlist to file
+        saveSonglistToFile()
     }
 
     /**
@@ -97,7 +97,7 @@ class Project(
             remove(song)
         }
         //save project
-        // TODO: save songlist to file
+        saveSonglistToFile()
         //alert
         DialogManager.alert(Alert(
             title = "Song deleted",
@@ -118,7 +118,7 @@ class Project(
         //refresh ui
         redrawTimeline()
         //save project
-        // TODO: save songlist to file
+        saveSonglistToFile()
     }
 
     fun openSong(song: Song) {
@@ -143,7 +143,7 @@ class Project(
      * Saves the Songlist to a file in the project directory.
      * @warning Does not save the trigger sequence of the songs.
      */
-    fun saveSonglistToFile() {
+    private fun saveSonglistToFile() {
         // create json
         val json = buildSonglistJson()
         // write json to file

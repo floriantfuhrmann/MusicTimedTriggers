@@ -64,6 +64,8 @@ object ProjectManager {
         if(!project.getCacheDirectory().exists()) {
             project.getCacheDirectory().mkdir()
         }
+        //load songlist with sequences from project files
+        project.loadSonglistWithSequencesFromFile()
         //update currentProject
         currentProject = project
     }
