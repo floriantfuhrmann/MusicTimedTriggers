@@ -117,7 +117,12 @@ class Song (
         return currentAudioPlayer.value?.playing?.value ?: false
     }
 
-    fun toJson(): JsonObject {
+    /**
+     * Creates json for entry in songlist containing properties like name, path
+     * to audioFile and parameters for spectrogram generation. Does not contain
+     * trigger sequence, but rather the sequences uuid as reference.
+     */
+    fun toSonglistEntryJson(): JsonObject {
         //create json
         val json = JsonObject()
         //add name
@@ -149,7 +154,12 @@ class Song (
             project.addSong(song)
         }
 
-        fun fromJson(project: Project, json: JsonObject): Song {
+        /**
+         * Creates a Song instance from properties in songlist entry json and loads
+         * sequence from files using sequences uuid reference in songlist entry
+         * json.
+         */
+        fun loadFromSonglistEntryJson(project: Project, json: JsonObject): Song {
             //get name
             val name = json.get("name").asString
             //get file
@@ -165,11 +175,13 @@ class Song (
                 SpectrogramParameters()
             }
             //get trigger sequence
-            val triggerSequence = if(json.has("sequence")) {
-                TriggerSequence.fromJson(project, json.get("sequence").asJsonObject)
-            } else {
-                TriggerSequence.createSequence(project, getDurationOrNull(audioFile) ?: 0.0)
-            }
+            //todo: deserialize trigger sequence from files
+            val triggerSequence = TriggerSequence.createSequence(project, getDurationOrNull(audioFile) ?: 0.0) // todo: replace with actual deserialization
+//            val triggerSequence = if(json.has("sequence")) {
+//                TriggerSequence.fromJson(project, json.get("sequence").asJsonObject)
+//            } else {
+//                TriggerSequence.createSequence(project, getDurationOrNull(audioFile) ?: 0.0)
+//            }
             //return Song
             return Song(project, name, audioFile, spectrogramParams, triggerSequence)
         }

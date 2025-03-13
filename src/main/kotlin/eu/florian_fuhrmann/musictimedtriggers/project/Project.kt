@@ -3,6 +3,9 @@ package eu.florian_fuhrmann.musictimedtriggers.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.unusedfiles.UnusedFilesDialog
@@ -10,7 +13,9 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
+import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
 import java.io.File
+import java.nio.charset.StandardCharsets
 
 class Project(
     val projectDirectory: File,
@@ -47,6 +52,10 @@ class Project(
         }
     }
 
+    // UI States
+
+    lateinit var browserState: BrowserState
+
     // Functions managing the Projects Songs
 
     var songs: List<Song> by mutableStateOf(emptyList())
@@ -66,7 +75,7 @@ class Project(
             add(toIndex, removeAt(fromIndex))
         }
         //save project
-        // SAVE
+        // TODO
     }
     fun deleteSong(song: Song) {
         //remove song
@@ -107,65 +116,57 @@ class Project(
         song.opened() // 5. new#opened
     }
 
-    // UI States
+    // Functions to Save and Load Songlist
 
-    lateinit var browserState: BrowserState
+    /**
+     * Saves the Songlist to a file in the project directory.
+     * @warning Does not save the trigger sequence of the songs.
+     */
+    fun saveSonglistToFile() {
+        // create json
+        val json = buildSonglistJson()
+        // write json to file
+        val file = File(projectDirectory, SONGLIST_SAVE_FILE_NAME)
+        file.writeText(text = GSON_PRETTY.toJson(json), charset = Charsets.UTF_8)
+    }
 
-    // Functions to Save and Load Project
+    private fun buildSonglistJson(): JsonObject {
+        // create json
+        val json = JsonObject()
+        // add songs
+        val songlistJsonArray = JsonArray()
+        songs.forEach { songlistJsonArray.add(it.toSonglistEntryJson()) }
+        json.add("songlist", songlistJsonArray)
+        // return
+        return json
+    }
 
-//    fun save() {
-//        //create json
-//        val json = toJson()
-//        //write json to file
-//        val file = File(projectDirectory, ProjectManager.PROJECT_JSON_FILE_NAME)
-//        file.writeText(text = GSON_PRETTY.toJson(json), charset = StandardCharsets.UTF_8)
-//        //verbose
-//        println("Project saved to file")
-//    }
+    /**
+     * Loads the Songlist from songlist json file in the project directory.
+     * Also loads the songs sequences.
+     *
+     * @warning While [saveSonglistToFile] does not save the trigger sequence,
+     *    this function also loads the trigger sequences.
+     */
+    fun loadSonglistWithSequencesFromFile() {
+        // get songlist file
+        val file = File(projectDirectory, SONGLIST_SAVE_FILE_NAME)
+        require(file.exists()) { "Songlist file not found" }
+        // read json from file
+        val jsonString: String = file.readText(charset = StandardCharsets.UTF_8)
+        val json = JsonParser.parseString(jsonString).asJsonObject
+        // load songs with sequences from json
+        loadSonglistWithSequencesFromJson(json)
+    }
 
-//    private fun toJson(): JsonObject {
-//        //create json
-//        val json = JsonObject()
-//        //add color
-//        json.add("color", projectColor.toJson())
-//        //add triggers manager
-//        json.add("triggersManager", triggersManager.toJson())
-//        //add songs
-//        val songsJsonArray = JsonArray()
-//        songs.forEach { songsJsonArray.add(it.toJson()) }
-//        json.add("songs", songsJsonArray)
-//        //add ui state
-//        json.add("uiBrowserState", browserState!!.toJson())
-//        //return
-//        return json
-//    }
+    private fun loadSonglistWithSequencesFromJson(json: JsonObject) {
+        // get songlist json array
+        val songlistJsonArray = json.getAsJsonArray("songlist")
+        // load songs with sequences from json
+        songs = songlistJsonArray.map { Song.loadFromSonglistEntryJson(this, it.asJsonObject) }
+    }
 
     companion object {
-//        fun fromJson(projectDirectory: File, json: JsonObject): Project {
-//            //get color
-//            val color: HsvColor = HsvColor.fromJson(json.get("color").asJsonObject)
-//            //get triggers manager
-//            val triggersManager = if(json.has("triggersManager")) {
-//                TriggersManager.fromJson(json.get("triggersManager").asJsonObject)
-//            } else {
-//                TriggersManager.create()
-//            }
-//            //create project instance
-//            val project = Project(projectDirectory, color, triggersManager)
-//            //set songs
-//            if(json.has("songs")) {
-//                project.songs = json.get("songs").asJsonArray.map {
-//                    Song.fromJson(project, it.asJsonObject)
-//                }
-//            }
-//            //set ui state
-//            project.browserState = if (json.has("uiBrowserState")) {
-//                BrowserState.fromJson(project, json.get("uiBrowserState").asJsonObject)
-//            } else {
-//                BrowserState.create(project)
-//            }
-//            //return project
-//            return project
-//        }
+        private const val SONGLIST_SAVE_FILE_NAME = "songlist.json"
     }
 }
