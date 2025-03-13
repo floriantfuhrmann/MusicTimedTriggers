@@ -58,32 +58,46 @@ class Project(
 
     // Functions managing the Projects Songs
 
-    var songs: List<Song> by mutableStateOf(emptyList())
+    var songs: List<Song> by mutableStateOf(emptyList()) // maybe use a mutable list instead
     var currentSong: Song? by mutableStateOf(null)
 
-    fun addSong(song: Song) {
+    /**
+     * Adds the new song to the projects songlist making it appear in the
+     * sidebar and saves the songlist to file.
+     */
+    fun addNewSongToSonglist(song: Song) {
         //add song
         songs = songs.toMutableList().apply {
             add(song)
         }
         //save project
-        // TODO
+        // TODO: save songlist to file
     }
-    fun moveSong(fromIndex: Int, toIndex: Int) {
+
+    /**
+     * Moves a song in the songlist from one index to another and saves the
+     * changed songlist to file.
+     */
+    fun moveSongInSongList(fromIndex: Int, toIndex: Int) {
         //update songs list
         songs = songs.toMutableList().apply {
             add(toIndex, removeAt(fromIndex))
         }
         //save project
-        // TODO
+        // TODO: save songlist to file
     }
+
+    /**
+     * Deletes a song from the projects songlist and saves the songlist to
+     * file.
+     */
     fun deleteSong(song: Song) {
         //remove song
         songs = songs.toMutableList().apply {
             remove(song)
         }
         //save project
-        // TODO
+        // TODO: save songlist to file
         //alert
         DialogManager.alert(Alert(
             title = "Song deleted",
@@ -94,12 +108,19 @@ class Project(
             onConfirm = { scanForUnusedAudioFiles() }
         ))
     }
+
+    /**
+     * Handles changes to a songs' properties, which need to be saved in the
+     * songlist (like name, audio file, spectrogram parameters) and saves the
+     * songlist to file.
+     */
     fun updateSong(song: Song) {
         //refresh ui
         redrawTimeline()
         //save project
-        // TODO
+        // TODO: save songlist to file
     }
+
     fun openSong(song: Song) {
         println("Opening Song ${song.name}...")
         //only open song if it will actually change anything

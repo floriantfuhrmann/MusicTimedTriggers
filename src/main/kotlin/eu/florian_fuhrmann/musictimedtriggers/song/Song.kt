@@ -150,8 +150,9 @@ class Song (
                 SpectrogramParameters(),
                 TriggerSequence.createSequence(project, getDurationOrNull(audioFile) ?: 0.0)
             )
+            //TODO: Also save the created sequence?
             //add to project
-            project.addSong(song)
+            project.addNewSongToSonglist(song)
         }
 
         /**
