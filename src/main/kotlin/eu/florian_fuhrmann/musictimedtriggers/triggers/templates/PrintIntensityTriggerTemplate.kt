@@ -43,10 +43,6 @@ class PrintIntensityTriggerTemplate(
         @RequireIntRange(1, 100)
         val name: String = "Example"
     ) : TriggerTemplateConfiguration() {
-        override fun toJson(): JsonObject {
-            //TODO: This is inefficient, use #toJsonTree instead
-            return JsonParser.parseString(GSON.toJson(this)).asJsonObject
-        }
 
         fun deepCopy(): TemplateConfiguration {
             val copy = copy() // copies this data classes attributes
