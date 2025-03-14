@@ -3,7 +3,9 @@ package eu.florian_fuhrmann.musictimedtriggers.triggers.sequence
 import androidx.compose.ui.util.fastAny
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
+import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
 import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
 import java.io.File
@@ -354,7 +356,7 @@ class TriggerSequenceLine(
         triggers.forEach { triggersJsonArray.add(it.toJson()) }
         json.add("triggers", triggersJsonArray)
         //write json to file
-        val file = File(sequence.getSequenceDirectory(), "Line-$uuid.json")
+        val file = getSequenceLineFile(sequence, uuid)
         file.writeText(GSON_PRETTY.toJson(json))
     }
 
@@ -363,15 +365,23 @@ class TriggerSequenceLine(
             return TriggerSequenceLine(UUID.randomUUID(), sequence, name, ArrayList())
         }
 
-//        fun fromJson(sequence: TriggerSequence, json: JsonObject): TriggerSequenceLine {
-//            return TriggerSequenceLine(
-//                sequence,
-//                json.get("name").asString,
-//                ArrayList(json.get("triggers").asJsonArray.map {
-//                    sequence.project.triggersManager.getPlacedTriggerFromJson(it.asJsonObject)
-//                })
-//            )
-//        }
+        fun getSequenceLineFile(sequence: TriggerSequence, lineUuid: UUID): File {
+            return File(sequence.getSequenceDirectory(), "Line-$lineUuid.json")
+        }
+
+        fun loadFromFile(sequence: TriggerSequence, lineUuid: UUID): TriggerSequenceLine {
+            //load json from file
+            val file = getSequenceLineFile(sequence, lineUuid)
+            val json = JsonParser.parseString(file.readText()).asJsonObject
+            //get name
+            val name = json.get("name").asString
+            //get triggers
+            val triggers = ArrayList(json.get("triggers").asJsonArray.map {
+                sequence.project.triggersManager.getPlacedTriggerFromJson(it.asJsonObject)
+            })
+            //create and return instance
+            return TriggerSequenceLine(lineUuid, sequence, name, triggers)
+        }
     }
 
 }

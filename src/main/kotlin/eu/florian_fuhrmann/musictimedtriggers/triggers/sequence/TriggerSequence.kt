@@ -2,6 +2,7 @@ package eu.florian_fuhrmann.musictimedtriggers.triggers.sequence
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
@@ -86,25 +87,17 @@ class TriggerSequence(
     // Saving and Loading
 
     /**
-     * Get the directory for a specific trigger sequence in the trigger
+     * Get the directory for this specific trigger sequence in the trigger
      * sequences directory.
      */
-    fun getSequenceDirectory() =
-        File(project.projectDirectory, TRIGGER_SEQUENCES_DIRECTORY_NAME + File.separator + uuid)
-
-    /**
-     * Get the file for the sequence info of a trigger sequence in the trigger
-     * sequences directory.
-     */
-    private fun getSequenceInfoFile() =
-        File(getSequenceDirectory(), TRIGGER_SEQUENCE_INFO_FILE_NAME)
+    fun getSequenceDirectory() = getSequenceDirectory(project.projectDirectory, uuid)
 
     /**
      * Create the directory for this trigger sequence inside the general
      * trigger sequences directory. Function intended to be used during
      * sequence creation.
      */
-    private fun createSequenceDirectory() = getSequenceDirectory().mkdir()
+    private fun createSequenceDirectory() = getSequenceDirectory(project.projectDirectory, uuid).mkdir()
 
     /**
      * Save the sequence info and all its lines to files.
@@ -136,7 +129,7 @@ class TriggerSequence(
         lines.forEach { linesJsonArray.add(it.uuid.toString()) }
         json.add("lines", linesJsonArray)
         //save to file
-        val file = getSequenceInfoFile()
+        val file = getSequenceInfoFile(project.projectDirectory, uuid)
         file.writeText(text = GSON_PRETTY.toJson(json), charset = Charsets.UTF_8)
     }
 
@@ -168,6 +161,20 @@ class TriggerSequence(
         private const val TRIGGER_SEQUENCE_INFO_FILE_NAME = "sequence_info.json"
 
         /**
+         * Get the directory for a specific trigger sequence in the trigger
+         * sequences directory.
+         */
+        fun getSequenceDirectory(projectDirectory: File, sequenceUuid: UUID) =
+            File(projectDirectory, TRIGGER_SEQUENCES_DIRECTORY_NAME + File.separator + sequenceUuid)
+
+        /**
+         * Get the file for the sequence info of a trigger sequence in the trigger
+         * sequences directory.
+         */
+        private fun getSequenceInfoFile(projectDirectory: File, sequenceUuid: UUID) =
+            File(getSequenceDirectory(projectDirectory, sequenceUuid), TRIGGER_SEQUENCE_INFO_FILE_NAME)
+
+        /**
          * Create the trigger sequences directory inside the project directory.
          * Function intended to be used during project creation.
          */
@@ -175,18 +182,25 @@ class TriggerSequence(
             File(projectDirectory, TRIGGER_SEQUENCES_DIRECTORY_NAME).mkdir()
         }
 
-//        fun fromJson(project: Project, json: JsonObject): TriggerSequence {
-//            //get duration
-//            val duration: Double = json.get("duration").asDouble
-//            //create instance
-//            val sequence = TriggerSequence(project, duration, mutableListOf())
-//            //add lines
-//            json.get("lines").asJsonArray.forEach {
-//                sequence.lines.add(TriggerSequenceLine.fromJson(sequence, it.asJsonObject))
-//            }
-//            //return
-//            return sequence
-//        }
+        fun loadFromFiles(project: Project, sequenceUuid: UUID): TriggerSequence {
+            val sequenceDirectory = getSequenceDirectory(project.projectDirectory, sequenceUuid)
+            require(sequenceDirectory.exists()) { "Sequence directory does not exist." }
+            val sequenceInfoFile = getSequenceInfoFile(project.projectDirectory, sequenceUuid)
+            require(sequenceInfoFile.exists()) { "Sequence info file does not exist." }
+            //load json from file
+            val sequenceInfoJson = JsonParser.parseString(sequenceInfoFile.readText(Charsets.UTF_8)).asJsonObject
+            //get line uuids from json
+            val lineUuids = sequenceInfoJson.get("lines").asJsonArray.map { UUID.fromString(it.asString) }
+            //create instance
+            val duration: Double = sequenceInfoJson.get("duration").asDouble
+            val sequence = TriggerSequence(sequenceUuid, project, duration, mutableListOf())
+            //load lines
+            val lines = lineUuids.map { TriggerSequenceLine.loadFromFile(sequence, it) }.toMutableList()
+            //add lines to sequence
+            sequence.lines.addAll(lines)
+            //return
+            return sequence
+        }
     }
 
 }

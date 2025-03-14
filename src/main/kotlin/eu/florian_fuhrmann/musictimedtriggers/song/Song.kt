@@ -16,6 +16,7 @@ import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.openAudioPlayer
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.Spectrogram
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.SpectrogramParameters
 import java.io.File
+import java.util.UUID
 
 class Song (
     private val project: Project,
@@ -136,6 +137,8 @@ class Song (
         }
         //add spectrogram params
         json.add("spectrogramParams", spectrogramParams.toJson())
+        //add associated trigger sequence uuid
+        json.addProperty("sequence", sequence.uuid.toString())
         //return json
         return json
     }
@@ -178,14 +181,9 @@ class Song (
             } else {
                 SpectrogramParameters()
             }
-            //get trigger sequence
-            //todo: deserialize trigger sequence from files
-            val triggerSequence = TriggerSequence.createSequence(project, getDurationOrNull(audioFile) ?: 0.0) // todo: replace with actual deserialization
-//            val triggerSequence = if(json.has("sequence")) {
-//                TriggerSequence.fromJson(project, json.get("sequence").asJsonObject)
-//            } else {
-//                TriggerSequence.createSequence(project, getDurationOrNull(audioFile) ?: 0.0)
-//            }
+            //load trigger sequence
+            val sequenceUuid = UUID.fromString(json.get("sequence").asString)
+            val triggerSequence = TriggerSequence.loadFromFiles(project, sequenceUuid)
             //return Song
             return Song(project, name, audioFile, spectrogramParams, triggerSequence)
         }

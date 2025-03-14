@@ -24,7 +24,7 @@ abstract class AbstractPlacedIntensityTrigger(
         // calculate proportional position
         val proportionalPosition = (inBoundsTime(timePosition) - startTime) / duration
         // return intensity at proportional position
-        return keyframes().intensityAt(proportionalPosition)
+        return keyframes().intensityAt(proportionalPosition.coerceAtLeast(0.0).coerceAtMost(1.0))
     }
 
 }
