@@ -360,6 +360,14 @@ class TriggerSequenceLine(
         file.writeText(GSON_PRETTY.toJson(json))
     }
 
+    /**
+     * Removes the file of this line in the sequence directory
+     */
+    fun removeSaveFile() {
+        val file = getSequenceLineFile(sequence, uuid)
+        file.delete()
+    }
+
     companion object {
         fun createTriggerSequenceLine(sequence: TriggerSequence, name: String): TriggerSequenceLine {
             return TriggerSequenceLine(UUID.randomUUID(), sequence, name, ArrayList())

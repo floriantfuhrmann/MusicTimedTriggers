@@ -49,7 +49,7 @@ class TriggerSequence(
     private var lastLineRemovedCounter = 0
     fun removeLine(lineIndex: Int) {
         //remove from lines list
-        lines.removeAt(lineIndex)
+        val removedLine = lines.removeAt(lineIndex)
         //ensure there is always at least 1 line
         var replacementLine: TriggerSequenceLine? = null
         if(lines.isEmpty()) {
@@ -68,7 +68,8 @@ class TriggerSequence(
         //save updated sequence info
         saveSequenceInfoToFile()
         replacementLine?.saveToFile()
-        //ToDo: delete line file
+        //delete line file
+        removedLine.removeSaveFile()
     }
 
     fun findLineOf(trigger: AbstractPlacedTrigger): TriggerSequenceLine? {
@@ -132,6 +133,13 @@ class TriggerSequence(
         //save to file
         val file = getSequenceInfoFile(project.projectDirectory, uuid)
         file.writeText(text = GSON_PRETTY.toJson(json), charset = Charsets.UTF_8)
+    }
+
+    /**
+     * Remove the sequence directory and all its files.
+     */
+    fun removeSaveFiles() {
+        getSequenceDirectory().deleteRecursively()
     }
 
     companion object {

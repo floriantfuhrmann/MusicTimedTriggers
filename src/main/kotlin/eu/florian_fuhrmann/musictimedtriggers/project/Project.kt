@@ -96,9 +96,10 @@ class Project(
         songs = songs.toMutableList().apply {
             remove(song)
         }
-        //save project
+        //save updated songlist
         saveSonglistToFile()
-        //TODO: also delete the songs trigger sequence files
+        //delete the corresponding sequence
+        song.sequence.removeSaveFiles()
         //alert
         DialogManager.alert(Alert(
             title = "Song deleted",
