@@ -7,7 +7,7 @@ import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
 import java.io.File
 import java.nio.charset.StandardCharsets
 
-class ProjectSettings(val projectColor: GenericColor) {
+class ProjectSettings(var projectColor: GenericColor) {
 
     companion object {
         const val SAVE_FILE_NAME = "project_settings.json"

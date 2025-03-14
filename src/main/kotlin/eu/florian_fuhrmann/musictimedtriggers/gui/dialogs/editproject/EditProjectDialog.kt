@@ -52,8 +52,9 @@ class EditProjectDialog(val create: Boolean, val project: Project? = null) : Dia
                             //create project
                             ProjectManager.createProject(projectDirectory, GenericColor.fromHsvColor(selectedColor))
                         } else if(project != null) {
-                            //update project
-                            TODO("Update and save project")
+                            //update project settings
+                            project.projectSettings.projectColor = GenericColor.fromHsvColor(selectedColor)
+                            project.projectSettings.save(project)
                         } else {
                             error("EditProjectDialog is not creating, but project is null")
                         }
