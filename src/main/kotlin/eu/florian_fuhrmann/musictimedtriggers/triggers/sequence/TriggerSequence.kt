@@ -68,6 +68,7 @@ class TriggerSequence(
         //save updated sequence info
         saveSequenceInfoToFile()
         replacementLine?.saveToFile()
+        //ToDo: delete line file
     }
 
     fun findLineOf(trigger: AbstractPlacedTrigger): TriggerSequenceLine? {

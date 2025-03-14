@@ -38,7 +38,7 @@ class BrowserState(
     // Saving and Loading
 
     companion object {
-        private const val SAVE_FILE_NAME = "trigger_browser_ui_state.json"
+        private const val BROWSER_STATE_SAVE_FILE_NAME = "trigger_browser_ui_state.json"
 
         fun create(triggersManager: TriggersManager): BrowserState {
             //create instance of new browser state
@@ -86,7 +86,7 @@ class BrowserState(
          */
         fun loadFromFile(projectDirectory: File, triggersManager: TriggersManager): BrowserState {
             // get json file in project directory
-            val file = File(projectDirectory, SAVE_FILE_NAME)
+            val file = File(projectDirectory, BROWSER_STATE_SAVE_FILE_NAME)
             // fallback to create new browser state if file does not exist
             if (!file.exists()) {
                 return create(triggersManager)
@@ -103,9 +103,12 @@ class BrowserState(
      * @param projectDirectory the parent projects' project directory
      */
     fun saveToFile(projectDirectory: File) {
-        val json = toJson()
-        val file = File(projectDirectory, SAVE_FILE_NAME)
+        val file = File(projectDirectory, BROWSER_STATE_SAVE_FILE_NAME)
         file.writeText(GSON_PRETTY.toJson(toJson()))
+    }
+
+    private fun saveToFileInCurrentProjectDirectory() {
+        saveToFile(ProjectManager.currentProject!!.projectDirectory)
     }
 
     private fun toJson(): JsonObject {
@@ -170,8 +173,8 @@ class BrowserState(
             updateAllGroupTriggers(triggersManager.getTemplateGroup(browserGroup.uuid)!!)
             //also make sure initially no triggers are selected
             unselectAllTemplates()
-            //save project
-            // TODO
+            //save state to file
+            saveToFileInCurrentProjectDirectory()
         }
     }
 
@@ -181,8 +184,8 @@ class BrowserState(
     fun moveGroup(fromIndex: Int, toIndex: Int) {
         openedGroups.value = openedGroups.value.toMutableList().apply {
             add(toIndex, removeAt(fromIndex))
-            //save project
-            // TODO
+            //save state to file
+            saveToFileInCurrentProjectDirectory()
         }
     }
 
@@ -198,8 +201,8 @@ class BrowserState(
             //and if it was selected then also unselect all triggers
             unselectAllTemplates()
         }
-        //save project
-        // TODO
+        //save state to file
+        saveToFileInCurrentProjectDirectory()
     }
 
     /**
@@ -213,8 +216,8 @@ class BrowserState(
             updateAllGroupTriggers(triggersManager.getTemplateGroup(browserGroup.uuid)!!)
             //and make sure no templates are selected anymore
             unselectAllTemplates()
-            //save project
-            // TODO
+            //save state to file
+            saveToFileInCurrentProjectDirectory()
         }
     }
 
