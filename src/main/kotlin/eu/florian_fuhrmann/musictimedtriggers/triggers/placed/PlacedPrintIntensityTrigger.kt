@@ -66,10 +66,6 @@ class PlacedPrintIntensityTrigger(
         @Configurable("Keyframes")
         val keyframes: Keyframes
     ) : Configuration() {
-//        override fun toJson(): JsonObject {
-//            //TODO: This is inefficient, use #toJsonTree instead
-//            return JsonParser.parseString(GSON.toJson(this)).asJsonObject
-//        }
 
         companion object {
             fun create() = PlacedConfiguration(Keyframes.create())

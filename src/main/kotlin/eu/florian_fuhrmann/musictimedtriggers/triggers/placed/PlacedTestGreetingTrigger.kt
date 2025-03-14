@@ -37,11 +37,6 @@ data class TestGreetingPlacedTriggerConfiguration(
     @Configurable("Name", "Which name to greet")
     val name: String = "World"
 ) : Configuration() {
-//    override fun toJson(): JsonObject {
-//        //TODO: This is inefficient, use #toJsonTree instead
-//        return JsonParser.parseString(GSON.toJson(this)).asJsonObject
-//    }
-
     companion object {
         fun fromJson(json: JsonElement): TestGreetingPlacedTriggerConfiguration {
             return GSON.fromJson(json, TestGreetingPlacedTriggerConfiguration::class.java)
