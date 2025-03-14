@@ -98,6 +98,7 @@ class Project(
         }
         //save project
         saveSonglistToFile()
+        //TODO: also delete the songs trigger sequence files
         //alert
         DialogManager.alert(Alert(
             title = "Song deleted",

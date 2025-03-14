@@ -7,6 +7,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.GenericColor
 import java.io.File
 
@@ -23,9 +24,10 @@ object ProjectManager {
         val newProject = Project(projectDirectory, projectSettings, triggersManager)
         //create ui states
         newProject.browserState = BrowserState.create(triggersManager)
-        // create Audio and Cache directory
+        // create Audio, Cache and TriggerSequences directory
         newProject.getAudioDirectory().mkdir()
         newProject.getCacheDirectory().mkdir()
+        TriggerSequence.createTriggerSequencesDirectory(projectDirectory)
         // save project settings for the first time
         projectSettings.save(newProject)
         // save triggers manager for the first time

@@ -1,14 +1,16 @@
 package eu.florian_fuhrmann.musictimedtriggers.triggers.sequence
 
 import androidx.compose.ui.util.fastAny
-import com.google.gson.JsonObject
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
+import java.util.*
+import kotlin.collections.ArrayList
 
 class TriggerSequenceLine(
-    val sequence: TriggerSequence,
-    var name: String,
-    private val triggers: ArrayList<AbstractPlacedTrigger>
+    val uuid: UUID,
+    val sequence: TriggerSequence, // sequence this line belongs to
+    var name: String, // human-readable name of the line
+    private val triggers: ArrayList<AbstractPlacedTrigger> // list of triggers on this line (sorted by start time)
 ) {
 
     fun updateName(newName: String) {
@@ -16,7 +18,7 @@ class TriggerSequenceLine(
         name = newName
         //redraw timeline
         redrawTimeline()
-        //save project
+        //save update line info
         // TODO
     }
 
@@ -189,7 +191,7 @@ class TriggerSequenceLine(
      * Checks if there are no triggers in time period from [fromTime] to [toTime], which should not be ignored (so are
      * not in [ignoreSet])
      *
-     * @return weither no time of time period is occupied by any trigger
+     * @return whether no time of time period is occupied by any trigger
      */
     fun isPeriodFree(fromTime: Double, toTime: Double, ignoreSet: Set<AbstractPlacedTrigger>): Boolean {
         return !getTriggersInPeriod(fromTime, toTime, true).fastAny { !ignoreSet.contains(it) }
@@ -335,20 +337,24 @@ class TriggerSequenceLine(
         }
     }
 
+    // Saving and Loading
+
+    // TODO
+
     companion object {
         fun createTriggerSequenceLine(sequence: TriggerSequence, name: String): TriggerSequenceLine {
-            return TriggerSequenceLine(sequence, name, ArrayList())
+            return TriggerSequenceLine(UUID.randomUUID(), sequence, name, ArrayList())
         }
 
-        fun fromJson(sequence: TriggerSequence, json: JsonObject): TriggerSequenceLine {
-            return TriggerSequenceLine(
-                sequence,
-                json.get("name").asString,
-                ArrayList(json.get("triggers").asJsonArray.map {
-                    sequence.project.triggersManager.getPlacedTriggerFromJson(it.asJsonObject)
-                })
-            )
-        }
+//        fun fromJson(sequence: TriggerSequence, json: JsonObject): TriggerSequenceLine {
+//            return TriggerSequenceLine(
+//                sequence,
+//                json.get("name").asString,
+//                ArrayList(json.get("triggers").asJsonArray.map {
+//                    sequence.project.triggersManager.getPlacedTriggerFromJson(it.asJsonObject)
+//                })
+//            )
+//        }
     }
 
 }
