@@ -1,10 +1,12 @@
 package eu.florian_fuhrmann.musictimedtriggers.utils.configurations
 
 import com.godaddy.android.colorpicker.HsvColor
+import com.google.gson.JsonObject
 import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.GenericColor
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.*
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries.*
+import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON
 import java.lang.reflect.Field
 
 abstract class Configuration {
@@ -86,5 +88,10 @@ abstract class Configuration {
                 ErrorConfigurationEntry(this, field, configurable)
             }
         }
+    }
+
+    open fun toJson(): JsonObject {
+        //TODO: Are we sure this works here? Or would it need to be in the subclasses?
+        return GSON.toJsonTree(this).asJsonObject
     }
 }

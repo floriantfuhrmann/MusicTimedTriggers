@@ -1,8 +1,12 @@
 package eu.florian_fuhrmann.musictimedtriggers.triggers.sequence
 
 import androidx.compose.ui.util.fastAny
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
+import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
+import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -19,7 +23,7 @@ class TriggerSequenceLine(
         //redraw timeline
         redrawTimeline()
         //save update line info
-        // TODO
+        saveToFile()
     }
 
     fun getTriggersCount() = triggers.size
@@ -339,7 +343,20 @@ class TriggerSequenceLine(
 
     // Saving and Loading
 
-    // TODO
+    /**
+     * Saves this line to a file in the sequence directory
+     */
+    fun saveToFile() {
+        //build json
+        val json = JsonObject()
+        json.addProperty("name", name)
+        val triggersJsonArray = JsonArray()
+        triggers.forEach { triggersJsonArray.add(it.toJson()) }
+        json.add("triggers", triggersJsonArray)
+        //write json to file
+        val file = File(sequence.getSequenceDirectory(), "Line-$uuid.json")
+        file.writeText(GSON_PRETTY.toJson(json))
+    }
 
     companion object {
         fun createTriggerSequenceLine(sequence: TriggerSequence, name: String): TriggerSequenceLine {

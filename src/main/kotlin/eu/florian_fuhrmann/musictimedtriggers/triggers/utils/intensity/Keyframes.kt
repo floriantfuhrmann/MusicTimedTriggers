@@ -30,6 +30,7 @@ class Keyframes(
         keyframesList.add(index, newKeyframe)
     }
 
+    @Transient
     private val minKeyframePositionDifferenceSeconds = 0.05 // 50ms
 
     /**

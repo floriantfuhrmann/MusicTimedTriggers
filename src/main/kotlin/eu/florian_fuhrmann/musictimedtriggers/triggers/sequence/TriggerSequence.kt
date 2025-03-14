@@ -34,13 +34,15 @@ class TriggerSequence(
     }
 
     fun newLine(insertIndex: Int) {
+        //create new line
+        val newLine = TriggerSequenceLine.createTriggerSequenceLine(this, "New Line")
         //insert new line
-        lines.add(insertIndex, TriggerSequenceLine.createTriggerSequenceLine(this, "New Line"))
+        lines.add(insertIndex, newLine)
         //redraw timeline
         redrawTimeline()
-        //save sequence info
+        //save sequence info and newly created line
+        newLine.saveToFile()
         saveSequenceInfoToFile()
-        //TODO: also save new line to file
     }
 
     private var lastLineRemovedCounter = 0
@@ -48,9 +50,10 @@ class TriggerSequence(
         //remove from lines list
         lines.removeAt(lineIndex)
         //ensure there is always at least 1 line
+        var replacementLine: TriggerSequenceLine? = null
         if(lines.isEmpty()) {
             //create a replacement line
-            val replacementLine = if(lastLineRemovedCounter++ >= 10) {
+            replacementLine = if(lastLineRemovedCounter++ >= 10) {
                 lastLineRemovedCounter = 0
                 TriggerSequenceLine.createTriggerSequenceLine(this, "Please stop deleting the last Line")
             } else {
@@ -63,7 +66,7 @@ class TriggerSequence(
         redrawTimeline()
         //save updated sequence info
         saveSequenceInfoToFile()
-        //TODO: also save replacement line to file
+        replacementLine?.saveToFile()
     }
 
     fun findLineOf(trigger: AbstractPlacedTrigger): TriggerSequenceLine? {
@@ -83,18 +86,33 @@ class TriggerSequence(
     // Saving and Loading
 
     /**
-     * Create the directory for this trigger sequence inside the general trigger sequences directory.
-     * Function intended to be used during sequence creation.
+     * Get the directory for a specific trigger sequence in the trigger
+     * sequences directory.
      */
-    private fun createSequenceDirectory() {
-        getTriggerSequenceDirectory(project.projectDirectory, uuid).mkdir()
-    }
+    fun getSequenceDirectory() =
+        File(project.projectDirectory, TRIGGER_SEQUENCES_DIRECTORY_NAME + File.separator + uuid)
+
+    /**
+     * Get the file for the sequence info of a trigger sequence in the trigger
+     * sequences directory.
+     */
+    private fun getSequenceInfoFile() =
+        File(getSequenceDirectory(), TRIGGER_SEQUENCE_INFO_FILE_NAME)
+
+    /**
+     * Create the directory for this trigger sequence inside the general
+     * trigger sequences directory. Function intended to be used during
+     * sequence creation.
+     */
+    private fun createSequenceDirectory() = getSequenceDirectory().mkdir()
 
     /**
      * Save the sequence info and all its lines to files.
-     * @param createDirectory Whether also to create the sequence directory first. (default: true)
+     *
+     * @param createDirectory Whether also to create the sequence directory
+     *    first. (default: false)
      */
-    fun saveAll(createDirectory: Boolean = true) {
+    fun saveAll(createDirectory: Boolean = false) {
         //first create the sequence directory
         if(createDirectory) {
             createSequenceDirectory()
@@ -102,7 +120,7 @@ class TriggerSequence(
         //save sequence info
         saveSequenceInfoToFile()
         //save all lines
-        //TODO: save all lines
+        lines.forEach { it.saveToFile() }
     }
 
     /**
@@ -118,7 +136,7 @@ class TriggerSequence(
         lines.forEach { linesJsonArray.add(it.uuid.toString()) }
         json.add("lines", linesJsonArray)
         //save to file
-        val file = getSequenceInfoFile(project.projectDirectory, uuid)
+        val file = getSequenceInfoFile()
         file.writeText(text = GSON_PRETTY.toJson(json), charset = Charsets.UTF_8)
     }
 
@@ -156,18 +174,6 @@ class TriggerSequence(
         fun createTriggerSequencesDirectory(projectDirectory: File) {
             File(projectDirectory, TRIGGER_SEQUENCES_DIRECTORY_NAME).mkdir()
         }
-
-        /**
-         * Get the directory for a specific trigger sequence in the trigger sequences directory.
-         */
-        private fun getTriggerSequenceDirectory(projectDirectory: File, uuid: UUID) =
-            File(projectDirectory, TRIGGER_SEQUENCES_DIRECTORY_NAME + File.separator + uuid)
-
-        /**
-         * Get the file for the sequence info of a trigger sequence in the trigger sequences directory.
-         */
-        private fun getSequenceInfoFile(projectDirectory: File, uuid: UUID) =
-            File(getTriggerSequenceDirectory(projectDirectory, uuid), TRIGGER_SEQUENCE_INFO_FILE_NAME)
 
 //        fun fromJson(project: Project, json: JsonObject): TriggerSequence {
 //            //get duration

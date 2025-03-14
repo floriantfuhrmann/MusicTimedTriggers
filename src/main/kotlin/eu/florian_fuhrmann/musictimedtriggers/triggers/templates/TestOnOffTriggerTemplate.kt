@@ -47,7 +47,8 @@ data class TestOnOffTriggerTemplateConfiguration(
     @RequireIntRange(1, 100)
     val name: String
 ) : TriggerTemplateConfiguration() {
-    fun toJson(): JsonObject {
+    override fun toJson(): JsonObject {
+        //TODO: This is inefficient, use #toJsonTree instead
         return JsonParser.parseString(GSON.toJson(this)).asJsonObject
     }
 

@@ -9,6 +9,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.rend
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
 import java.awt.Color
 import java.awt.Graphics2D
@@ -166,6 +167,8 @@ object ReceiveDraggedTemplatesManger {
         if(time < 0 || time >= sequence.duration) return
         //get index of sequence line at pointer point
         var lineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(p.y) ?: return
+        //init set containing affected lines
+        val affectedLines = mutableSetOf<TriggerSequenceLine>()
         ProjectManager.currentProject?.browserState?.selectedTemplates?.forEach {
             //get line
             val line = sequence.lines[lineIndex]
@@ -174,11 +177,16 @@ object ReceiveDraggedTemplatesManger {
             val adjustedTime = triggerAt?.endTime ?: time
             val duration = line.getFreeDurationFrom(adjustedTime, true)
                 .coerceAtMost(AbstractPlacedTrigger.DEFAULT_TRIGGER_DURATION)
+            //add trigger to line and increment line index
             line.addTrigger(it.getTriggerTemplate().createPlaced(adjustedTime, duration))
             lineIndex++
+            //add line to affected lines
+            affectedLines.add(line)
         }
         //also redraw so drag indicator disappears
         redrawTimeline()
+        //finally save affected lines
+        affectedLines.forEach { it.saveToFile() }
     }
 
 }

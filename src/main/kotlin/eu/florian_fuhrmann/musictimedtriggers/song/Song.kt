@@ -153,7 +153,7 @@ class Song (
                 sequence
             )
             //save newly created sequence to file
-            sequence.saveAll()
+            sequence.saveAll(createDirectory = true)
             //add to project
             project.addNewSongToSonglist(song)
         }

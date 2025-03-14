@@ -4,6 +4,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 
 object EditTriggersManager {
 
@@ -14,10 +15,14 @@ object EditTriggersManager {
         val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: return
         if (TriggerSelectionManager.selectedTriggers.size == 1) {
             // delete the one selected trigger
-            val first = TriggerSelectionManager.selectedTriggers.first()
-            sequence.findLineOf(first)!!.removeTrigger(first)
+            val firstSelectedTrigger = TriggerSelectionManager.selectedTriggers.first()
+            val line = sequence.findLineOf(firstSelectedTrigger)
+            require(line != null) {"Failed to find the selected triggers line"}
+            line.removeTrigger(firstSelectedTrigger)
             //redraw timeline so change becomes visible
             redrawTimeline()
+            //also save the affected line
+            line.saveToFile()
         } else {
             // Confirm Deletion first
             DialogManager.alert(
@@ -27,11 +32,19 @@ object EditTriggersManager {
                     onDismiss = {},
                     dismissText = "Cancel",
                     onConfirm = {
+                        //init set containing affected lines
+                        val affectedLines = mutableSetOf<TriggerSequenceLine>()
+                        //remove selected triggers
                         TriggerSelectionManager.selectedTriggers.forEach {
-                            sequence.findLineOf(it)!!.removeTrigger(it)
+                            //find line, remove trigger and add line to affected lines
+                            val line = sequence.findLineOf(it)!!
+                            line.removeTrigger(it)
+                            affectedLines.add(line)
                         }
                         //redraw timeline so change becomes visible
                         redrawTimeline()
+                        //also save the affected lines
+                        affectedLines.forEach { it.saveToFile() }
                     }
                 )
             )
