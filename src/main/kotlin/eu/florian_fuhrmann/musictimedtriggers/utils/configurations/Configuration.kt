@@ -91,7 +91,6 @@ abstract class Configuration {
     }
 
     open fun toJson(): JsonObject {
-        //TODO: Are we sure this works here? Or would it need to be in the subclasses?
         return GSON.toJsonTree(this).asJsonObject
     }
 }
