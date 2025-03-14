@@ -64,8 +64,8 @@ abstract class AbstractTriggerTemplate(
                 // to be updated because changes are applied anyway
                 if(!creating) {
                     ProjectManager.currentProject?.browserState?.updateTriggerTemplate(this)
-                    //save project
-                    // TODO
+                    //save group of modified template to file
+                    group.saveToFile(ProjectManager.currentProject?.projectDirectory!!)
                 }
             }
         ))
