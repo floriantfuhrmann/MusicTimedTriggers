@@ -304,22 +304,16 @@ private fun removeSelectedTemplates(
                 dismissText = "Cancel",
                 onConfirm = {
                     removeSelectedTemplates(browserState, false)
-                },
-            ),
+                }
+            )
         )
     } else {
         ProjectManager.currentProject!!.triggersManager.removeTriggerTemplates(
-            browserState.selectedTemplates.map {
-                it.getTriggerTemplate()
-            },
+            browserState.selectedTemplates.map { it.getTriggerTemplate() }
         )
     }
 }
 
 private fun removeSingleTemplate(browserTemplate: BrowserTemplate) {
-    ProjectManager.currentProject!!.triggersManager.removeTriggerTemplates(
-        listOf(
-            browserTemplate.getTriggerTemplate(),
-        ),
-    )
+    ProjectManager.currentProject!!.triggersManager.removeTriggerTemplates(listOf(browserTemplate.getTriggerTemplate()))
 }

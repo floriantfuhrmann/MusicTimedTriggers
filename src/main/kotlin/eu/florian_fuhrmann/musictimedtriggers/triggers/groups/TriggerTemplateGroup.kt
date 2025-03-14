@@ -21,8 +21,8 @@ class TriggerTemplateGroup(
         templates.add(toIndex, templates.removeAt(fromIndex))
         //update ui
         ProjectManager.currentProject?.browserState?.moveTemplate(fromIndex, toIndex)
-        //save project
-        // TODO
+        //save trigger template group to file
+        saveToFile(ProjectManager.currentProject!!.projectDirectory)
     }
 
     /**
@@ -34,6 +34,16 @@ class TriggerTemplateGroup(
         val file = getTemplateGroupFileInProjectDirectory(projectDirectory, uuid)
         //save json to file
         file.writeText(GSON_PRETTY.toJson(toJson()))
+    }
+
+    /**
+     * Delete the json file for this trigger template group.
+     */
+    fun deleteFile(projectDirectory: File) {
+        //get file
+        val file = getTemplateGroupFileInProjectDirectory(projectDirectory, uuid)
+        //delete file
+        file.delete()
     }
 
     private fun toJson(): JsonObject {
