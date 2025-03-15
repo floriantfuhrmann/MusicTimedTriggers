@@ -30,6 +30,7 @@ class Keyframes(
         keyframesList.add(index, newKeyframe)
     }
 
+    @Transient
     private val minKeyframePositionDifferenceSeconds = 0.05 // 50ms
 
     /**
@@ -80,7 +81,7 @@ class Keyframes(
      */
     fun intensityAt(proportionalPosition: Double): Double {
         // require that the proportional position is in the range [0, 1]
-        require(proportionalPosition in 0.0..1.0) { "Proportional position must be in range [0, 1]" }
+        require(proportionalPosition in 0.0..1.0) { "Proportional position must be in range [0, 1], but is $proportionalPosition" }
         // search for keyframe using built-in binary search
         val foundIndex = keyframesList.binarySearch { it.position.compareTo(proportionalPosition) }
         // check whether keyframe was found at exact position

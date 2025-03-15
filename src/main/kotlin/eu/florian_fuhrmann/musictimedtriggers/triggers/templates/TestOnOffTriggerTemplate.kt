@@ -47,9 +47,6 @@ data class TestOnOffTriggerTemplateConfiguration(
     @RequireIntRange(1, 100)
     val name: String
 ) : TriggerTemplateConfiguration() {
-    fun toJson(): JsonObject {
-        return JsonParser.parseString(GSON.toJson(this)).asJsonObject
-    }
 
     fun deepCopy(): TestOnOffTriggerTemplateConfiguration {
         val copy = copy()

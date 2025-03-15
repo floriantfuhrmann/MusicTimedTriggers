@@ -40,7 +40,7 @@ fun SongList() {
     val reorderableLazyColumnState =
         rememberReorderableLazyColumnState(lazyListState) { from, to ->
             // Update the list
-            ProjectManager.currentProject?.moveSong(from.index, to.index)
+            ProjectManager.currentProject?.moveSongInSongList(from.index, to.index)
         }
 
     if (project.songs.isNotEmpty()) {

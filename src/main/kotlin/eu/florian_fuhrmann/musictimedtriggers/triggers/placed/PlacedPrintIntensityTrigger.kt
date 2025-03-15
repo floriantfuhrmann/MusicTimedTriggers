@@ -57,7 +57,7 @@ class PlacedPrintIntensityTrigger(
                 template,
                 startTime,
                 duration,
-                PlacedConfiguration.fromJson(json.get("configuration") as JsonObject)
+                PlacedConfiguration.fromJson(json.get("configuration").asJsonObject)
             )
         }
     }
@@ -66,9 +66,6 @@ class PlacedPrintIntensityTrigger(
         @Configurable("Keyframes")
         val keyframes: Keyframes
     ) : Configuration() {
-        fun toJson(): JsonObject {
-            return JsonParser.parseString(GSON.toJson(this)).asJsonObject
-        }
 
         companion object {
             fun create() = PlacedConfiguration(Keyframes.create())

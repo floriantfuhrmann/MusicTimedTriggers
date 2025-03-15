@@ -539,8 +539,8 @@ object MoveTriggersManager {
                 }
             }
         }
-        // redraw if any triggers changed, so these changes are visible
         if (anyAffected) {
+            // redraw if any triggers changed, so these changes are visible
             redrawTimeline()
         }
     }
@@ -554,6 +554,9 @@ object MoveTriggersManager {
         updateTriggerHover(e, false)
         // update cursor
         updateCursor()
+        // also save all lines (keeping track of which lines were affected during the move might be something for the future)
+        val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: throw IllegalStateException("No sequence")
+        sequence.lines.forEach { it.saveToFile() }
     }
 
     // Keyframe Movement

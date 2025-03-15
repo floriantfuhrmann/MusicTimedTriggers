@@ -1,5 +1,6 @@
 package eu.florian_fuhrmann.musictimedtriggers.triggers.placed
 
+import com.google.gson.JsonObject
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.configuration.ConfigurationDialog
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
@@ -76,6 +77,17 @@ abstract class AbstractPlacedTrigger(
                 )
             )
         }
+    }
+
+    fun toJson(): JsonObject {
+        val json = JsonObject()
+        json.addProperty("startTime", startTime)
+        json.addProperty("duration", duration)
+        json.addProperty("template", triggerTemplate.uuid.toString())
+        if(configuration != null) {
+            json.add("configuration", configuration.toJson())
+        }
+        return json
     }
 
     class PlacedTriggerConfigurationContext(val placedTrigger: AbstractPlacedTrigger) : ConfigurationContext()

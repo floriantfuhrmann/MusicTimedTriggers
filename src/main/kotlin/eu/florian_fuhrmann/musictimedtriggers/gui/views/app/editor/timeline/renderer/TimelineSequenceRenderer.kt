@@ -8,7 +8,7 @@ import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrig
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
-import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.utils.ConfigurationColor
+import eu.florian_fuhrmann.musictimedtriggers.utils.color.GenericColor
 import java.awt.*
 import kotlin.math.roundToInt
 
@@ -194,7 +194,7 @@ object TimelineSequenceRenderer {
         y: Int,
         width: Int,
         height: Int,
-        triggerColor: ConfigurationColor,
+        triggerColor: GenericColor,
         name: String,
         style: TriggerStateStyle = TriggerStateStyle.Normal,
         hovered: Boolean = false,

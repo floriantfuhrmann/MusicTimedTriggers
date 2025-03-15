@@ -16,6 +16,7 @@ import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.openAudioPlayer
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.Spectrogram
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.SpectrogramParameters
 import java.io.File
+import java.util.UUID
 
 class Song (
     private val project: Project,
@@ -117,7 +118,12 @@ class Song (
         return currentAudioPlayer.value?.playing?.value ?: false
     }
 
-    fun toJson(): JsonObject {
+    /**
+     * Creates json for entry in songlist containing properties like name, path
+     * to audioFile and parameters for spectrogram generation. Does not contain
+     * trigger sequence, but rather the sequences uuid as reference.
+     */
+    fun toSonglistEntryJson(): JsonObject {
         //create json
         val json = JsonObject()
         //add name
@@ -131,25 +137,36 @@ class Song (
         }
         //add spectrogram params
         json.add("spectrogramParams", spectrogramParams.toJson())
+        //add associated trigger sequence uuid
+        json.addProperty("sequence", sequence.uuid.toString())
         //return json
         return json
     }
 
     companion object {
         fun createSong(project: Project, name: String, audioFile: File) {
+            //create the songs trigger sequence
+            val sequence = TriggerSequence.createSequence(project, getDurationOrNull(audioFile) ?: 0.0)
             //create song instance
             val song = Song(
                 project,
                 name,
                 audioFile,
                 SpectrogramParameters(),
-                TriggerSequence.createSequence(project, getDurationOrNull(audioFile) ?: 0.0)
+                sequence
             )
+            //save newly created sequence to file
+            sequence.saveAll(createDirectory = true)
             //add to project
-            project.addSong(song)
+            project.addNewSongToSonglist(song)
         }
 
-        fun fromJson(project: Project, json: JsonObject): Song {
+        /**
+         * Creates a Song instance from properties in songlist entry json and loads
+         * sequence from files using sequences uuid reference in songlist entry
+         * json.
+         */
+        fun loadFromSonglistEntryJson(project: Project, json: JsonObject): Song {
             //get name
             val name = json.get("name").asString
             //get file
@@ -164,12 +181,9 @@ class Song (
             } else {
                 SpectrogramParameters()
             }
-            //get trigger sequence
-            val triggerSequence = if(json.has("sequence")) {
-                TriggerSequence.fromJson(project, json.get("sequence").asJsonObject)
-            } else {
-                TriggerSequence.createSequence(project, getDurationOrNull(audioFile) ?: 0.0)
-            }
+            //load trigger sequence
+            val sequenceUuid = UUID.fromString(json.get("sequence").asString)
+            val triggerSequence = TriggerSequence.loadFromFiles(project, sequenceUuid)
             //return Song
             return Song(project, name, audioFile, spectrogramParams, triggerSequence)
         }

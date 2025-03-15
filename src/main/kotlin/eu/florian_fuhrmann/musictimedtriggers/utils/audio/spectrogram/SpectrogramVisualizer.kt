@@ -283,7 +283,7 @@ data class SpectrogramParameters(
     @RequireIntRange(min = 1, max = 1024)
     @PlusMinusButtons
     var overlapFactor: Int = 16,
-    // Weither to apply the Hamming Window Function on the samples in a window
+    // Whether to apply the Hamming Window Function on the samples in a window
     @Configurable("Hamming Window", "Weither to apply the Hamming Window Function on the samples in a Window")
     var useHammingWindow: Boolean = true,
     // Maximum range for amp values from the highest value (the min value will be set to max-maxRange if range would be
@@ -292,7 +292,7 @@ data class SpectrogramParameters(
     @RequireIntRange(min = 1, max = 99999)
     @PlusMinusButtons
     var maxRange: Int = 99999,
-    // Weither to use a log10 y-axis instead of a linear one (true means a log10 y-axis will be used)
+    // Whether to use a log10 y-axis instead of a linear one (true means a log10 y-axis will be used)
     @Configurable("log10 Y-Axis", "Weither to use a log10 y-axis instead of a linear one")
     var log10YAxis: Boolean = true,
     // Factor which is multiplied with the linear y-axis length to get the log10 y-axis length (1 -> same length,
@@ -304,7 +304,7 @@ data class SpectrogramParameters(
     var log10YAxisLengthFactor: Double = 1.0
 ) : Configuration() {
     fun sha512Hash(): String {
-        //just gerate a sha512 hash of all values concatenated
+        //just generate a sha512 hash of all values concatenated
         return sha256(
             "$calculateWindowSizeFromDuration " //always factored into the hash
                     +
@@ -323,8 +323,8 @@ data class SpectrogramParameters(
         )
     }
 
-    fun toJson(): JsonObject {
-        return JsonParser.parseString(GSON.toJson(this)).asJsonObject
+    override fun toJson(): JsonObject {
+        return GSON.toJsonTree(this).asJsonObject
     }
 
     companion object {

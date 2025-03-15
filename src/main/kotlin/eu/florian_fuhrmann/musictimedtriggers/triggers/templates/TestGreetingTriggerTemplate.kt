@@ -56,9 +56,6 @@ data class TestGreetingTriggerTemplateConfiguration(
     @RequireIntRange(1, 100)
     val greeting: String = "Hello"
 ) : TriggerTemplateConfiguration() {
-    fun toJson(): JsonObject {
-        return JsonParser.parseString(GSON.toJson(this)).asJsonObject
-    }
 
     fun deepCopy(): TestGreetingTriggerTemplateConfiguration {
         val copy = copy()

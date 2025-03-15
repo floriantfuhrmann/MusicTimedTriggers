@@ -32,7 +32,7 @@ var titleBarDropdownOpened: MutableState<Boolean> = mutableStateOf(false)
 fun DecoratedWindowScope.TitleBarView() {
     TitleBar(
         modifier = Modifier.newFullscreenControls().trackActivation(),
-        gradientStartColor = (ProjectManager.currentProject?.projectColor?.toColor()
+        gradientStartColor = (ProjectManager.currentProject?.projectSettings?.projectColor?.toComposeColor()
             ?.mix(JewelTheme.globalColors.paneBackground, 0.55f) ?: Color.Unspecified)
     )
     {
