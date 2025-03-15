@@ -92,6 +92,12 @@ class Project(
      * file.
      */
     fun deleteSong(song: Song) {
+        //close song (if it is the current song)
+        if (song == currentSong) {
+            song.closing()
+            currentSong = null
+            song.closed()
+        }
         //remove song
         songs = songs.toMutableList().apply {
             remove(song)
