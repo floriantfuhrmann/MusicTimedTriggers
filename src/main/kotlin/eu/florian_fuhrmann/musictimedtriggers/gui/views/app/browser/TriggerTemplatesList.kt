@@ -293,27 +293,20 @@ fun TriggerTemplateItem(
 
 private fun removeSelectedTemplates(
     browserState: BrowserState,
-    showConfirmationAlert: Boolean,
+    alwaysShowConfirmation: Boolean = false, // Todo: when this is set to true, show a confirmation dialog even when there are no usages
 ) {
-    if (showConfirmationAlert) {
-        DialogManager.alert(
-            Alert(
-                title = "Confirm deletion of ${browserState.selectedTemplates.size} Templates",
-                text = "Are you sure you want to delete ${browserState.selectedTemplates.size} Trigger Templates?",
-                onDismiss = {},
-                dismissText = "Cancel",
-                onConfirm = {
-                    removeSelectedTemplates(browserState, false)
-                }
-            )
-        )
-    } else {
-        ProjectManager.currentProject!!.triggersManager.removeTriggerTemplates(
-            browserState.selectedTemplates.map { it.getTriggerTemplate() }
-        )
-    }
-}
-
-private fun removeSingleTemplate(browserTemplate: BrowserTemplate) {
-    ProjectManager.currentProject!!.triggersManager.removeTriggerTemplates(listOf(browserTemplate.getTriggerTemplate()))
+    // get current project
+    val project = ProjectManager.currentProject ?: throw IllegalStateException("No project currently open")
+    // collect triggers to remove
+    val selectedTemplates = browserState.selectedTemplates.map { it.getTriggerTemplate() }
+    //search for usages of the selected templates
+    val usages = ProjectManager.currentProject!!.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
+    /* ToDo: Show alert with a 'View Usages' button and a 'Delete Anyway' button. If the user chooses 'View Usages',
+        open a dialog with the usages. Then ensure the placed triggers are deleted before the templates. A more complex
+        alert system is needed before this can be continued. */
+    /*
+    To remove the templates, use the following code:
+    ProjectManager.currentProject!!.triggersManager.removeTriggerTemplates(selectedTemplates)
+    Warning: does not the delete the placed triggers, which use the  templates.
+     */
 }

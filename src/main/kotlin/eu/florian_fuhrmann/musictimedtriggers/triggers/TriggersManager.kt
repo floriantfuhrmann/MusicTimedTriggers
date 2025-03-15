@@ -1,9 +1,13 @@
 package eu.florian_fuhrmann.musictimedtriggers.triggers
 
 import com.google.gson.JsonObject
+import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.triggers.groups.TriggerTemplateGroup
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
 import java.io.File
 import java.util.*
@@ -89,6 +93,10 @@ class TriggersManager(
         affectedGroups.forEach { it.saveToFile(getCurrentProjectDirectory()) }
     }
 
+    /**
+     * Removes the given trigger templates from the project.
+     * @warning This function does not check if the trigger templates are used in placed triggers.
+     */
     fun removeTriggerTemplates(removedTriggerTemplates: List<AbstractTriggerTemplate>) {
         //init set containing affected groups (technically only one group can be affected, because it's not possible to select trigger templates across groups)
         val affectedGroups = mutableSetOf<TriggerTemplateGroup>()
@@ -105,6 +113,28 @@ class TriggersManager(
         ProjectManager.currentProject?.browserState?.removeTriggerTemplates(removedTriggerTemplates)
         //save affected groups in project files
         affectedGroups.forEach { it.saveToFile(getCurrentProjectDirectory()) }
+    }
+
+    data class TriggerUsage(
+        val placedTrigger: AbstractPlacedTrigger,
+        val line: TriggerSequenceLine,
+        val song: Song
+    )
+
+    fun searchUsagesOfTriggerTemplates(project: Project, templates: List<AbstractTriggerTemplate>): List<TriggerUsage> {
+        val result = mutableListOf<TriggerUsage>()
+        //search for usages in all songs
+        project.songs.forEach { song ->
+            song.sequence.lines.forEach { line ->
+                line.getAllTriggers().forEach { placedTrigger ->
+                    if (templates.contains(placedTrigger.triggerTemplate)) {
+                        //add placed trigger to result list
+                        result.add(TriggerUsage(placedTrigger, line, song))
+                    }
+                }
+            }
+        }
+        return result
     }
 
     // Deserializing Placed Triggers
