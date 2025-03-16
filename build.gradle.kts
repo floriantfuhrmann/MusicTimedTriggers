@@ -14,6 +14,7 @@ repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     google()
+    maven("https://www.jetbrains.com/intellij-repository/releases")
 }
 
 dependencies {
@@ -29,8 +30,16 @@ dependencies {
     // kotlin-reflect https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-reflect
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.1.10")
 
-    implementation("org.jetbrains.jewel:jewel-int-ui-standalone:0.15.0")
-    implementation("org.jetbrains.jewel:jewel-int-ui-decorated-window:0.15.0")
+    // from: https://github.com/JetBrains/jewel?tab=readme-ov-file#getting-started
+    // See https://github.com/JetBrains/Jewel/releases for the release notes
+    implementation("org.jetbrains.jewel:jewel-int-ui-standalone-243:0.27.0")
+    implementation("org.jetbrains.jewel:jewel-int-ui-decorated-window-243:0.27.0")
+    // Do not bring in Material (we use Jewel)
+    implementation(compose.desktop.currentOs) {
+        exclude(group = "org.jetbrains.compose.material")
+    }
+    // from: https://github.com/JetBrains/jewel?tab=readme-ov-file#icons
+    implementation("com.jetbrains.intellij.platform:icons:243.26053.20")
 
     // https://mvnrepository.com/artifact/org.jetbrains.compose.components/components-splitpane-desktop
     implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.5.11")

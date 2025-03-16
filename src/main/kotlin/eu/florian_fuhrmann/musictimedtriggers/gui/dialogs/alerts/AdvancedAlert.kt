@@ -33,7 +33,7 @@ open class AdvancedAlert(
             onDismissRequest = onDismissRequest,
             title = title,
             text = text,
-            backgroundColor = JewelTheme.globalColors.paneBackground,
+            backgroundColor = JewelTheme.globalColors.panelBackground,
             properties = DialogProperties(dismissOnClickOutside = true),
             confirmButton = confirmButton,
             dismissButton = dismissButton

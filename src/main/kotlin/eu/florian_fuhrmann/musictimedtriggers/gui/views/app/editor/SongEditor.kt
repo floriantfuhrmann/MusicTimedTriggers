@@ -26,7 +26,7 @@ fun SongEditor() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(JewelTheme.globalColors.paneBackground)
+                    .background(JewelTheme.globalColors.panelBackground)
                     .padding(5.dp)
             ) {
                 Text(

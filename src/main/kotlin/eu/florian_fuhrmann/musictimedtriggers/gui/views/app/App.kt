@@ -55,7 +55,7 @@ fun App() {
                 Box(
                     Modifier
                         .trackActivation()
-                        .background(JewelTheme.globalColors.paneBackground)
+                        .background(JewelTheme.globalColors.panelBackground)
                         .padding(0.dp),
                 ) {
                     Sidebar()

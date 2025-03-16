@@ -263,7 +263,7 @@ class KeyframesConfigurationEntry(
                                             onDismissRequest = {
                                                 dropdownExpanded = false
                                             },
-                                            modifier = Modifier.background(color = JewelTheme.globalColors.paneBackground)
+                                            modifier = Modifier.background(color = JewelTheme.globalColors.panelBackground)
                                                 .border(width = 1.dp, color = JewelTheme.globalColors.borders.normal)
                                         ) {
                                             Column(

@@ -47,7 +47,7 @@ fun SongList() {
         LazyColumn(
             state = lazyListState,
             modifier = Modifier
-                .background(JewelTheme.globalColors.paneBackground)
+                .background(JewelTheme.globalColors.panelBackground)
                 .padding(5.dp)
                 .fillMaxSize(),
         ) {
@@ -74,7 +74,7 @@ fun SongList() {
     } else {
         Column(
             modifier = Modifier
-                .background(JewelTheme.globalColors.paneBackground)
+                .background(JewelTheme.globalColors.panelBackground)
                 .padding(5.dp)
                 .fillMaxSize()
         ) {

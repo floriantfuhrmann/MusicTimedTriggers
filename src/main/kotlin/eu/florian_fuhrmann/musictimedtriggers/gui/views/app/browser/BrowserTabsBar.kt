@@ -20,6 +20,7 @@ import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTrigger
 import eu.florian_fuhrmann.musictimedtriggers.utils.IconsDummy
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.icon.PathIconKey
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.theme.dropdownStyle
 import sh.calvin.reorderable.*
@@ -42,12 +43,13 @@ fun BrowserTabsBar() {
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f).height(JewelTheme.defaultTabStyle.metrics.tabHeight)) {
-            if(scrollState.canScrollForward || scrollState.canScrollBackward) {
-                TabStripHorizontalScrollbar(
-                    modifier = Modifier.fillMaxWidth(),
-                    adapter = rememberScrollbarAdapter(scrollState)
-                )
-            }
+            //TODO: Add Scrollbar again
+//            if(scrollState.canScrollForward || scrollState.canScrollBackward) {
+//                TabStripHorizontalScrollbar(
+//                    modifier = Modifier.fillMaxWidth(),
+//                    adapter = rememberScrollbarAdapter(scrollState)
+//                )
+//            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -89,10 +91,10 @@ fun BrowserTabsBar() {
                                 }
                             }
                         },
-                        iconResource = when(MainUiState.theme.isDark()) {
+                        iconKey = IconsDummy.getPathIconKeyFor(when(MainUiState.theme.isDark()) {
                             true -> "icons/pencil-outline-icon_dark.svg"
                             else -> "icons/pencil-outline-icon.svg"
-                        }
+                        }),
                     ) {
                         Text("Edit Group")
                     }
@@ -101,10 +103,10 @@ fun BrowserTabsBar() {
                         onClick = {
                             DialogManager.openDialog(EditTemplateGroupDialog(true, null))
                         },
-                        iconResource = when(MainUiState.theme.isDark()) {
+                        iconKey = IconsDummy.getPathIconKeyFor(when(MainUiState.theme.isDark()) {
                             true -> "icons/plus-line-icon_dark.svg"
                             else -> "icons/plus-line-icon.svg"
-                        }
+                        }),
                     ) {
                         Text("Create Group")
                     }
@@ -151,7 +153,7 @@ fun BrowserTabsBar() {
                     expanded = false
                 },
                 modifier = Modifier
-                    .background(color = JewelTheme.globalColors.paneBackground)
+                    .background(color = JewelTheme.globalColors.panelBackground)
             ) {
                 Column(
                     modifier = Modifier
@@ -175,9 +177,8 @@ fun BrowserTabsBar() {
                                     //Trigger Template Icon
                                     Column {
                                         Icon(
-                                            triggerType.iconResource,
-                                            null,
-                                            IconsDummy::class.java,
+                                            key = IconsDummy.getPathIconKeyFor(triggerType.iconResource),
+                                            contentDescription = null,
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }
