@@ -16,8 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.unit.dp
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.AdvancedAlertCreator
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserTemplate
@@ -296,11 +296,19 @@ private fun removeSelectedTemplates(
     val project = ProjectManager.currentProject ?: throw IllegalStateException("No project currently open")
     // collect triggers to remove
     val selectedTemplates = browserState.selectedTemplates.map { it.getTriggerTemplate() }
-    //search for usages of the selected templates
+    // search for usages of the selected templates
     val usages = ProjectManager.currentProject!!.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
+    // show confirmation dialog if needed
+    if (alwaysShowConfirmation || usages.isNotEmpty()) {
+        DialogManager.alert(AdvancedAlertCreator.createUsagesAlert(selectedTemplates, usages))
+    }
+
+
     /* ToDo: Show alert with a 'View Usages' button and a 'Delete Anyway' button. If the user chooses 'View Usages',
         open a dialog with the usages. Then ensure the placed triggers are deleted before the templates. A more complex
         alert system is needed before this can be continued. */
+
+
     /*
     To remove the templates, use the following code:
     ProjectManager.currentProject!!.triggersManager.removeTriggerTemplates(selectedTemplates)
