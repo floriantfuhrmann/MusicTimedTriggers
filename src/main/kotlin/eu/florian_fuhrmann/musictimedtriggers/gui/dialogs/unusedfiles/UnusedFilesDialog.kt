@@ -9,7 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Alert
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.components.CloseDialogButton
@@ -54,7 +54,8 @@ class UnusedFilesDialog(private val unusedFiles: List<File>) : Dialog(windowed =
                             OutlinedButton(
                                 onClick = {
                                     //open confirm alter
-                                    DialogManager.alert(Alert(
+                                    DialogManager.alert(
+                                        Alert(
                                         title = "Confirm delete ${it.name}",
                                         text = "Are you sure you want to delete the file ${it.canonicalPath}?",
                                         dismissText = "Cancel",
