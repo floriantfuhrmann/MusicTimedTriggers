@@ -87,7 +87,7 @@ fun TriggerTemplatesList() {
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .clickable {
+                    .clickable(indication = null, interactionSource = null) {
                         // only triggers when clicked outside a list item
                         browserState.unselectAllTemplates()
                     }.onKeyEvent {
@@ -153,14 +153,11 @@ fun TriggerTemplateItem(
                     browserState.onTemplateHoverEnter(browserTemplate)
                 }.onPointerEvent(PointerEventType.Exit) {
                     browserState.onTemplateHoverExit(browserTemplate)
-                }.combinedClickable(
+                }.onClick (
+                    matcher = PointerMatcher.mouse(PointerButton.Primary),
                     onClick = {
                         browserState.selectTemplate(browserTemplate, false)
-                    },
-                    onDoubleClick = {
-                        // open edit dialog
-                        browserTemplate.getTriggerTemplate().openEditDialog(false)
-                    },
+                    }
                 ).onClick(
                     keyboardModifiers = { isShiftPressed },
                     matcher = PointerMatcher.mouse(PointerButton.Primary),
@@ -245,7 +242,7 @@ fun TriggerTemplateItem(
                         .onHover {
                             hovered = it
                         }
-                        .clickable {
+                        .clickable(indication = null, interactionSource = null) {
                             // open edit dialog
                             browserTemplate.getTriggerTemplate().openEditDialog(false)
                         },
