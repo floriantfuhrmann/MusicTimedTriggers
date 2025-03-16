@@ -1,6 +1,5 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.HoverInteraction
@@ -134,19 +133,6 @@ fun SingleTab(
                     }
                 }
 
-//                val closePainter by tabStyle.icons.close.getPainter(Stateful(closeButtonState))
-//                Image(
-//                    modifier = Modifier
-//                        .clickable(
-//                            interactionSource = closeActionInteractionSource,
-//                            indication = null,
-//                            onClick = onClose,
-//                            role = Role.Button,
-//                        )
-//                        .size(16.dp),
-//                    painter = closePainter,
-//                    contentDescription = "Close tab",
-//                )
                 Icon(
                     key = tabStyle.icons.close,
                     modifier =

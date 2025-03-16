@@ -34,7 +34,7 @@ import java.awt.Cursor
 @Composable
 fun TriggerTemplatesList() {
     // State
-    val browserState = ProjectManager.currentProject!!.browserState!!
+    val browserState = ProjectManager.currentProject!!.browserState
     val reorderableLazyColumnState =
         rememberReorderableLazyColumnState(browserState.templatesLazyListState) { from, to ->
             ProjectManager.currentProject
