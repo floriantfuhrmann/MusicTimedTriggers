@@ -1,6 +1,6 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers
 
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Alert
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager

@@ -1,6 +1,6 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers
 
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Alert
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.renamesequenceline.RenameSequenceLineDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
@@ -121,7 +121,8 @@ object RightClickMenuManager {
                     })
                     menu.add(JMenuItem("Delete").apply {
                         addActionListener {
-                            DialogManager.alert(Alert(
+                            DialogManager.alert(
+                                Alert(
                                 title = "Delete ${line.name}?",
                                 text = "Are you sure you want to delete Sequence Line ${line.name} containing ${line.getTriggersCount()} placed Triggers?",
                                 onDismiss = {},

@@ -1,4 +1,4 @@
-package eu.florian_fuhrmann.musictimedtriggers.gui.dialogs
+package eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.AlertDialog
@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import org.jetbrains.jewel.foundation.modifier.trackActivation
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.OutlinedButton
@@ -20,19 +20,17 @@ class Alert(
     val dismissText: String = "Dismiss",
     val onConfirm: (() -> Unit)? = null,
     val confirmText: String = "Confirm"
-) {
+) : AbstractAlert() {
 
     @Composable
-    fun Content(totalAlertAmount: Int = 1) {
+    override fun Content(totalAlertAmount: Int) {
         AlertDialog(
             onDismissRequest = {
                 DialogManager.closeAlert()
                 onDismiss?.invoke()
             },
             title = {
-                Text(
-                    fontStyle = JewelTheme.defaultTextStyle.fontStyle,
-                    fontWeight = FontWeight.Bold,
+                Text(fontWeight = FontWeight.Bold,
                     text = if (totalAlertAmount > 1) {
                         "($totalAlertAmount) "
                     } else {
@@ -41,12 +39,10 @@ class Alert(
                 )
             },
             text = {
-                Text(fontStyle = JewelTheme.defaultTextStyle.fontStyle, text = text)
+                Text(text)
             },
             backgroundColor = JewelTheme.globalColors.paneBackground,
-            properties = DialogProperties(
-                dismissOnClickOutside = true
-            ),
+            properties = DialogProperties(dismissOnClickOutside = true),
             confirmButton = {
                 if(onConfirm != null) {
                     DefaultButton(
@@ -54,9 +50,7 @@ class Alert(
                             DialogManager.closeAlert()
                             onConfirm.invoke()
                         },
-                        modifier = Modifier
-                            .padding(bottom = 5.dp)
-                            .trackActivation()
+                        modifier = Modifier.padding(bottom = 5.dp)
                     ) {
                         Text(confirmText)
                     }
@@ -69,9 +63,7 @@ class Alert(
                             DialogManager.closeAlert()
                             onDismiss.invoke()
                         },
-                        modifier = Modifier
-                            .padding(bottom = 5.dp)
-                            .trackActivation()
+                        modifier = Modifier.padding(bottom = 5.dp)
                     ) {
                         Text(dismissText)
                     }

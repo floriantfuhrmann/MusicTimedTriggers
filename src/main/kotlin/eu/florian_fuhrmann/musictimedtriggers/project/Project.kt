@@ -6,7 +6,7 @@ import androidx.compose.runtime.setValue
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Alert
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.unusedfiles.UnusedFilesDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
@@ -107,7 +107,8 @@ class Project(
         //delete the corresponding sequence
         song.sequence.removeSaveFiles()
         //alert
-        DialogManager.alert(Alert(
+        DialogManager.alert(
+            Alert(
             title = "Song deleted",
             text = "Song ${song.name} has been deleted. Do you want to scan the Audio directory for unused files?",
             dismissText = "No",
