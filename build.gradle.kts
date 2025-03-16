@@ -27,7 +27,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
 
     // kotlin-reflect https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-reflect
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.23")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.1.10")
 
     implementation("org.jetbrains.jewel:jewel-int-ui-standalone:0.15.0")
     implementation("org.jetbrains.jewel:jewel-int-ui-decorated-window:0.15.0")
