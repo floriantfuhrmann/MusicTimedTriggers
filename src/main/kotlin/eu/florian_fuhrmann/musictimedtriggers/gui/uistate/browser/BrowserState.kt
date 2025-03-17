@@ -198,8 +198,9 @@ class BrowserState(
         //make sure the group is not selected
         if(selectedGroup.value?.uuid == browserGroup.uuid) {
             selectedGroup.value = null
-            //and if it was selected then also unselect all triggers
+            //and if it was selected then also unselect all triggers and update template list
             unselectAllTemplates()
+            updateAllGroupTriggers(null)
         }
         //save state to file
         saveToFileInCurrentProjectDirectory()

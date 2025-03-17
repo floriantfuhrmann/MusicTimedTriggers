@@ -24,7 +24,6 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserTemplat
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
-import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 import eu.florian_fuhrmann.musictimedtriggers.utils.IconsDummy
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.getContrasting
@@ -34,7 +33,6 @@ import org.jetbrains.jewel.ui.component.Text
 import sh.calvin.reorderable.*
 import java.awt.Cursor
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TriggerTemplatesList() {
     // State
