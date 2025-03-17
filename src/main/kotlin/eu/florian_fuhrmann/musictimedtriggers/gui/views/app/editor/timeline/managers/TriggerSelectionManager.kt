@@ -27,12 +27,12 @@ object TriggerSelectionManager {
     // Variables
 
     /**
-     * bool to mark weither we are currently selecting triggers
+     * bool to mark whether we are currently selecting triggers
      */
     var selecting = false
         private set
 
-    // corners of selection (not determined weither x1 or x2 is smaller, same for y)
+    // corners of selection (not determined whether x1 or x2 is smaller, same for y)
     private var selectionX1 = 0
     private var selectionX2 = 0
     private var selectionY1 = 0
@@ -65,12 +65,19 @@ object TriggerSelectionManager {
         redrawTimeline()
     }
 
-    /** @return weither the [trigger] is visually selected in some way */
+    fun deselectTrigger(trigger: AbstractPlacedTrigger, redraw: Boolean = true) {
+        val removed = selectedTriggers.remove(trigger)
+        if (removed && redraw) {
+            redrawTimeline()
+        }
+    }
+
+    /** @return whether the [trigger] is visually selected in some way */
     fun isVisuallySelected(trigger: AbstractPlacedTrigger) =
         selectionBoxTriggers.contains(trigger) || selectedTriggers.contains(trigger)
 
     /**
-     * @return weither the [trigger] is selected (a trigger is only considered
+     * @return whether the [trigger] is selected (a trigger is only considered
      *    to be finally selected after selecting with selection box has ended)
      */
     fun isSelected(trigger: AbstractPlacedTrigger) = selectedTriggers.contains(trigger)

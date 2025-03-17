@@ -19,12 +19,17 @@ import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.Text
 
+/**
+ * AdvancedAlert allows passing custom Composable for the title, text,
+ * confirm and dismiss buttons. But still uses Materials' AlertDialog as
+ * container.
+ */
 open class AdvancedAlert(
     val onDismissRequest: () -> Unit /* = { DialogManager.closeAlert() }*/,
     val title: @Composable (() -> Unit)? = null,
     val text: @Composable (() -> Unit),
     val confirmButton: @Composable (() -> Unit) = {},
-    val dismissButton: @Composable (() -> Unit)? = null,
+    val dismissButton: @Composable (() -> Unit)? = null
 ) : AbstractAlert() {
 
     @Composable

@@ -32,6 +32,8 @@ class TriggerSequenceLine(
 
     fun getTriggerByIndex(index: Int) = triggers.getOrNull(index)
 
+    fun getAllTriggers() = Collections.unmodifiableList(triggers)
+
     /**
      * Returns the placed trigger at time [timePosition] or the first trigger starting after [timePosition]
      *

@@ -16,12 +16,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.unit.dp
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.AlertCreator
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserTemplate
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 import eu.florian_fuhrmann.musictimedtriggers.utils.IconsDummy
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.getContrasting
 import org.jetbrains.jewel.foundation.modifier.onHover
@@ -60,6 +64,9 @@ fun TriggerTemplatesList() {
                             hoveredTemplate.getTriggerTemplate().openEditDialog(false)
                         }
                     },
+                    ContextMenuItem("Search Usages") {
+                        searchUsagesOfSelectedTemplates(browserState)
+                    },
                     ContextMenuItem(
                         "Delete" +
                             if (browserState.selectedTemplates.size != 1) {
@@ -68,11 +75,11 @@ fun TriggerTemplatesList() {
                                 ""
                             },
                     ) {
-                        removeSelectedTemplates(browserState, browserState.selectedTemplates.size != 1)
+                        removeSelectedTemplates(browserState)
                     },
                     ContextMenuItem("Copy") {
                         browserState.copy()
-                    },
+                    }
                 )
             } else {
                 listOf(
@@ -95,7 +102,7 @@ fun TriggerTemplatesList() {
                         if (it.type != KeyEventType.KeyUp) return@onKeyEvent false
                         if (it.key == Key.Backspace || it.key == Key.Delete) {
                             // remove all selected triggers
-                            removeSelectedTemplates(browserState, true)
+                            removeSelectedTemplates(browserState, it.isShiftPressed && it.isAltPressed)
                             return@onKeyEvent true
                         }
                         return@onKeyEvent false
@@ -285,29 +292,44 @@ fun TriggerTemplateItem(
     }
 }
 
-private fun removeSelectedTemplates(
-    browserState: BrowserState,
-    showConfirmationAlert: Boolean,
-) {
-    if (showConfirmationAlert) {
-        DialogManager.alert(
-            Alert(
-                title = "Confirm deletion of ${browserState.selectedTemplates.size} Templates",
-                text = "Are you sure you want to delete ${browserState.selectedTemplates.size} Trigger Templates?",
-                onDismiss = {},
-                dismissText = "Cancel",
-                onConfirm = {
-                    removeSelectedTemplates(browserState, false)
-                }
-            )
-        )
+private fun removeSelectedTemplates(browserState: BrowserState, skipConfirmation: Boolean = false) {
+    // get current project
+    val project = ProjectManager.currentProject ?: throw IllegalStateException("No project currently open")
+    // collect triggers to remove
+    val selectedTemplates = browserState.selectedTemplates.map { it.getTriggerTemplate() }
+    // search for usages of the selected templates
+    val usages = project.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
+    // create onConfirm function
+    val onConfirm: () -> Unit = {
+        // remove placed triggers in usages and collect set of affected lines
+        val affectedLines = mutableSetOf<TriggerSequenceLine>()
+        usages.forEach {
+            TriggerSelectionManager.deselectTrigger(it.placedTrigger, false)
+            it.line.removeTrigger(it.placedTrigger)
+            affectedLines.add(it.line)
+        }
+        // redraw timeline because some placed triggers currently visible might have been removed
+        redrawTimeline()
+        // save the affected lines
+        affectedLines.forEach { it.saveToFile() }
+        // remove the templates
+        project.triggersManager.removeTriggerTemplates(selectedTemplates) // also saves the affected groups
+    }
+    // show confirmation dialog if needed
+    if (skipConfirmation) {
+        onConfirm.invoke()
     } else {
-        ProjectManager.currentProject!!.triggersManager.removeTriggerTemplates(
-            browserState.selectedTemplates.map { it.getTriggerTemplate() }
-        )
+        DialogManager.alert(AlertCreator.createUsagesAlert(true, selectedTemplates, usages, onConfirm))
     }
 }
 
-private fun removeSingleTemplate(browserTemplate: BrowserTemplate) {
-    ProjectManager.currentProject!!.triggersManager.removeTriggerTemplates(listOf(browserTemplate.getTriggerTemplate()))
+private fun searchUsagesOfSelectedTemplates(browserState: BrowserState) {
+    // get current project
+    val project = ProjectManager.currentProject ?: throw IllegalStateException("No project currently open")
+    // collect selected triggers
+    val selectedTemplates = browserState.selectedTemplates.map { it.getTriggerTemplate() }
+    // search for usages of the selected triggers
+    val usages = project.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
+    // open usages alert
+    DialogManager.alert(AlertCreator.createUsagesAlert(false, selectedTemplates, usages))
 }
