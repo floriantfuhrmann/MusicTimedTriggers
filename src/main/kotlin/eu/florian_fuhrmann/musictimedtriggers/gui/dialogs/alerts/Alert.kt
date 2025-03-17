@@ -13,6 +13,10 @@ import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.Text
 
+/**
+ * A simple alert dialog with a title, text and optional dismiss and
+ * confirm buttons. Uses Materials' AlertDialog as container.
+ */
 class Alert(
     val title: String = "Alert",
     val text: String,

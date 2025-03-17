@@ -17,7 +17,7 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.AdvancedAlertCreator
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.AlertCreator
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserTemplate
@@ -297,7 +297,7 @@ private fun removeSelectedTemplates(
     val usages = ProjectManager.currentProject!!.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
     // show confirmation dialog if needed
     if (alwaysShowConfirmation || usages.isNotEmpty()) {
-        DialogManager.alert(AdvancedAlertCreator.createUsagesAlert(selectedTemplates, usages))
+        DialogManager.alert(AlertCreator.createUsagesAlert(selectedTemplates, usages))
     }
 
 
