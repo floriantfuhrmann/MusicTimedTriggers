@@ -16,7 +16,7 @@ import org.jetbrains.jewel.ui.component.Text
 fun TriggerBrowser() {
     Column(
         Modifier.trackActivation()
-            .background(JewelTheme.globalColors.paneBackground)
+            .background(JewelTheme.globalColors.panelBackground)
             .fillMaxSize().onKeyEvent {
                 //Copy and Paste should work even if focus is not in the list itself, but on other parts of the browser
                 if(it.type != KeyEventType.KeyUp) return@onKeyEvent false

@@ -41,7 +41,7 @@ class Alert(
             text = {
                 Text(text)
             },
-            backgroundColor = JewelTheme.globalColors.paneBackground,
+            backgroundColor = JewelTheme.globalColors.panelBackground,
             properties = DialogProperties(dismissOnClickOutside = true),
             confirmButton = {
                 if(onConfirm != null) {

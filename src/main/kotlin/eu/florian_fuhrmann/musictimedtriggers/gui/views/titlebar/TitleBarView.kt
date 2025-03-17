@@ -33,7 +33,7 @@ fun DecoratedWindowScope.TitleBarView() {
     TitleBar(
         modifier = Modifier.newFullscreenControls().trackActivation(),
         gradientStartColor = (ProjectManager.currentProject?.projectSettings?.projectColor?.toComposeColor()
-            ?.mix(JewelTheme.globalColors.paneBackground, 0.55f) ?: Color.Unspecified)
+            ?.mix(JewelTheme.globalColors.panelBackground, 0.55f) ?: Color.Unspecified)
     )
     {
         Row(Modifier.align(Alignment.Start).padding(5.dp).trackActivation()) {
@@ -55,10 +55,10 @@ fun DecoratedWindowScope.TitleBarView() {
                         onClick = {
                             DialogManager.openDialog(EditProjectDialog(create = false, project = ProjectManager.currentProject))
                         },
-                        iconResource = when(MainUiState.theme.isDark()) {
+                        iconKey = IconsDummy.getPathIconKeyFor(when(MainUiState.theme.isDark()) {
                             true -> "icons/setting-line-icon_dark.svg"
                             else -> "icons/setting-line-icon.svg"
-                        }
+                        })
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -75,10 +75,10 @@ fun DecoratedWindowScope.TitleBarView() {
                     onClick = {
                         DialogManager.openDialog(OpenProjectDialog())
                     },
-                    iconResource = when(MainUiState.theme.isDark()) {
+                    iconKey = IconsDummy.getPathIconKeyFor(when(MainUiState.theme.isDark()) {
                         true -> "icons/open-folder-outline-icon_dark.svg"
                         else -> "icons/open-folder-outline-icon.svg"
-                    }
+                    })
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -94,10 +94,10 @@ fun DecoratedWindowScope.TitleBarView() {
                     onClick = {
                         DialogManager.openDialog(EditProjectDialog(create = true))
                     },
-                    iconResource = when(MainUiState.theme.isDark()) {
+                    iconKey = IconsDummy.getPathIconKeyFor(when(MainUiState.theme.isDark()) {
                         true -> "icons/plus-line-icon_dark.svg"
                         else -> "icons/plus-line-icon.svg"
-                    }
+                    })
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -160,12 +160,11 @@ fun DecoratedWindowScope.TitleBarView() {
                 }, Modifier.size(40.dp).padding(5.dp).trackActivation()) {
                     Box(modifier = Modifier.padding(5.dp).trackActivation()) {
                         Icon(
-                            when (MainUiState.theme.isDark()) {
+                            key = IconsDummy.getPathIconKeyFor(when (MainUiState.theme.isDark()) {
                                 true -> "icons/day-sunny-icon.svg"
                                 else -> "icons/moon-icon.svg"
-                            },
-                            "Edit",
-                            IconsDummy::class.java
+                            }),
+                            contentDescription = "Edit"
                         )
                     }
                 }
