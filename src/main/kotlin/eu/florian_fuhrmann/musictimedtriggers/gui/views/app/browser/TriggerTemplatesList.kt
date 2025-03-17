@@ -117,7 +117,7 @@ fun TriggerTemplatesList() {
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TriggerTemplateItem(
-    scope: ReorderableItemScope,
+    scope: ReorderableCollectionItemScope,
     browserState: BrowserState,
     browserTemplate: BrowserTemplate,
     isDragging: Boolean,

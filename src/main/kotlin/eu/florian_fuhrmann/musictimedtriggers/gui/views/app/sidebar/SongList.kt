@@ -26,8 +26,8 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Link
 import org.jetbrains.jewel.ui.component.SelectableIconButton
 import org.jetbrains.jewel.ui.component.Text
+import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.ReorderableItemScope
 import sh.calvin.reorderable.rememberReorderableLazyColumnState
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -105,7 +105,7 @@ fun SongList() {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun DragHandle(
-    scope: ReorderableItemScope,
+    scope: ReorderableCollectionItemScope,
     item: Song,
     onClick: () -> Unit,
     onDoubleClick: () -> Unit,

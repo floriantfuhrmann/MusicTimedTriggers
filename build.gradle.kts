@@ -45,7 +45,7 @@ dependencies {
     implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.7.3")
 
     // Reorderable (https://github.com/Calvin-LL/Reorderable/)
-    implementation("sh.calvin.reorderable:reorderable:1.3.2")
+    implementation("sh.calvin.reorderable:reorderable:2.4.3")
 
     // Compose Multiplatform File Picker (https://github.com/Wavesonics/compose-multiplatform-file-picker)
     implementation("com.darkrockstudios:mpfilepicker:3.1.0")
