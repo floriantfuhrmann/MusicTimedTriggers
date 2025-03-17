@@ -15,7 +15,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 fun EditorToolbar() {
     Row(
         modifier = Modifier
-            .background(JewelTheme.globalColors.paneBackground)
+            .background(JewelTheme.globalColors.panelBackground)
             .fillMaxWidth()
             .padding(3.dp)
             .height(26.dp)

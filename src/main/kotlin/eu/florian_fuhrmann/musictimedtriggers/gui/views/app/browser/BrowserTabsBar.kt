@@ -1,12 +1,23 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollableDefaults
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.DropdownMenu
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.edittemplategroup.EditTemplateGroupDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.styles.outlinedButtonStyleWithNoPadding
@@ -18,6 +29,7 @@ import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggerType
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
 import eu.florian_fuhrmann.musictimedtriggers.utils.IconsDummy
+import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
@@ -38,39 +50,62 @@ fun BrowserTabsBar() {
             } ?: emptyList()
         }
     }
-    val scrollState = rememberScrollState()
+    val tabsScrollState = rememberScrollState()
+    var tabsHovered by remember { mutableStateOf(false) }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
+        //Column with tabs
         Column(modifier = Modifier.weight(1f).height(JewelTheme.defaultTabStyle.metrics.tabHeight)) {
-            if(scrollState.canScrollForward || scrollState.canScrollBackward) {
-                TabStripHorizontalScrollbar(
-                    modifier = Modifier.fillMaxWidth(),
-                    adapter = rememberScrollbarAdapter(scrollState)
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(scrollState)
+            // This is similar to TabStrip from org.jetbrains.jewel.ui.component, but modified to be reorderable
+            Box(
+                Modifier.focusable(true, remember { MutableInteractionSource() }).onHover {
+                    tabsHovered = it
+                }
             ) {
-                ReorderableRow(
-                    list = openedGroups,
-                    onSettle = { fromIndex, toIndex ->
-                        ProjectManager.currentProject?.browserState?.moveGroup(fromIndex, toIndex)
-                    }
-                ) { _, item, _ ->
-                    // Item content
-                    scrollState.viewportSize
-                    key(item.uuid) {
-                        DragHandle(
-                            this, item, item == ProjectManager.currentProject?.browserState?.selectedGroup?.value,
-                            onClick = {
-                                ProjectManager.currentProject?.browserState?.selectGroup(item)
-                            },
-                            onClose = {
-                                ProjectManager.currentProject?.browserState?.closeGroup(item)
-                            }
+                // Scrollbar for Tabs
+                androidx.compose.animation.AnimatedVisibility(
+                    modifier = Modifier.zIndex(0.5f),
+                    visible = tabsHovered,
+                    enter = fadeIn(tween(durationMillis = 125, delayMillis = 0, easing = LinearEasing)),
+                    exit = fadeOut(tween(durationMillis = 125, delayMillis = 700, easing = LinearEasing)),
+                ) {
+                    HorizontalScrollbar(tabsScrollState, style = JewelTheme.defaultTabStyle.scrollbarStyle, modifier = Modifier.fillMaxWidth())
+                }
+                // Tabs
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(tabsScrollState)
+                        .scrollable(
+                            state = tabsScrollState,
+                            orientation = Orientation.Vertical,
+                            reverseDirection =
+                                ScrollableDefaults.reverseDirection(
+                                    LocalLayoutDirection.current,
+                                    Orientation.Vertical,
+                                    false
+                                )
                         )
+                        .selectableGroup()
+                ) {
+                    ReorderableRow(
+                        list = openedGroups,
+                        onSettle = { fromIndex, toIndex ->
+                            ProjectManager.currentProject?.browserState?.moveGroup(fromIndex, toIndex)
+                        }
+                    ) { _, item, _ ->
+                        // Item content
+                        key(item.uuid) {
+                            TabDragHandle(
+                                this, item, item == ProjectManager.currentProject?.browserState?.selectedGroup?.value,
+                                onClick = {
+                                    ProjectManager.currentProject?.browserState?.selectGroup(item)
+                                },
+                                onClose = {
+                                    ProjectManager.currentProject?.browserState?.closeGroup(item)
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -89,10 +124,10 @@ fun BrowserTabsBar() {
                                 }
                             }
                         },
-                        iconResource = when(MainUiState.theme.isDark()) {
+                        iconKey = IconsDummy.getPathIconKeyFor(when(MainUiState.theme.isDark()) {
                             true -> "icons/pencil-outline-icon_dark.svg"
                             else -> "icons/pencil-outline-icon.svg"
-                        }
+                        }),
                     ) {
                         Text("Edit Group")
                     }
@@ -101,10 +136,10 @@ fun BrowserTabsBar() {
                         onClick = {
                             DialogManager.openDialog(EditTemplateGroupDialog(true, null))
                         },
-                        iconResource = when(MainUiState.theme.isDark()) {
+                        iconKey = IconsDummy.getPathIconKeyFor(when(MainUiState.theme.isDark()) {
                             true -> "icons/plus-line-icon_dark.svg"
                             else -> "icons/plus-line-icon.svg"
-                        }
+                        }),
                     ) {
                         Text("Create Group")
                     }
@@ -151,7 +186,7 @@ fun BrowserTabsBar() {
                     expanded = false
                 },
                 modifier = Modifier
-                    .background(color = JewelTheme.globalColors.paneBackground)
+                    .background(color = JewelTheme.globalColors.panelBackground)
             ) {
                 Column(
                     modifier = Modifier
@@ -175,9 +210,8 @@ fun BrowserTabsBar() {
                                     //Trigger Template Icon
                                     Column {
                                         Icon(
-                                            triggerType.iconResource,
-                                            null,
-                                            IconsDummy::class.java,
+                                            key = IconsDummy.getPathIconKeyFor(triggerType.iconResource),
+                                            contentDescription = null,
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }
@@ -200,7 +234,7 @@ fun BrowserTabsBar() {
 }
 
 @Composable
-private fun DragHandle(
+private fun TabDragHandle(
     scope: ReorderableScope,
     browserGroup: BrowserGroup,
     selected: Boolean,
@@ -209,7 +243,7 @@ private fun DragHandle(
 ) {
     SingleTab(
         modifier = with(scope) { Modifier.draggableHandle() },
-        editorStyle = true,
+        editorStyle = false,
         selected = selected,
         closable = true,
         onClose = onClose,

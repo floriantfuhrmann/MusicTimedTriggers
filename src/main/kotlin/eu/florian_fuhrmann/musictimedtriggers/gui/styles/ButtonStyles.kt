@@ -18,6 +18,8 @@ val outlinedButtonStyleWithNoPadding: ButtonStyle
                 padding = PaddingValues(0.dp),
                 minSize = JewelTheme.outlinedButtonStyle.metrics.minSize,
                 borderWidth = 0.dp, //JewelTheme.outlinedButtonStyle.metrics.borderWidth
-            )
+                focusOutlineExpand = JewelTheme.outlinedButtonStyle.metrics.focusOutlineExpand,
+            ),
+            focusOutlineAlignment = JewelTheme.outlinedButtonStyle.focusOutlineAlignment
         )
     }

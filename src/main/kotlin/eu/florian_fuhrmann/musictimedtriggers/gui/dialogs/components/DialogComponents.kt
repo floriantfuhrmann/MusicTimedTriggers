@@ -22,7 +22,7 @@ fun DialogFrame(
 ) {
     Box(
         modifier = Modifier
-            .background(JewelTheme.globalColors.paneBackground)
+            .background(JewelTheme.globalColors.panelBackground)
             .fillMaxSize()
             .padding(5.dp)
             .trackActivation()

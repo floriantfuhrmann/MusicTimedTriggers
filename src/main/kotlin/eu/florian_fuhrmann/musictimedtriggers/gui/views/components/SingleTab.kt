@@ -1,6 +1,5 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.HoverInteraction
@@ -25,8 +24,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
-import org.jetbrains.jewel.ui.NoIndication
 import org.jetbrains.jewel.ui.component.ButtonState
+import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.TabState
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
@@ -88,8 +87,6 @@ fun SingleTab(
                 .selectable(
                     onClick = onClick,
                     selected = selected,
-                    interactionSource = interactionSource,
-                    indication = NoIndication,
                     role = Role.Tab,
                 )
                 .drawBehind {
@@ -136,18 +133,18 @@ fun SingleTab(
                     }
                 }
 
-                val closePainter by tabStyle.icons.close.getPainter(Stateful(closeButtonState))
-                Image(
-                    modifier = Modifier
-                        .clickable(
+                Icon(
+                    key = tabStyle.icons.close,
+                    modifier =
+                        Modifier.clickable(
                             interactionSource = closeActionInteractionSource,
                             indication = null,
                             onClick = onClose,
                             role = Role.Button,
                         )
-                        .size(16.dp),
-                    painter = closePainter,
+                            .size(16.dp),
                     contentDescription = "Close tab",
+                    hint = Stateful(closeButtonState),
                 )
             } else if (closable) {
                 Spacer(Modifier.size(16.dp))
