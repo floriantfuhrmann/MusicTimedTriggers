@@ -29,7 +29,7 @@ object AlertCreator {
         return "${if(m<10){"0"}else{""}}$m:${if(s<10){"0"}else{""}}$s"
     }
 
-    fun createUsagesAlert(templates: List<AbstractTriggerTemplate>, usages: List<TriggersManager.TriggerUsage>): CustomAlert {
+    fun createUsagesAlert(templates: List<AbstractTriggerTemplate>, usages: List<TriggersManager.TriggerUsage>, onConfirm: () -> Unit): CustomAlert {
         return CustomAlert(
             onDismissRequest = { closeAlert() },
             content = {
@@ -134,7 +134,10 @@ object AlertCreator {
                         }
                         OutlinedButton(
                             modifier = Modifier.padding(start = 5.dp),
-                            onClick = { closeAlert() }
+                            onClick = {
+                                closeAlert()
+                                onConfirm()
+                            }
                         ) {
                             Text("Confirm deletion", color = Color.Red)
                         }

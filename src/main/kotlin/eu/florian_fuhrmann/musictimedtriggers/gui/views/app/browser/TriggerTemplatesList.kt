@@ -21,7 +21,10 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.AlertCreator
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserTemplate
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 import eu.florian_fuhrmann.musictimedtriggers.utils.IconsDummy
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.getContrasting
 import org.jetbrains.jewel.foundation.modifier.onHover
@@ -68,7 +71,7 @@ fun TriggerTemplatesList() {
                                 ""
                             },
                     ) {
-                        removeSelectedTemplates(browserState, browserState.selectedTemplates.size != 1)
+                        removeSelectedTemplates(browserState)
                     },
                     ContextMenuItem("Copy") {
                         browserState.copy()
@@ -95,7 +98,7 @@ fun TriggerTemplatesList() {
                         if (it.type != KeyEventType.KeyUp) return@onKeyEvent false
                         if (it.key == Key.Backspace || it.key == Key.Delete) {
                             // remove all selected triggers
-                            removeSelectedTemplates(browserState, true)
+                            removeSelectedTemplates(browserState, it.isShiftPressed && it.isAltPressed)
                             return@onKeyEvent true
                         }
                         return@onKeyEvent false
@@ -285,30 +288,33 @@ fun TriggerTemplateItem(
     }
 }
 
-private fun removeSelectedTemplates(
-    browserState: BrowserState,
-    alwaysShowConfirmation: Boolean = false, // Todo: when this is set to true, show a confirmation dialog even when there are no usages
-) {
+private fun removeSelectedTemplates(browserState: BrowserState, skipConfirmation: Boolean = false) {
     // get current project
     val project = ProjectManager.currentProject ?: throw IllegalStateException("No project currently open")
     // collect triggers to remove
     val selectedTemplates = browserState.selectedTemplates.map { it.getTriggerTemplate() }
     // search for usages of the selected templates
     val usages = ProjectManager.currentProject!!.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
-    // show confirmation dialog if needed
-    if (alwaysShowConfirmation || usages.isNotEmpty()) {
-        DialogManager.alert(AlertCreator.createUsagesAlert(selectedTemplates, usages))
+    // create onConfirm function
+    val onConfirm: () -> Unit = {
+        // remove placed triggers in usages and collect set of affected lines
+        val affectedLines = mutableSetOf<TriggerSequenceLine>()
+        usages.forEach {
+            TriggerSelectionManager.deselectTrigger(it.placedTrigger, false)
+            it.line.removeTrigger(it.placedTrigger)
+            affectedLines.add(it.line)
+        }
+        // redraw timeline because some placed triggers currently visible might have been removed
+        redrawTimeline()
+        // save the affected lines
+        affectedLines.forEach { it.saveToFile() }
+        // remove the templates
+        project.triggersManager.removeTriggerTemplates(selectedTemplates) // also saves the affected groups
     }
-
-
-    /* ToDo: Show alert with a 'View Usages' button and a 'Delete Anyway' button. If the user chooses 'View Usages',
-        open a dialog with the usages. Then ensure the placed triggers are deleted before the templates. A more complex
-        alert system is needed before this can be continued. */
-
-
-    /*
-    To remove the templates, use the following code:
-    ProjectManager.currentProject!!.triggersManager.removeTriggerTemplates(selectedTemplates)
-    Warning: does not the delete the placed triggers, which use the  templates.
-     */
+    // show confirmation dialog if needed
+    if (skipConfirmation) {
+        onConfirm.invoke()
+    } else {
+        DialogManager.alert(AlertCreator.createUsagesAlert(selectedTemplates, usages, onConfirm))
+    }
 }
