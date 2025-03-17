@@ -29,7 +29,12 @@ object AlertCreator {
         return "${if(m<10){"0"}else{""}}$m:${if(s<10){"0"}else{""}}$s"
     }
 
-    fun createUsagesAlert(templates: List<AbstractTriggerTemplate>, usages: List<TriggersManager.TriggerUsage>, onConfirm: () -> Unit): CustomAlert {
+    fun createUsagesAlert(
+        deleteMode: Boolean, // whether usages are displayed for deletion or just for information
+        templates: List<AbstractTriggerTemplate>,
+        usages: List<TriggersManager.TriggerUsage>,
+        onConfirm: (() -> Unit)? = null // only needed if deleteMode is true
+    ): CustomAlert {
         return CustomAlert(
             onDismissRequest = { closeAlert() },
             content = {
@@ -43,85 +48,111 @@ object AlertCreator {
                 Column {
                     // Title
                     Row(modifier = Modifier.padding(top = 15.dp, start = 15.dp, end = 15.dp)) {
-                        Text(when(usages.size) {
-                            0 -> if(templates.size == 1) "The template is not used in any placed triggers." else "The templates are not used in any placed triggers."
-                            1 -> if(templates.size == 1) "The template is still used one time" else "One template is still used in one place"
-                            else -> if(templates.size == 1) "The template is still used ${usages.size} times" else "The templates are still used ${usages.size} times"
-                        }, fontWeight = FontWeight.Bold, color = if (usages.isEmpty()) Color.Green else Color.Red)
+                        Text(
+                            if (deleteMode) {
+                                when (usages.size) {
+                                    0 -> if (templates.size == 1) "The template is not used in any placed triggers" else "The templates are not used in any placed triggers"
+                                    1 -> if (templates.size == 1) "The template is still used one time" else "One template is still used in one place"
+                                    else -> if (templates.size == 1) "The template is still used ${usages.size} times" else "The templates are still used ${usages.size} times"
+                                }
+                            } else {
+                                "Template Usages"
+                            }, fontWeight = FontWeight.Bold, color = if (usages.isEmpty() || !deleteMode) JewelTheme.globalColors.text.normal else Color.Red
+                        )
                     }
                     // Message
                     Row(modifier = Modifier.padding(top = 8.dp, start = 15.dp, end = 15.dp)) {
-                        Text(
-                            when (usages.size) {
-                            0 -> buildAnnotatedString {
-                                append("Continuing with deletion will not delete any placed triggers.")
-                            }
-
-                            1 -> buildAnnotatedString {
-                                append("Continuing with deletion will also remove ")
-                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                    append("one")
+                        if (deleteMode) {
+                            Text(
+                                when (usages.size) {
+                                0 -> buildAnnotatedString {
+                                    append("Continuing with deletion will not delete any placed triggers.")
                                 }
-                                append(" placed trigger:")
-                            }
 
-                            else -> buildAnnotatedString {
-                                append("Continuing with deletion will also remove ")
-                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                    append("${usages.size}")
+                                1 -> buildAnnotatedString {
+                                    append("Continuing with deletion will also remove ")
+                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append("one")
+                                    }
+                                    append(" placed trigger:")
                                 }
-                                append(" placed triggers:")
-                            }
+
+                                else -> buildAnnotatedString {
+                                    append("Continuing with deletion will also remove ")
+                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append("${usages.size}")
+                                    }
+                                    append(" placed triggers:")
+                                }
+                            })
+                        } else if (usages.isEmpty()) {
+                            Text("No usages found")
                         }
-                        )
+                        //else: in non-delete mode, this row will just serve as a spacer
                     }
                     // Usages
-                    Row(modifier = Modifier.padding(top = 1.dp, start = 15.dp, end = 15.dp).border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal)) {
-                        Box(modifier = Modifier.weight(1f).fillMaxHeight(0.5f)) {
-                            val scrollState = rememberScrollState()
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .verticalScroll(scrollState)
-                            ) {
+                    if(usages.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.padding(top = 1.dp, start = 15.dp, end = 15.dp)
+                                .border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal)
+                        ) {
+                            Box(modifier = Modifier.weight(1f).fillMaxHeight(0.5f)) {
+                                val scrollState = rememberScrollState()
                                 Column(
-                                    verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top)
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .verticalScroll(scrollState)
                                 ) {
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    for (usage in usages) {
-                                        Row {
-                                            Text(
-                                                text = buildAnnotatedString {
-                                                    withStyle(disabledTextStyle) {
-                                                        append("${usage.song.name} > ${usage.line.name} > ")
-                                                    }
-                                                    withLink(
-                                                        LinkAnnotation.Clickable(tag = "", linkInteractionListener = { _ ->
-                                                            closeAlert()
-                                                            ProjectManager.currentProject?.openSongAtTime(usage.song, usage.placedTrigger.startTime)
-                                                        }
-                                                    )) {
-                                                        withStyle(linkStyle) {
-                                                            append("${usage.placedTrigger.name()} (${formatSeconds(usage.placedTrigger.startTime)})")
-                                                        }
-                                                    }
-                                                },
-                                                modifier = Modifier.padding(horizontal = 8.dp)
-                                                    .padding(end = scrollbarContentSafePadding())
-                                            )
-                                        }
-                                        if(usage != usages.last()) {
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top)
+                                    ) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        for (usage in usages) {
                                             Row {
-                                                Box(Modifier.height(8.dp), contentAlignment = Alignment.CenterStart) {
-                                                    Divider(Orientation.Horizontal, Modifier.fillMaxWidth())
+                                                Text(
+                                                    text = buildAnnotatedString {
+                                                        withStyle(disabledTextStyle) {
+                                                            append("${usage.song.name} > ${usage.line.name} > ")
+                                                        }
+                                                        withLink(
+                                                            LinkAnnotation.Clickable(
+                                                                tag = "",
+                                                                linkInteractionListener = { _ ->
+                                                                    closeAlert()
+                                                                    ProjectManager.currentProject?.openSongAtTime(
+                                                                        usage.song,
+                                                                        usage.placedTrigger.startTime
+                                                                    )
+                                                                }
+                                                            )) {
+                                                            withStyle(linkStyle) {
+                                                                append("${usage.placedTrigger.name()} (${formatSeconds(usage.placedTrigger.startTime)})")
+                                                            }
+                                                        }
+                                                    },
+                                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                                        .padding(end = scrollbarContentSafePadding())
+                                                )
+                                            }
+                                            if (usage != usages.last()) {
+                                                Row {
+                                                    Box(
+                                                        Modifier.height(8.dp),
+                                                        contentAlignment = Alignment.CenterStart
+                                                    ) {
+                                                        Divider(Orientation.Horizontal, Modifier.fillMaxWidth())
+                                                    }
                                                 }
                                             }
                                         }
+                                        Spacer(modifier = Modifier.height(4.dp))
                                     }
-                                    Spacer(modifier = Modifier.height(4.dp))
                                 }
+                                VerticalScrollbar(
+                                    scrollState = scrollState,
+                                    modifier = Modifier.align(Alignment.CenterEnd)
+                                )
                             }
-                            VerticalScrollbar(scrollState = scrollState, modifier = Modifier.align(Alignment.CenterEnd))
                         }
                     }
                     // Buttons
@@ -130,16 +161,18 @@ object AlertCreator {
                             modifier = Modifier,
                             onClick = { closeAlert() }
                         ) {
-                            Text("Abort")
+                            Text(if (deleteMode) "Abort" else "Close")
                         }
-                        OutlinedButton(
-                            modifier = Modifier.padding(start = 5.dp),
-                            onClick = {
-                                closeAlert()
-                                onConfirm()
+                        if(deleteMode) {
+                            OutlinedButton(
+                                modifier = Modifier.padding(start = 5.dp),
+                                onClick = {
+                                    closeAlert()
+                                    onConfirm!!()
+                                }
+                            ) {
+                                Text("Confirm Deletion", color = Color.Red)
                             }
-                        ) {
-                            Text("Confirm deletion", color = Color.Red)
                         }
                     }
                 }

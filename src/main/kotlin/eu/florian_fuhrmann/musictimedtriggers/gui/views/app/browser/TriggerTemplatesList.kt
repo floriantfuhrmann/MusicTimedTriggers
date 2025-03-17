@@ -24,6 +24,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserTemplat
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 import eu.florian_fuhrmann.musictimedtriggers.utils.IconsDummy
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.getContrasting
@@ -63,6 +64,9 @@ fun TriggerTemplatesList() {
                             hoveredTemplate.getTriggerTemplate().openEditDialog(false)
                         }
                     },
+                    ContextMenuItem("Search Usages") {
+                        searchUsagesOfSelectedTemplates(browserState)
+                    },
                     ContextMenuItem(
                         "Delete" +
                             if (browserState.selectedTemplates.size != 1) {
@@ -75,7 +79,7 @@ fun TriggerTemplatesList() {
                     },
                     ContextMenuItem("Copy") {
                         browserState.copy()
-                    },
+                    }
                 )
             } else {
                 listOf(
@@ -294,7 +298,7 @@ private fun removeSelectedTemplates(browserState: BrowserState, skipConfirmation
     // collect triggers to remove
     val selectedTemplates = browserState.selectedTemplates.map { it.getTriggerTemplate() }
     // search for usages of the selected templates
-    val usages = ProjectManager.currentProject!!.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
+    val usages = project.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
     // create onConfirm function
     val onConfirm: () -> Unit = {
         // remove placed triggers in usages and collect set of affected lines
@@ -315,6 +319,17 @@ private fun removeSelectedTemplates(browserState: BrowserState, skipConfirmation
     if (skipConfirmation) {
         onConfirm.invoke()
     } else {
-        DialogManager.alert(AlertCreator.createUsagesAlert(selectedTemplates, usages, onConfirm))
+        DialogManager.alert(AlertCreator.createUsagesAlert(true, selectedTemplates, usages, onConfirm))
     }
+}
+
+private fun searchUsagesOfSelectedTemplates(browserState: BrowserState) {
+    // get current project
+    val project = ProjectManager.currentProject ?: throw IllegalStateException("No project currently open")
+    // collect selected triggers
+    val selectedTemplates = browserState.selectedTemplates.map { it.getTriggerTemplate() }
+    // search for usages of the selected triggers
+    val usages = project.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
+    // open usages alert
+    DialogManager.alert(AlertCreator.createUsagesAlert(false, selectedTemplates, usages))
 }
