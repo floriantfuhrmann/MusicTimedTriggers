@@ -236,7 +236,8 @@ class BrowserState(
         updateAllGroupTriggers(triggerTemplateGroup)
         //also make sure no templates are selected
         unselectAllTemplates()
-        //no need to save the project because that will be done anyway (because not only the ui changed)
+        //save state to file
+        saveToFileInCurrentProjectDirectory()
     }
 
     /**
