@@ -1,16 +1,14 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager.closeAlert
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
@@ -20,13 +18,27 @@ import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 
 object AlertCreator {
+
+    private fun formatSeconds(seconds: Double): String {
+        val m = seconds.toInt() / 60
+        val s = seconds.toInt() % 60
+        return "${if(m<10){"0"}else{""}}$m:${if(s<10){"0"}else{""}}$s"
+    }
 
     fun createUsagesAlert(templates: List<AbstractTriggerTemplate>, usages: List<TriggersManager.TriggerUsage>): CustomAlert {
         return CustomAlert(
             onDismissRequest = { closeAlert() },
             content = {
+                val disabledTextStyle = SpanStyle(
+                    color = LocalLinkStyle.current.colors.contentDisabled,
+                )
+                val linkStyle = SpanStyle(
+                    color = LocalLinkStyle.current.colors.content,
+                    textDecoration = TextDecoration.Underline
+                )
                 Column {
                     // Title
                     Row(modifier = Modifier.padding(top = 15.dp, start = 15.dp, end = 15.dp)) {
@@ -68,7 +80,6 @@ object AlertCreator {
                             val scrollState = rememberScrollState()
                             Column(
                                 modifier = Modifier
-//                                    .weight(1f)
                                     .fillMaxSize()
                                     .verticalScroll(scrollState)
                             ) {
@@ -79,7 +90,20 @@ object AlertCreator {
                                     for (usage in usages) {
                                         Row {
                                             Text(
-                                                text = "${usage.song.name} > ${usage.line.name} > ${usage.placedTrigger.name()} > ${usage.placedTrigger.startTime}",
+                                                text = buildAnnotatedString {
+                                                    withStyle(disabledTextStyle) {
+                                                        append("${usage.song.name} > ${usage.line.name} > ")
+                                                    }
+                                                    withLink(
+                                                        LinkAnnotation.Clickable(tag = "", linkInteractionListener = { _ ->
+                                                            println("ToDo: goto ${usage.placedTrigger.startTime}")
+                                                        }
+                                                    )) {
+                                                        withStyle(linkStyle) {
+                                                            append("${usage.placedTrigger.name()} (${formatSeconds(usage.placedTrigger.startTime)})")
+                                                        }
+                                                    }
+                                                },
                                                 modifier = Modifier.padding(horizontal = 8.dp)
                                                     .padding(end = scrollbarContentSafePadding())
                                             )
