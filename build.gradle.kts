@@ -42,7 +42,7 @@ dependencies {
     implementation("com.jetbrains.intellij.platform:icons:243.26053.20")
 
     // https://mvnrepository.com/artifact/org.jetbrains.compose.components/components-splitpane-desktop
-    implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.5.11")
+    implementation("org.jetbrains.compose.components:components-splitpane-desktop:1.7.3")
 
     // Reorderable (https://github.com/Calvin-LL/Reorderable/)
     implementation("sh.calvin.reorderable:reorderable:1.3.2")
