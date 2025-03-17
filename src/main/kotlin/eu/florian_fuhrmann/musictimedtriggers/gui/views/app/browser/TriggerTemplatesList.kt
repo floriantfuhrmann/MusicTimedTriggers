@@ -291,6 +291,10 @@ fun TriggerTemplateItem(
 }
 
 private fun removeSelectedTemplates(browserState: BrowserState, skipConfirmation: Boolean = false) {
+    // ensure that at least one template is selected
+    if (browserState.selectedTemplates.isEmpty()) {
+        return
+    }
     // get current project
     val project = ProjectManager.currentProject ?: throw IllegalStateException("No project currently open")
     // collect triggers to remove
