@@ -51,7 +51,7 @@ dependencies {
     implementation("com.darkrockstudios:mpfilepicker:3.1.0")
 
     // Gson https://mvnrepository.com/artifact/com.google.code.gson/gson
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.google.code.gson:gson:2.12.1")
 
     // compose-color-picker (https://github.com/godaddy/compose-color-picker)
     implementation("com.godaddy.android.colorpicker:compose-color-picker:0.7.0")
