@@ -19,6 +19,8 @@ object EditTriggersManager {
             val line = sequence.findLineOf(firstSelectedTrigger)
             require(line != null) {"Failed to find the selected triggers line"}
             line.removeTrigger(firstSelectedTrigger)
+            //make sure the trigger is no longer selected
+            TriggerSelectionManager.deselectAllTriggers(false)
             //redraw timeline so change becomes visible
             redrawTimeline()
             //also save the affected line
@@ -41,6 +43,8 @@ object EditTriggersManager {
                             line.removeTrigger(it)
                             affectedLines.add(line)
                         }
+                        //make sure the triggers are no longer selected
+                        TriggerSelectionManager.deselectAllTriggers(false)
                         //redraw timeline so change becomes visible
                         redrawTimeline()
                         //also save the affected lines

@@ -80,7 +80,7 @@ fun main() {
                     if (!TimelineFocusManager.timelineFocused) return@DecoratedWindow false
                     if (it.type != KeyEventType.KeyUp) return@DecoratedWindow false
                     if (it.key == Key.Backspace || it.key == Key.Delete) {
-                        EditTriggersManager.editSelectedTrigger()
+                        EditTriggersManager.deleteSelectedTriggers()
                         return@DecoratedWindow true
                     } else if (it.key == Key.Enter) {
                         EditTriggersManager.editSelectedTrigger()

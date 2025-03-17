@@ -72,6 +72,13 @@ object TriggerSelectionManager {
         }
     }
 
+    fun deselectAllTriggers(redraw: Boolean = true) {
+        selectedTriggers.clear()
+        if (redraw) {
+            redrawTimeline()
+        }
+    }
+
     /** @return whether the [trigger] is visually selected in some way */
     fun isVisuallySelected(trigger: AbstractPlacedTrigger) =
         selectionBoxTriggers.contains(trigger) || selectedTriggers.contains(trigger)
