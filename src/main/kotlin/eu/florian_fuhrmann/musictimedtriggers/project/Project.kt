@@ -13,6 +13,8 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
+import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.AudioPlayer
+import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
 import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
 import java.io.File
 import java.nio.charset.StandardCharsets
@@ -144,6 +146,12 @@ class Project(
         currentSong = song // 3. set currentSong reference
         previousSong?.closed() // 4. previous#closed
         song.opened() // 5. new#opened
+    }
+
+    fun openSongAtTime(song: Song, time: Double) {
+        openSong(song)
+        currentAudioPlayer.value?.secondPosition = time
+        redrawTimeline()
     }
 
     // Functions to Save and Load Songlist

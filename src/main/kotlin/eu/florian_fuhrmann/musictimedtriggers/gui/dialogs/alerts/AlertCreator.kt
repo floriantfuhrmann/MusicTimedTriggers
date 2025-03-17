@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager.closeAlert
+import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
 import org.jetbrains.jewel.foundation.Stroke
@@ -96,7 +97,8 @@ object AlertCreator {
                                                     }
                                                     withLink(
                                                         LinkAnnotation.Clickable(tag = "", linkInteractionListener = { _ ->
-                                                            println("ToDo: goto ${usage.placedTrigger.startTime}")
+                                                            closeAlert()
+                                                            ProjectManager.currentProject?.openSongAtTime(usage.song, usage.placedTrigger.startTime)
                                                         }
                                                     )) {
                                                         withStyle(linkStyle) {
