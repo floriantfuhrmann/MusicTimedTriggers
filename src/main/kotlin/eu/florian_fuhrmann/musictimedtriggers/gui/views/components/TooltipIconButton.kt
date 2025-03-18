@@ -68,8 +68,7 @@ fun SimpleIconButton(
             .padding(5.dp)
             .alpha( if(enabled) { 1f } else { 0.5f } )
         ) {
-            Icon(iconKey, iconContentDescriptor)
-            //todo: maybe fix tint?
+            Icon(iconKey, iconContentDescriptor, tint = MainUiState.theme.iconColor())
         }
     }
 }
@@ -94,7 +93,7 @@ fun OutlineIconButton(
         Box(modifier = Modifier
             //.background(color = backgroundColor, shape = RoundedCornerShape(JewelTheme.outlinedButtonStyle.metrics.cornerSize))
             .padding(iconPadding.dp)) {
-            Icon(iconKey, null)
+            Icon(iconKey, null, tint = MainUiState.theme.iconColor())
         }
     }
 }

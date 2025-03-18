@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.darkrockstudios.libraries.mpfilepicker.DirectoryPicker
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.ui.Outline
@@ -63,7 +64,8 @@ fun FilePathField(
                     Icon(
                         key = MttIcons.openFolderOutline,
                         "Browse",
-                        modifier = Modifier.trackActivation()
+                        modifier = Modifier.trackActivation(),
+                        tint = MainUiState.theme.iconColor()
                     )
                 }
             }

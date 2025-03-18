@@ -21,6 +21,7 @@ import androidx.compose.ui.zIndex
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.edittemplategroup.EditTemplateGroupDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.styles.outlinedButtonStyleWithNoPadding
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserGroup
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SingleTab
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
@@ -169,7 +170,7 @@ fun BrowserTabsBar() {
                 style = outlinedButtonStyleWithNoPadding
             ) {
                 Box(modifier = Modifier.padding(5.dp)) {
-                    Icon(MttIcons.plusLine, null)
+                    Icon(MttIcons.plusLine, null, tint = MainUiState.theme.iconColor())
                 }
             }
             DropdownMenu(

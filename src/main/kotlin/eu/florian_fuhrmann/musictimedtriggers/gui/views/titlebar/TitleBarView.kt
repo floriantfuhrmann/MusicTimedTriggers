@@ -153,7 +153,8 @@ fun DecoratedWindowScope.TitleBarView() {
                                 true -> MttIcons.daySunny
                                 else -> MttIcons.moon
                             },
-                            contentDescription = null
+                            contentDescription = null,
+                            tint = MainUiState.theme.iconColor()
                         )
                     }
                 }
