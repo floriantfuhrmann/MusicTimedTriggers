@@ -16,6 +16,9 @@ import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editproject.EditProjectDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.openproject.OpenProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
@@ -35,7 +38,7 @@ fun NoProjectView() {
         Row(Modifier.padding(top = 5.dp)) {
             DefaultButton(
                 onClick = {
-                    //todo
+                    DialogManager.openDialog(OpenProjectDialog())
                 }
             ) {
                 Text("Open Project")
@@ -43,7 +46,7 @@ fun NoProjectView() {
             DefaultButton(
                 modifier = Modifier.padding(start = 5.dp),
                 onClick = {
-                    //todo
+                    DialogManager.openDialog(EditProjectDialog(create = true))
                 }
             ) {
                 Text("Create Project")
