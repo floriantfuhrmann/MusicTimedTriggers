@@ -21,14 +21,12 @@ import androidx.compose.ui.zIndex
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.edittemplategroup.EditTemplateGroupDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.styles.outlinedButtonStyleWithNoPadding
-import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserGroup
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SimpleIcon
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SingleTab
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggerType
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
-import eu.florian_fuhrmann.musictimedtriggers.utils.IconsDummy
+import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
@@ -124,10 +122,7 @@ fun BrowserTabsBar() {
                                 }
                             }
                         },
-                        iconKey = IconsDummy.getPathIconKeyFor(when(MainUiState.theme.isDark()) {
-                            true -> "icons/pencil-outline-icon_dark.svg"
-                            else -> "icons/pencil-outline-icon.svg"
-                        }),
+                        iconKey = MttIcons.pencilOutline,
                     ) {
                         Text("Edit Group")
                     }
@@ -136,10 +131,7 @@ fun BrowserTabsBar() {
                         onClick = {
                             DialogManager.openDialog(EditTemplateGroupDialog(true, null))
                         },
-                        iconKey = IconsDummy.getPathIconKeyFor(when(MainUiState.theme.isDark()) {
-                            true -> "icons/plus-line-icon_dark.svg"
-                            else -> "icons/plus-line-icon.svg"
-                        }),
+                        iconKey = MttIcons.plusLine,
                     ) {
                         Text("Create Group")
                     }
@@ -177,7 +169,7 @@ fun BrowserTabsBar() {
                 style = outlinedButtonStyleWithNoPadding
             ) {
                 Box(modifier = Modifier.padding(5.dp)) {
-                    SimpleIcon("plus-line-icon")
+                    Icon(MttIcons.plusLine, null)
                 }
             }
             DropdownMenu(
@@ -210,7 +202,7 @@ fun BrowserTabsBar() {
                                     //Trigger Template Icon
                                     Column {
                                         Icon(
-                                            key = IconsDummy.getPathIconKeyFor(triggerType.iconResource),
+                                            key = triggerType.iconKey,
                                             contentDescription = null,
                                             modifier = Modifier.size(24.dp)
                                         )

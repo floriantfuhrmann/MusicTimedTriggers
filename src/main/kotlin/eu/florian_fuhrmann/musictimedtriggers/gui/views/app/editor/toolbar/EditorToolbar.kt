@@ -9,6 +9,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.rend
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SimpleIconButton
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
+import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 
 @Composable
@@ -22,14 +23,14 @@ fun EditorToolbar() {
     ) {
         if(currentAudioPlayer.value?.playing?.value == true) {
             SimpleIconButton(
-                iconName = "pause-icon",
+                iconKey = MttIcons.pause,
                 onClick = {
                     ProjectManager.currentProject?.currentSong?.pause()
                 }
             )
         } else if(currentAudioPlayer.value?.playing?.value == false) {
             SimpleIconButton(
-                iconName = "play-icon",
+                iconKey = MttIcons.play,
                 onClick = {
                     ProjectManager.currentProject?.currentSong?.play()
                 }
@@ -37,11 +38,11 @@ fun EditorToolbar() {
         }
         Spacer(modifier = Modifier.weight(1f))
         SimpleIconButton(
-            iconName = "zoom-in-icon",
+            iconKey = MttIcons.zoomIn,
             onClick = { TimelineBackgroundRenderer.zoomIn() }
         )
         SimpleIconButton(
-            iconName = "zoom-out-icon",
+            iconKey = MttIcons.zoomOut,
             onClick = { TimelineBackgroundRenderer.zoomOut() },
             modifier = Modifier.padding(start = 2.dp)
         )

@@ -12,10 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.component.Icon
 import java.awt.Cursor
 
 @Composable
@@ -53,9 +55,9 @@ fun Collapsible(
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(16.dp)) {
                     if (extended.value) {
-                        SimpleIcon("chevron-top-icon")
+                        Icon(MttIcons.chevronTop, null)
                     } else {
-                        SimpleIcon("chevron-down-icon")
+                        Icon(MttIcons.chevronDown, null)
                     }
                 }
             }

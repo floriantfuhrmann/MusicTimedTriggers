@@ -7,14 +7,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
-import java.awt.Cursor
 
 @Composable
 fun DoubleField(
@@ -86,7 +84,7 @@ fun DoubleField(
                             SimpleIconButton(
                                 enabled = validDouble && doubleValue > minValue,
                                 forceHoverHandCursor = true,
-                                iconName = "minus-icon",
+                                iconKey = MttIcons.minus,
                                 onClick = {
                                     if(validDouble) {
                                         val newValue = minus(doubleValue).coerceAtLeast(minValue).coerceAtMost(maxValue)
@@ -102,7 +100,7 @@ fun DoubleField(
                             SimpleIconButton(
                                 enabled = validDouble && doubleValue < maxValue,
                                 forceHoverHandCursor = true,
-                                iconName = "plus-icon",
+                                iconKey = MttIcons.plus,
                                 onClick = {
                                     if(validDouble) {
                                         val newValue = plus(doubleValue).coerceAtLeast(minValue).coerceAtMost(maxValue)
