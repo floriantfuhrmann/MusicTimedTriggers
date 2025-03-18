@@ -15,7 +15,7 @@ import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.IntUiThemes
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.App
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.main.App
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.EditTriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TimelineFocusManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.titlebar.TitleBarView

@@ -1,6 +1,5 @@
-package eu.florian_fuhrmann.musictimedtriggers.gui.views.app
+package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.main
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,12 +10,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.dp
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.TriggerBrowser
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.SongEditor
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TimelineFocusManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.overlay.Overlay
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.sidebar.Sidebar
+import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.VerticalSplitPane
@@ -26,14 +24,10 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 
 @OptIn(ExperimentalSplitPaneApi::class, ExperimentalComposeUiApi::class)
 @Composable
-@Preview
-fun App() {
-    // Overlay
-    Overlay()
-
+fun OpenedProjectView(project: Project) {
+    // Splitter States
     val sidebarSplitterState = rememberSplitPaneState()
     val verticalSplitterState = rememberSplitPaneState()
-
     // Main Window Content
     HorizontalSplitPane(
         splitPaneState = sidebarSplitterState,
@@ -83,6 +77,4 @@ fun App() {
             }
         }
     }
-    // Dialog Container
-    DialogManager.DialogContainer()
 }
