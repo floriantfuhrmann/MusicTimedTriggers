@@ -13,10 +13,11 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.styles.outlinedButtonStyleWithNoPadding
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
-import eu.florian_fuhrmann.musictimedtriggers.utils.IconsDummy
+import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.theme.dropdownStyle
 import org.jetbrains.jewel.ui.theme.outlinedButtonStyle
 import org.jetbrains.jewel.ui.util.thenIf
@@ -28,7 +29,7 @@ fun TooltipIconButton(
     enabled: Boolean = true,
     forceHoverHandCursor: Boolean = false,
     tooltip: String,
-    iconName: String,
+    iconKey: IconKey,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -36,7 +37,7 @@ fun TooltipIconButton(
         SimpleIconButton(
             enabled = enabled,
             forceHoverHandCursor = forceHoverHandCursor,
-            iconName = iconName,
+            iconKey = iconKey,
             iconContentDescriptor = tooltip,
             onClick = onClick,
             modifier = modifier
@@ -48,8 +49,8 @@ fun TooltipIconButton(
 fun SimpleIconButton(
     enabled: Boolean = true,
     forceHoverHandCursor: Boolean = false,
-    iconName: String,
-    iconContentDescriptor: String = iconName,
+    iconKey: IconKey,
+    iconContentDescriptor: String = "",
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -67,34 +68,14 @@ fun SimpleIconButton(
             .padding(5.dp)
             .alpha( if(enabled) { 1f } else { 0.5f } )
         ) {
-            Icon(
-                when (MainUiState.theme.isDark()) {
-                    true -> "icons/${iconName}_dark.svg"
-                    else -> "icons/${iconName}.svg"
-                },
-                iconContentDescriptor,
-                IconsDummy::class.java
-            )
+            Icon(iconKey, iconContentDescriptor, tint = MainUiState.theme.iconColor())
         }
     }
 }
 
 @Composable
-fun SimpleIcon(iconName: String, iconContentDescriptor: String = iconName, modifier: Modifier = Modifier) {
-    Icon(
-        when (MainUiState.theme.isDark()) {
-            true -> "icons/${iconName}_dark.svg"
-            else -> "icons/${iconName}.svg"
-        },
-        iconContentDescriptor,
-        IconsDummy::class.java,
-        modifier = modifier
-    )
-}
-
-@Composable
 fun OutlineIconButton(
-    iconName: String,
+    iconKey: IconKey,
     onClick: () -> Unit = {},
     size: Float = JewelTheme.dropdownStyle.metrics.minSize.height.value,
     iconPadding: Float = 5f,
@@ -112,7 +93,7 @@ fun OutlineIconButton(
         Box(modifier = Modifier
             //.background(color = backgroundColor, shape = RoundedCornerShape(JewelTheme.outlinedButtonStyle.metrics.cornerSize))
             .padding(iconPadding.dp)) {
-            SimpleIcon(iconName)
+            Icon(iconKey, null, tint = MainUiState.theme.iconColor())
         }
     }
 }

@@ -10,6 +10,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editsong.EditSongDialo
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editsong.openDeleteSongDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SimpleIconButton
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 
 @Composable
@@ -28,7 +29,7 @@ fun SidebarToolbar() {
         SimpleIconButton(
             modifier = Modifier.aspectRatio(1f),
             forceHoverHandCursor = true,
-            iconName = "plus-icon",
+            iconKey =  MttIcons.plus,
             onClick = {
                 DialogManager.openDialog(EditSongDialog(project = project, add = true))
             }
@@ -36,7 +37,7 @@ fun SidebarToolbar() {
         SimpleIconButton(
             modifier = Modifier.aspectRatio(1f),
             forceHoverHandCursor = true,
-            iconName = "minus-icon",
+            iconKey =  MttIcons.minus,
             enabled = project.currentSong != null,
             onClick = {
                 openDeleteSongDialog(project, project.currentSong)
@@ -45,7 +46,7 @@ fun SidebarToolbar() {
         SimpleIconButton(
             modifier = Modifier.aspectRatio(1f),
             forceHoverHandCursor = true,
-            iconName = "edit-box-icon",
+            iconKey =  MttIcons.editBox,
             enabled = ProjectManager.currentProject?.currentSong != null,
             onClick = {
                 if(ProjectManager.currentProject!!.currentSong != null) {

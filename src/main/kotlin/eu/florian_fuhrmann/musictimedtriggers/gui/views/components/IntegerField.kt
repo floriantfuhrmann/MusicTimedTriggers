@@ -7,21 +7,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
-import java.awt.Cursor
 
 @Composable
 fun IntegerField(
     initialValue: Int,
     minValue: Int = Int.MIN_VALUE,
     maxValue: Int = Int.MAX_VALUE,
-    buttons: Boolean = true, // weither to show plus and minus buttons
+    buttons: Boolean = true, // whether to show plus and minus buttons
     buttonStep: Int = 1,
     plus: (Int) -> Int = { it + buttonStep },
     minus: (Int) -> Int = { it -buttonStep },
@@ -82,7 +80,7 @@ fun IntegerField(
                             SimpleIconButton(
                                 enabled = validInt && intValue > minValue,
                                 forceHoverHandCursor = true,
-                                iconName = "minus-icon",
+                                iconKey = MttIcons.minus,
                                 onClick = {
                                     if(validInt) {
                                         val newValue = minus(intValue).coerceAtLeast(minValue).coerceAtMost(maxValue)
@@ -99,7 +97,7 @@ fun IntegerField(
                             SimpleIconButton(
                                 enabled = validInt && intValue < maxValue,
                                 forceHoverHandCursor = true,
-                                iconName = "plus-icon",
+                                iconKey = MttIcons.plus,
                                 onClick = {
                                     if(validInt) {
                                         val newValue = plus(intValue).coerceAtLeast(minValue).coerceAtMost(maxValue)

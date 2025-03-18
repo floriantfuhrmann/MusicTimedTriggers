@@ -11,9 +11,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserTemplate
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
-import eu.florian_fuhrmann.musictimedtriggers.utils.IconsDummy
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.getContrasting
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
@@ -72,10 +72,10 @@ private fun DraggedTemplate(browserTemplate: BrowserTemplate) {
                 modifier = Modifier.fillMaxHeight()
             ) {
                 Icon(
-                    browserTemplate.type.iconResource,
+                    browserTemplate.type.iconKey,
                     null,
-                    IconsDummy::class.java,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
+                    tint = MainUiState.theme.iconColor()
                 )
             }
         }

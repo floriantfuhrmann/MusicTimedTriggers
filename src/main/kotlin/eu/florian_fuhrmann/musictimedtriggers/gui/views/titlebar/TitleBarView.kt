@@ -5,18 +5,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editproject.EditProjectDialog
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editsong.EditSongDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.openproject.OpenProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.IntUiThemes
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
-import eu.florian_fuhrmann.musictimedtriggers.utils.IconsDummy
+import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.mix
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -55,10 +53,7 @@ fun DecoratedWindowScope.TitleBarView() {
                         onClick = {
                             DialogManager.openDialog(EditProjectDialog(create = false, project = ProjectManager.currentProject))
                         },
-                        iconKey = IconsDummy.getPathIconKeyFor(when(MainUiState.theme.isDark()) {
-                            true -> "icons/setting-line-icon_dark.svg"
-                            else -> "icons/setting-line-icon.svg"
-                        })
+                        iconKey = MttIcons.settingLine
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -75,10 +70,7 @@ fun DecoratedWindowScope.TitleBarView() {
                     onClick = {
                         DialogManager.openDialog(OpenProjectDialog())
                     },
-                    iconKey = IconsDummy.getPathIconKeyFor(when(MainUiState.theme.isDark()) {
-                        true -> "icons/open-folder-outline-icon_dark.svg"
-                        else -> "icons/open-folder-outline-icon.svg"
-                    })
+                    iconKey = MttIcons.openFolderOutline
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -94,10 +86,7 @@ fun DecoratedWindowScope.TitleBarView() {
                     onClick = {
                         DialogManager.openDialog(EditProjectDialog(create = true))
                     },
-                    iconKey = IconsDummy.getPathIconKeyFor(when(MainUiState.theme.isDark()) {
-                        true -> "icons/plus-line-icon_dark.svg"
-                        else -> "icons/plus-line-icon.svg"
-                    })
+                    iconKey = MttIcons.plusLine
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -160,11 +149,12 @@ fun DecoratedWindowScope.TitleBarView() {
                 }, Modifier.size(40.dp).padding(5.dp).trackActivation()) {
                     Box(modifier = Modifier.padding(5.dp).trackActivation()) {
                         Icon(
-                            key = IconsDummy.getPathIconKeyFor(when (MainUiState.theme.isDark()) {
-                                true -> "icons/day-sunny-icon.svg"
-                                else -> "icons/moon-icon.svg"
-                            }),
-                            contentDescription = "Edit"
+                            key = when (MainUiState.theme.isDark()) {
+                                true -> MttIcons.daySunny
+                                else -> MttIcons.moon
+                            },
+                            contentDescription = null,
+                            tint = MainUiState.theme.iconColor()
                         )
                     }
                 }

@@ -25,7 +25,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.mana
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
-import eu.florian_fuhrmann.musictimedtriggers.utils.IconsDummy
+import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.getContrasting
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.ui.component.Icon
@@ -200,9 +200,8 @@ fun TriggerTemplateItem(
                 modifier = Modifier.fillMaxHeight(),
             ) {
                 Icon(
-                    browserTemplate.type.iconResource,
+                    browserTemplate.type.iconKey,
                     null,
-                    IconsDummy::class.java,
                     modifier = Modifier.size(24.dp),
                 )
             }
@@ -231,9 +230,8 @@ fun TriggerTemplateItem(
             ) {
                 var hovered by remember { mutableStateOf(false) }
                 Icon(
-                    "icons/pencil-icon.svg",
+                    key = MttIcons.pencil,
                     null,
-                    IconsDummy::class.java,
                     modifier = Modifier
                         .alpha(
                             if (hovered) {
@@ -267,9 +265,8 @@ fun TriggerTemplateItem(
             ) {
                 var hovered by remember { mutableStateOf(false) }
                 Icon(
-                    "icons/content-view-list-icon.svg",
+                    key = MttIcons.contentViewList,
                     null,
-                    IconsDummy::class.java,
                     modifier =
                         with(scope) { Modifier.draggableHandle(interactionSource = interactionSource) }
                             .alpha(

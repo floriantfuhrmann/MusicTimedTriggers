@@ -21,6 +21,7 @@ import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.*
+import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Dropdown
 import org.jetbrains.jewel.ui.component.SelectableIconButton
@@ -251,7 +252,7 @@ class KeyframesConfigurationEntry(
                                         // Options Button
                                         SimpleIconButton(
                                             forceHoverHandCursor = true,
-                                            iconName = "more-options-icon",
+                                            iconKey = MttIcons.moreOptions,
                                             onClick = {
                                                 dropdownExpanded = !dropdownExpanded
                                             },
