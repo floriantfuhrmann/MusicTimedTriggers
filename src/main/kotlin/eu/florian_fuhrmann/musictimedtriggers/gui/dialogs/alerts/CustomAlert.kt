@@ -4,10 +4,16 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -22,16 +28,32 @@ open class CustomAlert(
     val contentMargin: Dp = 10.dp
 ) : AbstractAlert() {
 
+    var focusRequester: FocusRequester? = null
+
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     override fun Content(totalAlertAmount: Int) {
+        //init focus requester
+        focusRequester = remember { FocusRequester() }
+        //shadow the focus requester to prevent it from changing while the dialog is being displayed
+        val focusRequester = focusRequester
+        require(focusRequester != null)
         //Overlay Box
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.5f))
                 .zIndex(1f)
-                .onClick { onDismissRequest() },
+                .onClick { onDismissRequest() }
+                .focusable()
+                .focusRequester(focusRequester)
+                .onKeyEvent {
+                    if(it.key == Key.Escape) {
+                        onDismissRequest()
+                        return@onKeyEvent true
+                    }
+                    return@onKeyEvent false
+                },
             contentAlignment = Alignment.Center
         ) {
             //1. Wrapper Box encapsulating the content in a max 75% by 75% box

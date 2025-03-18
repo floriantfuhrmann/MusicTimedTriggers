@@ -109,27 +109,39 @@ object AlertCreator {
                                         Spacer(modifier = Modifier.height(4.dp))
                                         for (usage in usages) {
                                             Row {
-                                                Text(
-                                                    text = buildAnnotatedString {
+                                                val text = buildAnnotatedString {
+                                                    // song and line name (with fake link, because pressing space counts
+                                                    // as a click on the first clickable link and I couldn't find a
+                                                    // better way to disable this behavior other than adding a fake link
+                                                    // as the first one)
+                                                    withLink(
+                                                        LinkAnnotation.Clickable(
+                                                            tag = "song_and_line_name",
+                                                            linkInteractionListener = { })
+                                                    ) {
                                                         withStyle(disabledTextStyle) {
                                                             append("${usage.song.name} > ${usage.line.name} > ")
                                                         }
-                                                        withLink(
-                                                            LinkAnnotation.Clickable(
-                                                                tag = "",
-                                                                linkInteractionListener = { _ ->
-                                                                    closeAlert()
-                                                                    ProjectManager.currentProject?.openSongAtTime(
-                                                                        usage.song,
-                                                                        usage.placedTrigger.startTime
-                                                                    )
-                                                                }
-                                                            )) {
-                                                            withStyle(linkStyle) {
-                                                                append("${usage.placedTrigger.name()} (${formatSeconds(usage.placedTrigger.startTime)})")
+                                                    }
+                                                    // actual link to goto placed trigger
+                                                    withLink(
+                                                        LinkAnnotation.Clickable(
+                                                            tag = "placed_trigger_name",
+                                                            linkInteractionListener = { _ ->
+                                                                closeAlert()
+                                                                ProjectManager.currentProject?.openSongAtTime(
+                                                                    usage.song,
+                                                                    usage.placedTrigger.startTime
+                                                                )
                                                             }
+                                                        )) {
+                                                        withStyle(linkStyle) {
+                                                            append("${usage.placedTrigger.name()} (${formatSeconds(usage.placedTrigger.startTime)})")
                                                         }
-                                                    },
+                                                    }
+                                                }
+                                                Text(
+                                                    text = text,
                                                     modifier = Modifier.padding(horizontal = 8.dp)
                                                         .padding(end = scrollbarContentSafePadding())
                                                 )

@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.zIndex
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.AbstractAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.CustomAlert
 import java.awt.Dimension
 
 object DialogManager {
@@ -72,6 +73,11 @@ object DialogManager {
             if(alerts.isNotEmpty()) {
                 key(alerts.first()) {
                     alerts.first().Content(alerts.size)
+                }
+                LaunchedEffect(alerts.first()) {
+                    if (alerts.first() is CustomAlert) {
+                        (alerts.first() as CustomAlert).focusRequester?.requestFocus()
+                    }
                 }
             }
         }
