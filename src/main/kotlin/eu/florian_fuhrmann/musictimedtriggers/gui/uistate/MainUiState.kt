@@ -40,6 +40,11 @@ enum class IntUiThemes {
     } else {
         Color(0, 192, 0)
     }
+    fun iconColor(): Color = if (isDark()) {
+        Color(255, 255, 255)
+    } else {
+        Color(85, 85, 85)
+    }
 
     companion object {
         fun fromSystemTheme(systemTheme: SystemTheme) =
