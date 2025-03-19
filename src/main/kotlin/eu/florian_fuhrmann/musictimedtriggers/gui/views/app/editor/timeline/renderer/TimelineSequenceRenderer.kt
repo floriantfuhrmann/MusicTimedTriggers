@@ -136,18 +136,20 @@ object TimelineSequenceRenderer {
             )
         }
         //draw sequence name / label
-        RenderUtils.drawStringOnRect(
-            g,
-            0,
-            y,
-            line.name,
-            Color(0, 0, 0, 128),
-            Color.white,
-            paddingLeft = 3,
-            paddingTop = 0,
-            paddingRight = 3,
-            paddingBottom = 0
-        )
+        if(line.name.isNotEmpty()) {
+            RenderUtils.drawStringOnRect(
+                g,
+                0,
+                y,
+                line.name,
+                Color(0, 0, 0, 128),
+                Color.white,
+                paddingLeft = 3,
+                paddingTop = 0,
+                paddingRight = 3,
+                paddingBottom = 0
+            )
+        }
     }
 
     private fun drawTrigger(

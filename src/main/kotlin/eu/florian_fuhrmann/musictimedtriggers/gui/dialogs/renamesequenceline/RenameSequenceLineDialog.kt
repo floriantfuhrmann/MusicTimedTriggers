@@ -33,14 +33,11 @@ class RenameSequenceLineDialog(private val line: TriggerSequenceLine) : Dialog("
         var nameTextFieldValue by remember {
             mutableStateOf(TextFieldValue(initialName, TextRange(initialName.length, initialName.length)))
         }
-        val validName by derivedStateOf { nameTextFieldValue.text.isNotBlank() }
         //Done Callback
         val onDone = {
-            if(validName) {
-                //close dialog and update name
-                DialogManager.closeDialog()
-                line.updateName(nameTextFieldValue.text)
-            }
+            //close dialog and update name
+            DialogManager.closeDialog()
+            line.updateName(nameTextFieldValue.text)
         }
         //UI
         DialogFrame(
@@ -49,7 +46,6 @@ class RenameSequenceLineDialog(private val line: TriggerSequenceLine) : Dialog("
                 CloseDialogButton(text = "Cancel", modifier = Modifier.padding(end = 5.dp))
                 //Done Button
                 DefaultButton(
-                    enabled = validName,
                     onClick = onDone,
                     modifier = Modifier.trackActivation()
                 ) {
@@ -66,7 +62,8 @@ class RenameSequenceLineDialog(private val line: TriggerSequenceLine) : Dialog("
                 //because this dialog only contains one field it should have focus when launching
                 val focusRequester = remember { FocusRequester() }
                 TextField(
-                    outline = if(validName) { Outline.None } else { Outline.Error },
+                    placeholder = { Text("No Name") },
+                    outline = Outline.None,
                     modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                     value = nameTextFieldValue,
                     onValueChange = {

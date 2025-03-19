@@ -90,7 +90,7 @@ object RightClickMenuManager {
                     })
                 } else {
                     //Show menu for sequence line
-                    menu.add(JMenuItem("Rename").apply {
+                    menu.add(JMenuItem(if(line.name.isEmpty()) "Give Name" else "Rename").apply {
                         addActionListener {
                             DialogManager.openDialog(RenameSequenceLineDialog(line))
                         }
