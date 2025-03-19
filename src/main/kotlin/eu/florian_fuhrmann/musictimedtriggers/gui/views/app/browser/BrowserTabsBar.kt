@@ -72,13 +72,13 @@ fun CollapsedBrowserBar() {
             .background(JewelTheme.globalColors.borders.normal)
             .padding(top = 1.dp)
             .background(JewelTheme.globalColors.panelBackground)
-            .padding(vertical = 5.dp),
+            .padding(0.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Spacer to align the buttons to the right
         Spacer(Modifier.weight(1f))
         // Expand Browser Button
-        ToggleBrowserButton()
+        ExpandBrowserButton()
     }
 }
 
@@ -275,6 +275,16 @@ fun ToggleBrowserButton() {
                 Icon(AllIconsKeys.FileTypes.UiForm, null)
             }
         }
+    }
+}
+
+@Composable
+fun ExpandBrowserButton() {
+    IconButton(
+        onClick = { MainUiState.toggleBrowser() },
+        modifier = Modifier.fillMaxHeight().trackActivation()
+    ) {
+        Icon(AllIconsKeys.FileTypes.UiForm, null)
     }
 }
 
