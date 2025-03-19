@@ -1,9 +1,7 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.main
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -11,6 +9,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.CollapsedBrowserBar
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.TriggerBrowser
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.SongEditor
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TimelineFocusManager
@@ -68,21 +67,30 @@ fun SidebarContainer(project: Project) {
 @OptIn(ExperimentalSplitPaneApi::class)
 @Composable
 fun EditorWithBrowserContainer(project: Project, verticalSplitterState: SplitPaneState) {
-    VerticalSplitPane(
-        splitPaneState = verticalSplitterState,
-    ) {
-        first(150.dp) {
-            SongEditor(project)
+    if(MainUiState.browserExpanded) {
+        VerticalSplitPane(
+            splitPaneState = verticalSplitterState,
+        ) {
+            first(150.dp) {
+                SongEditor(project)
+            }
+            second(100.dp) {
+                // Browser Container Box with 1.dp border on the top
+                Box(Modifier.background(JewelTheme.globalColors.borders.normal)
+                        .padding(start = 0.dp, top = 1.dp, end = 0.dp, bottom = 0.dp)
+                        .fillMaxSize(),
+                ) {
+                    TriggerBrowser(project)
+                }
+            }
         }
-        second(100.dp) {
-            Box(
-                Modifier
-                    .trackActivation()
-                    .background(JewelTheme.globalColors.borders.normal)
-                    .padding(start = 0.dp, top = 1.dp, end = 0.dp, bottom = 0.dp)
-                    .fillMaxSize(),
-            ) {
-                TriggerBrowser()
+    } else {
+        Column {
+            Row(Modifier.weight(1f).fillMaxWidth()) {
+                SongEditor(project)
+            }
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+                CollapsedBrowserBar()
             }
         }
     }
