@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editproject.EditProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.openproject.OpenProjectDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.styles.dropdownLikeIconButtonStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.IntUiThemes
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
@@ -19,6 +20,7 @@ import eu.florian_fuhrmann.musictimedtriggers.utils.color.mix
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.window.DecoratedWindowScope
 import org.jetbrains.jewel.window.TitleBar
 import org.jetbrains.jewel.window.newFullscreenControls
@@ -35,6 +37,23 @@ fun DecoratedWindowScope.TitleBarView() {
     )
     {
         Row(Modifier.align(Alignment.Start).padding(5.dp).trackActivation()) {
+            // Sidebar Toggle
+            if (ProjectManager.currentProject != null) {
+                IconButton(
+                    style = dropdownLikeIconButtonStyle,
+                    onClick = {
+                        MainUiState.toggleSidebar()
+                    },
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(1f)
+                        .trackActivation()
+                ) {
+                    Box(Modifier.padding(5.dp)) {
+                        Icon(AllIconsKeys.Nodes.DataColumn, null)
+                    }
+                }
+            }
             //Dropdown
             Dropdown(Modifier.height(30.dp).trackActivation(), menuContent = {
                 //track if dropdown is opened
@@ -128,8 +147,6 @@ fun DecoratedWindowScope.TitleBarView() {
                     }
                 }
             }
-            // Tools
-            // A Hide Sidebar Button could go here
         }
 
         Text(modifier = Modifier.scale(1f).trackActivation(), text = title)

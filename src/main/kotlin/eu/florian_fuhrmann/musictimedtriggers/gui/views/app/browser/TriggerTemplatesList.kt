@@ -37,13 +37,9 @@ import java.awt.Cursor
 fun TriggerTemplatesList() {
     // State
     val browserState = ProjectManager.currentProject!!.browserState
-    val reorderableLazyColumnState =
-        rememberReorderableLazyColumnState(browserState.templatesLazyListState) { from, to ->
-            ProjectManager.currentProject
-                ?.browserState
-                ?.getSelectedTriggerTemplateGroup()
-                ?.moveTemplate(from.index, to.index)
-        }
+    val reorderableLazyListState = rememberReorderableLazyListState(browserState.templatesLazyListState) { from, to ->
+        ProjectManager.currentProject?.browserState?.getSelectedTriggerTemplateGroup()?.moveTemplate(from.index, to.index)
+    }
     browserState.currentCoroutineScope = rememberCoroutineScope() // need to allow auto-scrolling to triggers
     // UI
     ContextMenuArea(
@@ -110,7 +106,7 @@ fun TriggerTemplatesList() {
             verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             items(browserState.templates, key = { it }) { item ->
-                ReorderableItem(reorderableLazyColumnState, key = item) { isDragging ->
+                ReorderableItem(reorderableLazyListState, key = item, animateItemModifier = Modifier) { isDragging ->
                     val interactionSource = remember { MutableInteractionSource() }
                     TriggerTemplateItem(this, browserState, item, isDragging, interactionSource)
                 }

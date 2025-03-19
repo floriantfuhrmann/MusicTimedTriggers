@@ -9,7 +9,22 @@ import org.jetbrains.skiko.currentSystemTheme
 
 object MainUiState {
 
+    // Sidebar expanded state (this could be moved to project settings or some general project ui state)
+    var sidebarExpanded: Boolean by mutableStateOf(true)
+
+    // Browser expanded state (this could also be moved to project settings or some general project ui state)
+    var browserExpanded: Boolean by mutableStateOf(true)
+
+    // Currently selected theme (this should probably be moved to project or global settings sometime)
     var theme: IntUiThemes by mutableStateOf(IntUiThemes.Dark)
+
+    fun toggleSidebar() {
+        sidebarExpanded = !sidebarExpanded
+    }
+
+    fun toggleBrowser() {
+        browserExpanded = !browserExpanded
+    }
 
 }
 

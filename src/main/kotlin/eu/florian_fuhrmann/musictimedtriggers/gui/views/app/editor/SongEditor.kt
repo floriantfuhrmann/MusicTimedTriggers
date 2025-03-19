@@ -8,31 +8,31 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.EditorTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.toolbar.EditorToolbar
-import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Text
 
 @Composable
-fun SongEditor() {
+fun SongEditor(project: Project) {
     Column {
-        if(ProjectManager.currentProject?.currentSong != null) {
-            //Toolbar
-            EditorToolbar()
-            //Timeline
-            Row {
+        //Toolbar
+        EditorToolbar(project.currentSong)
+        //Timeline
+        Row(Modifier.padding(top = 1.dp)) { // 1.dp padding to separate the toolbar from the timeline with a thin top border
+            if (project.currentSong != null) {
                 EditorTimeline()
-            }
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(JewelTheme.globalColors.panelBackground)
-                    .padding(5.dp)
-            ) {
-                Text(
-                    color = Color.Gray,
-                    text = "When you open a Song the Editor will be displayed here"
-                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(JewelTheme.globalColors.panelBackground)
+                        .padding(5.dp)
+                ) {
+                    Text(
+                        color = Color.Gray,
+                        text = "When you open a Song the Editor will be displayed here"
+                    )
+                }
             }
         }
     }

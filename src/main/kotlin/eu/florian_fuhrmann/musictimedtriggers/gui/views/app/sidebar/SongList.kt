@@ -1,6 +1,5 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.sidebar
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editsong.EditSongDialog
+import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import org.jetbrains.jewel.foundation.modifier.trackActivation
@@ -30,12 +30,8 @@ import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyColumnState
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SongList() {
-    // ensure there is a project opened
-    val project = ProjectManager.currentProject ?: return
-
+fun SongList(project: Project) {
     val lazyListState = rememberLazyListState()
     val reorderableLazyColumnState =
         rememberReorderableLazyColumnState(lazyListState) { from, to ->

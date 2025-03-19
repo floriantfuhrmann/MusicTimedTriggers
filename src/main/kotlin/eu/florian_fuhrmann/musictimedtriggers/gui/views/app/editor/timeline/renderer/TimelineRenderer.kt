@@ -22,7 +22,7 @@ object TimelineRenderer {
         //don't draw content when not ready
         if(ProjectManager.currentProject?.currentSong?.spectrogram == null || currentAudioPlayer.value == null) {
             g.color = Color.white
-            g.drawString("Preparing Spectrogram and AudioPlayer ...", 20, 10)
+            g.drawString("Preparing Spectrogram and AudioPlayer ...", 5, 15)
             return
         }
         //draw background

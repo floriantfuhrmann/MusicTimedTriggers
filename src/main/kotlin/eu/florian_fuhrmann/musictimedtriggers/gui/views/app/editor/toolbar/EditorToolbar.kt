@@ -8,12 +8,13 @@ import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SimpleIconButton
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
 import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 
 @Composable
-fun EditorToolbar() {
+fun EditorToolbar(song: Song?) {
     Row(
         modifier = Modifier
             .background(JewelTheme.globalColors.panelBackground)
@@ -21,30 +22,37 @@ fun EditorToolbar() {
             .padding(3.dp)
             .height(26.dp)
     ) {
-        if(currentAudioPlayer.value?.playing?.value == true) {
+        // Play / Pause Button
+        if (song != null) {
+            if(currentAudioPlayer.value?.playing?.value == true) {
+                SimpleIconButton(
+                    iconKey = MttIcons.pause,
+                    onClick = {
+                        ProjectManager.currentProject?.currentSong?.pause()
+                    }
+                )
+            } else if(currentAudioPlayer.value?.playing?.value == false) {
+                SimpleIconButton(
+                    iconKey = MttIcons.play,
+                    onClick = {
+                        ProjectManager.currentProject?.currentSong?.play()
+                    }
+                )
+            }
+        }
+        // Spacer in the middle
+        Spacer(modifier = Modifier.weight(1f))
+        // Zoom In / Out Buttons
+        if (song != null) {
             SimpleIconButton(
-                iconKey = MttIcons.pause,
-                onClick = {
-                    ProjectManager.currentProject?.currentSong?.pause()
-                }
+                iconKey = MttIcons.zoomIn,
+                onClick = { TimelineBackgroundRenderer.zoomIn() }
             )
-        } else if(currentAudioPlayer.value?.playing?.value == false) {
             SimpleIconButton(
-                iconKey = MttIcons.play,
-                onClick = {
-                    ProjectManager.currentProject?.currentSong?.play()
-                }
+                iconKey = MttIcons.zoomOut,
+                onClick = { TimelineBackgroundRenderer.zoomOut() },
+                modifier = Modifier.padding(start = 2.dp)
             )
         }
-        Spacer(modifier = Modifier.weight(1f))
-        SimpleIconButton(
-            iconKey = MttIcons.zoomIn,
-            onClick = { TimelineBackgroundRenderer.zoomIn() }
-        )
-        SimpleIconButton(
-            iconKey = MttIcons.zoomOut,
-            onClick = { TimelineBackgroundRenderer.zoomOut() },
-            modifier = Modifier.padding(start = 2.dp)
-        )
     }
 }
