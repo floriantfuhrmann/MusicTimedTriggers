@@ -4,8 +4,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.ui.component.styling.ButtonMetrics
-import org.jetbrains.jewel.ui.component.styling.ButtonStyle
+import org.jetbrains.jewel.ui.component.styling.*
+import org.jetbrains.jewel.ui.theme.dropdownStyle
+import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.theme.outlinedButtonStyle
 
 val outlinedButtonStyleWithNoPadding: ButtonStyle
@@ -21,5 +22,33 @@ val outlinedButtonStyleWithNoPadding: ButtonStyle
                 focusOutlineExpand = JewelTheme.outlinedButtonStyle.metrics.focusOutlineExpand,
             ),
             focusOutlineAlignment = JewelTheme.outlinedButtonStyle.focusOutlineAlignment
+        )
+    }
+
+/**
+ * IconButtonStyle mimicking the dropdown style
+ */
+val dropdownLikeIconButtonStyle: IconButtonStyle
+    @Composable
+    get() {
+        return IconButtonStyle(
+            colors = IconButtonColors(
+                backgroundDisabled = JewelTheme.dropdownStyle.colors.backgroundDisabled,
+                backgroundSelected = JewelTheme.iconButtonStyle.colors.backgroundSelected,
+                backgroundSelectedActivated = JewelTheme.iconButtonStyle.colors.backgroundSelectedActivated,
+                backgroundFocused = JewelTheme.dropdownStyle.colors.backgroundFocused,
+                backgroundPressed = JewelTheme.dropdownStyle.colors.backgroundPressed,
+                backgroundHovered = JewelTheme.dropdownStyle.colors.backgroundHovered,
+                border = JewelTheme.dropdownStyle.colors.border,
+                borderDisabled = JewelTheme.dropdownStyle.colors.borderDisabled,
+                borderSelected = JewelTheme.iconButtonStyle.colors.borderSelected,
+                borderSelectedActivated = JewelTheme.iconButtonStyle.colors.borderSelectedActivated,
+                borderFocused = JewelTheme.dropdownStyle.colors.borderFocused,
+                borderPressed = JewelTheme.dropdownStyle.colors.borderPressed,
+                borderHovered = JewelTheme.dropdownStyle.colors.borderHovered,
+                foregroundSelectedActivated = JewelTheme.iconButtonStyle.colors.foregroundSelectedActivated,
+                background = JewelTheme.dropdownStyle.colors.background
+            ),
+            metrics = JewelTheme.iconButtonStyle.metrics
         )
     }
