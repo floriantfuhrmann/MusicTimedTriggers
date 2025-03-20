@@ -177,7 +177,7 @@ object TriggerSelectionManager {
                 // only proceed if no trigger is hovered
                 if (getTriggerAt(e.x, e.y) != null) return
                 // only proceed if user clicked bellow seconds grid header
-                if (e.y <= TimelineRenderer.currentSecondsGridHeight) return
+                if (e.y <= TimelineRenderer.secondsGridHeight) return
                 // user didn't click a trigger or seconds grid, so start selection box
                 beginSelection(e)
             }

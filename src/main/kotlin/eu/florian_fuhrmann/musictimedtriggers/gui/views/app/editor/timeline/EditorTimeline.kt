@@ -14,10 +14,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.rend
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.titlebar.titleBarDropdownOpened
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
 import org.jetbrains.jewel.foundation.modifier.trackActivation
-import java.awt.Cursor
-import java.awt.Graphics
-import java.awt.MouseInfo
-import java.awt.Point
+import java.awt.*
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
@@ -95,31 +92,39 @@ fun EditorTimeline() {
             modifier = Modifier.fillMaxSize(),
             factory = {
                 // create panel with overwritten paintComponent() function
-                panel =
-                    object : JPanel() {
+                val jPanel = object : JPanel() {
                         override fun paintComponent(g: Graphics?) {
-                            // draw start
-                            val start = System.currentTimeMillis()
-                            if (g != null) {
-                                TimelineRenderer.render(g, this.width, this.height)
+                            // ensure graphics is not null
+                            if(g == null) {
+                                return
                             }
+                            // remember draw start time
+                            if(DebugOptions.DRAW_TIME) {
+                                DebugOptions.drawBeginTime = System.currentTimeMillis()
+                            }
+                            // render timeline
+                            TimelineRenderer.render(g as Graphics2D, 25, 25, this.width - 50, this.height - 50)
                             // draw finished
-//                            println("Draw took ${System.currentTimeMillis() - start}ms")
+                            if(DebugOptions.DRAW_TIME) {
+                                println("Draw took ${System.currentTimeMillis() - DebugOptions.drawBeginTime}ms")
+                            }
                         }
                     }
                 // add listeners
-                (panel as JPanel).addMouseListener(DragTimePositionManager.mouseListener)
-                (panel as JPanel).addMouseMotionListener(DragTimePositionManager.mouseMotionListener)
-                (panel as JPanel).addMouseListener(ReceiveDraggedTemplatesManger.mouseListener)
-                (panel as JPanel).addMouseListener(RightClickMenuManager.mouseListener)
-                (panel as JPanel).addMouseListener(MoveTriggersManager.mouseListener)
-                (panel as JPanel).addMouseMotionListener(MoveTriggersManager.mouseMotionListener)
-                (panel as JPanel).addMouseListener(TriggerSelectionManager.mouseListener)
-                (panel as JPanel).addMouseMotionListener(TriggerSelectionManager.mouseMotionListener)
-                (panel as JPanel).addMouseListener(TimelineFocusManager.mouseListener)
-                (panel as JPanel).addMouseWheelListener(DragTimePositionManager.mouseWheelListener)
+                jPanel.addMouseListener(DragTimePositionManager.mouseListener)
+                jPanel.addMouseMotionListener(DragTimePositionManager.mouseMotionListener)
+                jPanel.addMouseListener(ReceiveDraggedTemplatesManger.mouseListener)
+                jPanel.addMouseListener(RightClickMenuManager.mouseListener)
+                jPanel.addMouseListener(MoveTriggersManager.mouseListener)
+                jPanel.addMouseMotionListener(MoveTriggersManager.mouseMotionListener)
+                jPanel.addMouseListener(TriggerSelectionManager.mouseListener)
+                jPanel.addMouseMotionListener(TriggerSelectionManager.mouseMotionListener)
+                jPanel.addMouseListener(TimelineFocusManager.mouseListener)
+                jPanel.addMouseWheelListener(DragTimePositionManager.mouseWheelListener)
+                // set panel
+                panel = jPanel
                 // return panel
-                panel as JPanel
+                jPanel
             }
         )
     } else {

@@ -10,6 +10,7 @@ object TimelineGridRenderer {
     private const val TEXT_MARGIN = 2
 
     fun calculateSecondsGridHeight(g: Graphics): Int {
+        // for some reason ascent - descent is the height of the font, then we just add margin on top and bottom
         return g.fontMetrics.ascent - g.fontMetrics.descent + 2 * TEXT_MARGIN
     }
 
