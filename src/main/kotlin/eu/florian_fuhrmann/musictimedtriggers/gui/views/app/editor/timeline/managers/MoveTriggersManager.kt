@@ -4,7 +4,6 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redr
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer.durationToWidth
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer.xToTime
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.updateCursor
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
