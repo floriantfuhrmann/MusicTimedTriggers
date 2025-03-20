@@ -4,6 +4,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redr
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer.durationToWidth
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer.xToTime
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.updateCursor
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
@@ -23,25 +24,26 @@ object MoveTriggersManager {
 
     // Movement Variables:
 
-    /**
-     * bool to mark weither we are currently moving some triggers
-     */
+    /** bool to mark whether we are currently moving some triggers */
     var moving = false
 
-    /**
-     * which part of the selected triggers we are currently moving
-     */
+    /** which part of the selected triggers we are currently moving */
     var movingPart = TriggerPart.Middle
 
-    /**
-     * line on which the move captain currently is
-     */
+    /** line on which the move captain currently is */
     private var currentMoveLineIndex = 0
 
     /**
-     * offsets the place triggers should have from the pointer when moving (see move implementation)
+     * offsets the place triggers should have from the pointer when moving (see
+     * move implementation)
      */
     private var moveOffsets: Map<AbstractPlacedTrigger, Double> = emptyMap()
+
+    /**
+     * whether the last move went out of bounds (will only update after that
+     * when the pointer is in bounds again)
+     */
+    private var moveWentOutOfBounds: Boolean = false
 
     // Hover Variables:
 
@@ -338,8 +340,26 @@ object MoveTriggersManager {
     fun updateMove(e: MouseEvent) {
         // get sequence
         val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: throw IllegalStateException("No sequence")
-        // calculate pointer time and get line the pointer is on
-        val pointerTime = xToTime(e.x)
+        // calculate pointer time
+        var pointerTime = xToTime(e.x)
+        // if we are currently out ouf bounds only update if we are in bounds again (currently only considers x axis)
+        if (moveWentOutOfBounds) {
+            if (pointerTime >= TimelineBackgroundRenderer.currentFromTime && pointerTime <= TimelineBackgroundRenderer.currentToTime) {
+                moveWentOutOfBounds = false
+            } else {
+                return
+            }
+        } else {
+            // limit pointer time to currently visible time frame
+            if (pointerTime < TimelineBackgroundRenderer.currentFromTime) {
+                pointerTime = TimelineBackgroundRenderer.currentFromTime
+                moveWentOutOfBounds = true
+            } else if(pointerTime > TimelineBackgroundRenderer.currentToTime) {
+                pointerTime = TimelineBackgroundRenderer.currentToTime
+                moveWentOutOfBounds = true
+            }
+        }
+        // get the line the pointer is on
         val pointerLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(e.y)
         // init any affected var (so we only need to redraw if anything actually changed)
         var anyAffected = false

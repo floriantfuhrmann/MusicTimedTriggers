@@ -51,9 +51,12 @@ object TimelineBackgroundRenderer {
         return (width.toDouble() / TimelineRenderer.timelineWidth) * currentTotalDisplayedDuration
     }
     // Values needed for conversions (updated during rendering)
-    private var currentTotalDisplayedDuration = 0.0
-    private var currentFromTime = 0.0
-    private var currentToTime = 0.0
+    var currentTotalDisplayedDuration = 0.0
+        private set
+    var currentFromTime = 0.0
+        private set
+    var currentToTime = 0.0
+        private set
 
     /**
      * Renders the background (the spectrogram) of the timeline
