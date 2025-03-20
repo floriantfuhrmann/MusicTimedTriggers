@@ -34,8 +34,8 @@ object TriggerSelectionManager {
 
     // corners of selection (not determined whether x1 or x2 is smaller, same for y)
     private var selectionX1 = 0
-    private var selectionX2 = 0
     private var selectionY1 = 0
+    private var selectionX2 = 0
     private var selectionY2 = 0
 
     /**
@@ -95,8 +95,6 @@ object TriggerSelectionManager {
      * begins selection of triggers using a selection box
      */
     fun beginSelection(e: MouseEvent) {
-        // only start selection when audio player is not playing
-        if (currentAudioPlayer.value?.playing?.value != false) return
         // set to no trigger hovered
         MoveTriggersManager.resetHovered()
         // only keep others when shift is pressed
@@ -106,7 +104,7 @@ object TriggerSelectionManager {
         // start selection
         selecting = true
         selectionX1 = e.x
-        selectionX2 = e.y
+        selectionY1 = e.y
         // and update for the first time
         updateSelection(e)
     }
@@ -114,16 +112,18 @@ object TriggerSelectionManager {
     /**
      * updates the selection box to the current mouse position
      */
-    private fun updateSelection(e: MouseEvent) {
-        selectionY1 = e.x
+    private fun updateSelection(e: MouseEvent, redraw: Boolean = true) {
+        selectionX2 = e.x
         selectionY2 = e.y
         updateTriggersInSelectionBox()
         // redraw timeline to show selection
-        redrawTimeline()
+        if(redraw) {
+            redrawTimeline()
+        }
     }
 
     fun endSelection(e: MouseEvent) {
-        updateSelection(e)
+        updateSelection(e, false)
         selecting = false
         if (e.isShiftDown && selectedTriggers.containsAll(selectionBoxTriggers)) {
             // if shift is pressed and all triggers in box are already selected, then remove instead
@@ -147,10 +147,16 @@ object TriggerSelectionManager {
         // get sequence
         val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: throw IllegalStateException("No sequence")
         // calculate period of selection
-        val fromTime = xToTime(min(selectionX1, selectionY1))
-        val toTime = xToTime(max(selectionX1, selectionY1))
-        val fromLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(min(selectionX2, selectionY2))
-        val toLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(max(selectionX2, selectionY2))
+        val fromTime = xToTime(min(selectionX1, selectionX2))
+        val toTime = xToTime(max(selectionX1, selectionX2))
+        val fromLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(
+            min(selectionY1, selectionY2)
+                .coerceAtLeast(TimelineRenderer.timelineX + TimelineRenderer.secondsGridHeight)
+        )
+        val toLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(
+            max(selectionY1, selectionY2)
+                .coerceAtMost(TimelineRenderer.timelineX + TimelineRenderer.timelineHeight)
+        )
         if (fromLineIndex == null || toLineIndex == null) return
         // update triggers in box
         selectionBoxTriggers =
@@ -176,8 +182,13 @@ object TriggerSelectionManager {
                 if (currentAudioPlayer.value?.playing?.value != false) return
                 // only proceed if no trigger is hovered
                 if (getTriggerAt(e.x, e.y) != null) return
-                // only proceed if user clicked bellow seconds grid header
-                if (e.y <= TimelineRenderer.secondsGridHeight) return
+                // only proceed if user clicked in timeline area
+                if (e.y <= TimelineRenderer.timelineX + TimelineRenderer.secondsGridHeight
+                    || e.y > TimelineRenderer.timelineX + TimelineRenderer.timelineHeight
+                    || e.x < TimelineRenderer.timelineX
+                    || e.x > TimelineRenderer.timelineX + TimelineRenderer.timelineWidth) {
+                    return
+                }
                 // user didn't click a trigger or seconds grid, so start selection box
                 beginSelection(e)
             }
@@ -224,10 +235,10 @@ object TriggerSelectionManager {
         // only draw when selecting
         if (!selecting) return
         // calculate corners
-        val minX = min(selectionX1, selectionY1)
-        val maxX = max(selectionX1, selectionY1)
-        val minY = min(selectionX2, selectionY2)
-        val maxY = max(selectionX2, selectionY2)
+        val minX = min(selectionX1, selectionX2)
+        val maxX = max(selectionX1, selectionX2)
+        val minY = min(selectionY1, selectionY2)
+        val maxY = max(selectionY1, selectionY2)
         // draw selection box
         g.color = Color(255, 255, 255, 64)
         g.fillRect(minX, minY, maxX - minX, maxY - minY)

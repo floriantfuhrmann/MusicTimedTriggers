@@ -54,8 +54,8 @@ object TimelineRenderer {
         TimelineSequenceRenderer.drawSequence(g, x, y + secondsGridHeight, width, height - secondsGridHeight, sequence)
         // draw dragged templates
         ReceiveDraggedTemplatesManger.drawDragIndicator(g, x, y, width, height)
-//        //draw selection
-//        TriggerSelectionManager.drawSelectionBox(g)
+        // draw selection
+        TriggerSelectionManager.drawSelectionBox(g)
         // draw play head
         TimelineGridRenderer.drawPlayHead(g, x, y, width, height, audioPlayer.secondPosition, secondsGridHeight)
     }
