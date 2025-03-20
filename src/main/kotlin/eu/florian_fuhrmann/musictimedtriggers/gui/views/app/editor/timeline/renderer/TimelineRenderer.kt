@@ -30,7 +30,7 @@ object TimelineRenderer {
             return
         }
         // Draw Background
-        // calculate height for seconds grid
+        // calculate height for seconds grid (needed as offset for spectrogram)
         secondsGridHeight = TimelineGridRenderer.calculateSecondsGridHeight(g)
         // draw spectrogram background
         TimelineBackgroundRenderer.render(
@@ -43,14 +43,9 @@ object TimelineRenderer {
             width,
             height - secondsGridHeight
         )
-//        //draw second grid
-//        TimelineGridRenderer.drawSecondGrid(
-//            g,
-//            secondsGridHeight,
-//            false,
-//            width,
-//            height
-//        )
+        // Draw Content
+        // draw second grid
+        TimelineGridRenderer.drawSecondGrid(g, x, y, width, height, secondsGridHeight, false)
 //        //draw triggers
 //        TimelineSequenceRenderer.drawSequence(
 //            g,
@@ -63,13 +58,7 @@ object TimelineRenderer {
 //        ReceiveDraggedTemplatesManger.drawDragIndicator(g, width, height)
 //        //draw selection
 //        TriggerSelectionManager.drawSelectionBox(g)
-//        //draw play head
-//        TimelineGridRenderer.drawPlayHead(
-//            g,
-//            currentAudioPlayer.value!!.secondPosition,
-//            secondsGridHeight,
-//            width,
-//            height
-//        )
+        // draw play head
+        TimelineGridRenderer.drawPlayHead(g, x, y, width, height, audioPlayer.secondPosition, secondsGridHeight)
     }
 }

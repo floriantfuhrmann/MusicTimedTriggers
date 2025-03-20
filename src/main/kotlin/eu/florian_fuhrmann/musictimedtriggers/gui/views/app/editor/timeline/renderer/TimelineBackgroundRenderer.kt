@@ -129,7 +129,6 @@ object TimelineBackgroundRenderer {
             val overlapTime: Double = (-srcStartX) / srcImgPixelsPerSecond
             require(overlapTime > 0) { "Calculated overlapTime (on the left) is not greater than zero (startX=$srcStartX, imgPixelsPerSecond=$srcImgPixelsPerSecond, overlapTime=$overlapTime)" }
             //recursively call render with adjusted from time and dstX1 coordinate
-            println("Adjusted from time: ${fromTime + overlapTime}")
             render(
                 g,
                 spectrogram,

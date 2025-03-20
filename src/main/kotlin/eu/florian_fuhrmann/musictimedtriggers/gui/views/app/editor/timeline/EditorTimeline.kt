@@ -103,7 +103,8 @@ fun EditorTimeline() {
                                 DebugOptions.drawBeginTime = System.currentTimeMillis()
                             }
                             // render timeline
-                            TimelineRenderer.render(g as Graphics2D, 25, 25, this.width - 50, this.height - 50)
+                            val inset = 35
+                            TimelineRenderer.render(g as Graphics2D, inset, inset, this.width - 2*inset, this.height - 2*inset)
                             // draw finished
                             if(DebugOptions.DRAW_TIME) {
                                 println("Draw took ${System.currentTimeMillis() - DebugOptions.drawBeginTime}ms")

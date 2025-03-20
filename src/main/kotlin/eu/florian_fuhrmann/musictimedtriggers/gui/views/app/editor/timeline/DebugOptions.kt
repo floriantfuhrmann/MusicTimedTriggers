@@ -4,6 +4,6 @@ object DebugOptions {
 
     const val DRAW_TIME = true
     var drawBeginTime: Long = 0L
-    const val IMAGE_PARTS = true
+    const val IMAGE_PARTS = false
 
 }
