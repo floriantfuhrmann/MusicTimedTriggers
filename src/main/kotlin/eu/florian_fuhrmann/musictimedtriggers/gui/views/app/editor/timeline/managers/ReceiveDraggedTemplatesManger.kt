@@ -6,6 +6,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.rend
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer.durationToWidth
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer.timeToX
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
@@ -43,16 +44,28 @@ object ReceiveDraggedTemplatesManger {
      * Draws the dragged templates as ghost triggers on the timeline. Also
      * draws a vertical line indicating if the insert is possible.
      * And updates the insertPossible variable.
+     * @param g Graphics2D object to draw on
+     * @param x x position of the content drawn
+     * @param y y position of the content drawn
+     * @param width total width of the content drawn
+     * @param height total height of the content drawn
      */
     fun drawDragIndicator(
         g: Graphics2D,
-        width: Int, //total width of the content drawn
-        height: Int //total height of the content drawn
+        x: Int,
+        y: Int,
+        width: Int,
+        height: Int
     ) {
         //only draw when dragging on timeline
         if(ProjectManager.currentProject?.browserState?.draggingOnTimeline?.value != true) return
         //get pointer point
         val p = getPointerPointOnPanel()
+        //only proceed if at least x is in timeline area (if y is out of bounds we can still draw the drag indicator)
+        if(p.x < TimelineRenderer.timelineX || p.x > TimelineRenderer.timelineX + TimelineRenderer.timelineWidth) {
+            insertPossible = false
+            return
+        }
         //get sequence
         val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: return
         //get time at pointer point
@@ -100,13 +113,13 @@ object ReceiveDraggedTemplatesManger {
                             ghostTriggerDuration = AbstractPlacedTrigger.MINIMUM_TRIGGER_DURATION
                         }
                         //render ghost trigger
-                        val lineFromY = TimelineSequenceRenderer.getSequenceLineTopY(hoveredLineIndex + index) ?: 0
-                        val lineHeight = TimelineSequenceRenderer.getSequenceLineHeight(hoveredLineIndex + index) ?: 0
+                        val lineTopY = TimelineSequenceRenderer.getSequenceLineTopY(hoveredLineIndex + index) ?: throw IllegalStateException("No line top Y found")
+                        val lineHeight = TimelineSequenceRenderer.getSequenceLineHeight(hoveredLineIndex + index) ?: throw IllegalStateException("No line height found")
                         val ghostWidth = durationToWidth(ghostTriggerDuration)
                         TimelineSequenceRenderer.drawTrigger(
                             g,
                             timeToX(adjustedLineTime),
-                            lineFromY,
+                            lineTopY,
                             ghostWidth, // TimelineBackgroundRenderer.timeToX(time + ghostTriggerDuration) - p.x
                             lineHeight,
                             null,
@@ -129,9 +142,9 @@ object ReceiveDraggedTemplatesManger {
                             val sequenceEndX = timeToX(sequence.duration)
                             val conflictWidth = p.x + ghostWidth - sequenceEndX
                             g.color = Color(255, 0, 0, 128)
-                            g.fillRect(sequenceEndX, lineFromY, conflictWidth, lineHeight)
+                            g.fillRect(sequenceEndX, lineTopY, conflictWidth, lineHeight)
                             g.color = Color.red
-                            RenderUtils.drawStringVerticallyCentered(g, sequenceEndX + conflictWidth + 5, lineFromY, lineHeight, "Trigger ends after Sequence end!")
+                            RenderUtils.drawStringVerticallyCentered(g, sequenceEndX + conflictWidth + 5, lineTopY, lineHeight, "Trigger ends after Sequence end!")
                         }
                     } else {
                         //otherwise insert is no longer possible
@@ -145,8 +158,7 @@ object ReceiveDraggedTemplatesManger {
         }
         //draw vertical line with color representing if insert is possible
         g.color = if(insertPossible) { Color.green } else { Color.red }
-        //g.fillRect(p.x - 5, p.y - 5, 10, 10)
-        g.fillRect(p.x - 1, 0, 2, height)
+        g.fillRect(p.x - 1, y, 2, height)
     }
 
     /**

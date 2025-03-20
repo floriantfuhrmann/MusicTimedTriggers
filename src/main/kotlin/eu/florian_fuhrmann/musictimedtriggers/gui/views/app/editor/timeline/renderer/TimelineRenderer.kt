@@ -9,7 +9,14 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 
 object TimelineRenderer {
+
+    // Values needed globally
     var secondsGridHeight = 0
+    // Area for the timeline (contains sequence lines with triggers on spectrogram and second grid)
+    var timelineX = 0
+    var timelineY = 0
+    var timelineWidth = 0
+    var timelineHeight = 0
 
     fun render(g: Graphics2D, x: Int, y: Int, width: Int, height: Int) {
         // enable antialiasing
@@ -29,27 +36,24 @@ object TimelineRenderer {
             g.drawString("Spectrogram, AudioPlayer or Sequence missing ...", x + 5, y + 15)
             return
         }
+        // update timeline area values
+        timelineX = x
+        timelineY = y
+        timelineWidth = width
+        timelineHeight = height
         // Draw Background
         // calculate height for seconds grid (needed as offset for spectrogram)
         secondsGridHeight = TimelineGridRenderer.calculateSecondsGridHeight(g)
         // draw spectrogram background
-        TimelineBackgroundRenderer.render(
-            g,
-            spectrogram,
-            audioPlayer.secondPosition,
-            audioPlayer.secondDuration,
-            x,
-            y + secondsGridHeight,
-            width,
-            height - secondsGridHeight
-        )
+        TimelineBackgroundRenderer.render(g, spectrogram, audioPlayer.secondPosition, audioPlayer.secondDuration, x,
+            y + secondsGridHeight, width, height - secondsGridHeight)
         // Draw Content
         // draw second grid
         TimelineGridRenderer.drawSecondGrid(g, x, y, width, height, secondsGridHeight, false)
         // draw placed triggers
         TimelineSequenceRenderer.drawSequence(g, x, y + secondsGridHeight, width, height - secondsGridHeight, sequence)
-        //draw dragged templates
-//        ReceiveDraggedTemplatesManger.drawDragIndicator(g, width, height)
+        // draw dragged templates
+        ReceiveDraggedTemplatesManger.drawDragIndicator(g, x, y, width, height)
 //        //draw selection
 //        TriggerSelectionManager.drawSelectionBox(g)
         // draw play head

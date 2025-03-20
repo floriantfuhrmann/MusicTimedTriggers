@@ -39,22 +39,18 @@ object TimelineBackgroundRenderer {
 
     // Conversion functions (also used by other renderers)
     fun timeToX(time: Double): Int {
-        return currentX + (((time - currentFromTime) / currentTotalDisplayedDuration) * currentWidth).roundToInt()
+        return TimelineRenderer.timelineX + (((time - currentFromTime) / currentTotalDisplayedDuration) * TimelineRenderer.timelineWidth).roundToInt()
     }
     fun xToTime(x: Int): Double {
-        return currentFromTime + ((x - currentX).toDouble() / pixelsPerSecond)
+        return currentFromTime + ((x - TimelineRenderer.timelineX).toDouble() / pixelsPerSecond)
     }
     fun durationToWidth(duration: Double): Int {
-        return ((duration / currentTotalDisplayedDuration) * currentWidth).roundToInt()
+        return ((duration / currentTotalDisplayedDuration) * TimelineRenderer.timelineWidth).roundToInt()
     }
     fun widthToDuration(width: Int): Double {
-        return (width.toDouble() / currentWidth) * currentTotalDisplayedDuration
+        return (width.toDouble() / TimelineRenderer.timelineWidth) * currentTotalDisplayedDuration
     }
     // Values needed for conversions (updated during rendering)
-    private var currentX = 0 // maybe move to TimelineRenderer (because this is probably need in other places as well)
-    private var currentY = 0 // maybe also move to TimelineRenderer
-    private var currentWidth = 0 // maybe also move to TimelineRenderer
-    private var currentHeight = 0 // maybe also move to TimelineRenderer
     private var currentTotalDisplayedDuration = 0.0
     private var currentFromTime = 0.0
     private var currentToTime = 0.0
@@ -83,11 +79,6 @@ object TimelineBackgroundRenderer {
         width: Int,
         height: Int
     ) {
-        // update current area values
-        currentX = x
-        currentY = y
-        currentWidth = width
-        currentHeight = height
         // calculate fromTime and toTime from middle time position and dst pixels per second
         currentTotalDisplayedDuration = width / pixelsPerSecond.toDouble()
         currentFromTime = middleTimePosition - currentTotalDisplayedDuration / 2
