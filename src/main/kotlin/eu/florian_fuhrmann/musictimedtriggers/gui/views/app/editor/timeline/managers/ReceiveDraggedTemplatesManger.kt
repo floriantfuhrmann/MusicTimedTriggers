@@ -100,8 +100,8 @@ object ReceiveDraggedTemplatesManger {
                             ghostTriggerDuration = AbstractPlacedTrigger.MINIMUM_TRIGGER_DURATION
                         }
                         //render ghost trigger
-                        val lineFromY = TimelineSequenceRenderer.getSequenceLineFromY(hoveredLineIndex + index)
-                        val lineHeight = TimelineSequenceRenderer.getSequenceLineHeight(hoveredLineIndex + index)
+                        val lineFromY = TimelineSequenceRenderer.getSequenceLineTopY(hoveredLineIndex + index) ?: 0
+                        val lineHeight = TimelineSequenceRenderer.getSequenceLineHeight(hoveredLineIndex + index) ?: 0
                         val ghostWidth = durationToWidth(ghostTriggerDuration)
                         TimelineSequenceRenderer.drawTrigger(
                             g,
@@ -109,6 +109,8 @@ object ReceiveDraggedTemplatesManger {
                             lineFromY,
                             ghostWidth, // TimelineBackgroundRenderer.timeToX(time + ghostTriggerDuration) - p.x
                             lineHeight,
+                            null,
+                            null,
                             template.getTriggerTemplate().configuration.color,
                             template.name.value,
                             style = if(ghostPossible) {

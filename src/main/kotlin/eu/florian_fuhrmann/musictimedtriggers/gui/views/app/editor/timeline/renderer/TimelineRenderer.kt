@@ -46,15 +46,9 @@ object TimelineRenderer {
         // Draw Content
         // draw second grid
         TimelineGridRenderer.drawSecondGrid(g, x, y, width, height, secondsGridHeight, false)
-//        //draw triggers
-//        TimelineSequenceRenderer.drawSequence(
-//            g,
-//            0,
-//            secondsGridHeight,
-//            width,
-//            height - secondsGridHeight,
-//            sequence
-//        )
+        // draw placed triggers
+        TimelineSequenceRenderer.drawSequence(g, x, y + secondsGridHeight, width, height - secondsGridHeight, sequence)
+        //draw dragged templates
 //        ReceiveDraggedTemplatesManger.drawDragIndicator(g, width, height)
 //        //draw selection
 //        TriggerSelectionManager.drawSelectionBox(g)

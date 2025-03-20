@@ -14,40 +14,37 @@ import kotlin.math.roundToInt
 
 object TimelineSequenceRenderer {
 
-    // array contains from y coordinate for every sequence line (same index in this array as in TriggerSequence#lines)
-    private var linesFromY: IntArray = IntArray(0)
-    private var linesHeight: IntArray = IntArray(0)
+    // Values needed for conversions (updated during rendering)
+    // arrays contain top y coordinates and heights of every sequence line (same index in this array as in TriggerSequence#lines)
+    private var lineTopYs: Array<Int?> = Array(0) { null } // must be ascending
+    private var lineHeights: Array<Int?> = Array(0) { null }
 
-    fun getSequenceLineFromY(lineIndex: Int) = linesFromY[lineIndex]
-    fun getSequenceLineHeight(lineIndex: Int) = linesHeight[lineIndex]
+    fun getSequenceLineTopY(lineIndex: Int) = lineTopYs[lineIndex]
+    fun getSequenceLineHeight(lineIndex: Int) = lineHeights[lineIndex]
 
     /**
-     * Finds which Sequence Line is at the [y] coordinate by checking fromY for every line
+     * Finds which Sequence Line is at the [y] coordinate
      */
     fun getSequenceLineAt(y: Int): TriggerSequenceLine? {
-        //get sequence
+        // get current sequence
         val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: return null
-        //check in reverse order on which sequence line the y coordinate is
-        for (i in linesFromY.indices.reversed()) {
-            if(y >= linesFromY[i]) {
-                return sequence.lines[i]
-            }
-        }
-        //y is so small, that no sequence line matches
-        return null
+        // return the line at the index
+        return sequence.lines[getSequenceLineIndexAt(y) ?: return null]
     }
 
     /**
-     * Finds the index of the Sequence Line at the [y] coordinate by checking fromY for every line
+     * Finds the index of the Sequence Line at the [y] coordinate
      */
     fun getSequenceLineIndexAt(y: Int): Int? {
-        //check in reverse order on which sequence line the y coordinate is
-        for (i in linesFromY.indices.reversed()) {
-            if(y >= linesFromY[i]) {
+        // check for every line if y is in bounds
+        for (i in lineTopYs.indices) {
+            val topY = lineTopYs[i] ?: continue
+            val height = lineHeights[i] ?: continue
+            if(y >= topY && y <= topY + height) {
                 return i
             }
         }
-        //y is so small, that no sequence line matches
+        // y is out of bounds
         return null
     }
 
@@ -59,48 +56,44 @@ object TimelineSequenceRenderer {
         height: Int, //total height of the content drawn
         sequence: TriggerSequence
     ) {
-        //reset linesFromY array
-        linesFromY = IntArray(sequence.lines.size)
-        linesHeight = IntArray(sequence.lines.size)
-        //calculate times
-        val fromTime = TimelineBackgroundRenderer.xToTime(0)
-        val toTime = TimelineBackgroundRenderer.xToTime(width)
-        //calculate heights
-        val heightOfSeparatorLines = sequence.lines.size - 1
-        val heightForSequenceLines = height - heightOfSeparatorLines
-        val heightPerSequenceLine = heightForSequenceLines.toDouble() / sequence.lines.size
-        //draw separator lines only
+        // reset line topYs and heights
+        lineTopYs = Array(sequence.lines.size) { null }
+        lineHeights = Array(sequence.lines.size) { null }
+        // calculate from and to time
+        val fromTime = TimelineBackgroundRenderer.xToTime(x)
+        val toTime = TimelineBackgroundRenderer.xToTime(x + width)
+        // calculate heights
+        val heightOfSeparatorLines = sequence.lines.size - 1 // one separator line between each sequence line
+        val heightForAllSequenceLines = height - heightOfSeparatorLines // total height of all sequence lines
+        val heightPerSequenceLine = heightForAllSequenceLines.toDouble() / sequence.lines.size // height of one sequence line (excluding separators) (not an integer!)
+        // first draw separator lines only (so they appear bellow the placed triggers)
+        g.color = Color.white
         var currentY = y.toDouble()
         sequence.lines.forEachIndexed { index, _ ->
-            //draw separator if not first line
-            val separatorY = currentY.roundToInt()
+            // draw separator (if not first line)
             if(index != 0) {
-                g.color = Color.white
-                g.drawLine(0, separatorY, width, separatorY)
-                currentY += 1 // add height of separator line
+                val separatorY = currentY.roundToInt()
+                g.drawLine(x, separatorY, x + width, separatorY)
+                currentY += 1.0 // add height of separator line
             }
-            currentY += heightPerSequenceLine // add height of sequence line
+            // add (average) height of sequence line
+            currentY += heightPerSequenceLine
         }
-        //draw triggers and rest of sequence line on top
-        currentY = y.toDouble()
+        // draw placed triggers and rest of sequence line above
+        currentY = y.toDouble() // reset y
         sequence.lines.forEachIndexed { index, line ->
-            //calculate y coordinate of separator
-            val separatorY = currentY.roundToInt()
+            // add height of separator line (if this is not the first line)
             if(index != 0) {
-                currentY += 1 // add height of separator line
+                currentY += 1.0
             }
-            //draw sequence line
-            val fromY = if(index != 0) {
-                separatorY + 1
-            } else {
-                separatorY
-            }
-            currentY += heightPerSequenceLine // add height of sequence line
-            val toY = currentY.roundToInt() - 1
-            val lineHeight = toY - fromY + 1
-            drawSequenceLine(g, 0, fromY, width, lineHeight, fromTime, toTime, line)
-            linesFromY[index] = fromY
-            linesHeight[index] = lineHeight
+            val topY = currentY.roundToInt()
+            currentY += heightPerSequenceLine // add (average) height of sequence line
+            val bottomY = currentY.roundToInt() - 1
+            val lineHeight = bottomY - topY + 1
+            drawSequenceLine(g, x, topY, width, lineHeight, fromTime, toTime, line)
+            // save top y and height
+            lineTopYs[index] = topY
+            lineHeights[index] = lineHeight
         }
     }
 
@@ -114,32 +107,25 @@ object TimelineSequenceRenderer {
         toTime: Double,
         line: TriggerSequenceLine
     ) {
-        //draw sequence triggers
+        // draw sequence triggers
         var currentTriggerIndex = line.getIndexOfTriggerAtOrIndexOfTriggerAfter(fromTime)
         while (true) {
-            //get trigger at index
+            // get trigger at index
             val trigger = line.getTriggerByIndex(currentTriggerIndex)
-            //make sure the trigger exists and is still in bounds
+            // make sure the trigger exists and is still in bounds
             if(trigger == null || trigger.startTime >= toTime) break
             currentTriggerIndex++
-            //calculate trigger x coordinates
+            // calculate trigger x coordinates
             val triggerX1 = TimelineBackgroundRenderer.timeToX(trigger.startTime)
             val triggerX2 = TimelineBackgroundRenderer.timeToX(trigger.endTime)
-            //draw that trigger
-            drawTrigger(
-                g,
-                triggerX1,
-                y,
-                triggerX2 - triggerX1 + 1,
-                height,
-                trigger
-            )
+            // draw that trigger
+            drawTrigger(g, triggerX1, y, triggerX2 - triggerX1 + 1, height, x, width, trigger)
         }
         //draw sequence name / label
         if(line.name.isNotEmpty()) {
             RenderUtils.drawStringOnRect(
                 g,
-                0,
+                x,
                 y,
                 line.name,
                 Color(0, 0, 0, 128),
@@ -158,14 +144,14 @@ object TimelineSequenceRenderer {
         y: Int,
         width: Int,
         height: Int,
+        lineX: Int,
+        lineWidth: Int,
         trigger: AbstractPlacedTrigger
     ) {
-        drawTrigger(
-            g,
-            x,
-            y,
-            width,
-            height,
+        drawTrigger(g,
+            x, y,
+            width, height,
+            lineX, lineWidth,
             trigger.triggerTemplate.configuration.color,
             trigger.name(),
             if (TriggerSelectionManager.isVisuallySelected(trigger)) {
@@ -196,6 +182,8 @@ object TimelineSequenceRenderer {
         y: Int,
         width: Int,
         height: Int,
+        lineX: Int?,
+        lineWidth: Int?,
         triggerColor: GenericColor,
         name: String,
         style: TriggerStateStyle = TriggerStateStyle.Normal,
@@ -253,7 +241,11 @@ object TimelineSequenceRenderer {
         // draw trigger name
         g.color = textColor
         g.setClip(x, y, width, height)
-        RenderUtils.drawStringVerticallyCentered(g, x + 3, y, height, name)
+        var nameX = x + 3
+        if (lineX != null && nameX < lineX + 3) {
+            nameX = lineX + 3
+        }
+        RenderUtils.drawStringVerticallyCentered(g, nameX, y, height, name)
         g.clip = null
         // draw keyframes (only if trigger is hovered)
         if(hovered && keyframes != null) {

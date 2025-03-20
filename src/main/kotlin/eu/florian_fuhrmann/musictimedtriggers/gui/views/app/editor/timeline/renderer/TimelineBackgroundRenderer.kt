@@ -51,10 +51,10 @@ object TimelineBackgroundRenderer {
         return (width.toDouble() / currentWidth) * currentTotalDisplayedDuration
     }
     // Values needed for conversions (updated during rendering)
-    private var currentX = 0
-    private var currentY = 0
-    private var currentWidth = 0
-    private var currentHeight = 0
+    private var currentX = 0 // maybe move to TimelineRenderer (because this is probably need in other places as well)
+    private var currentY = 0 // maybe also move to TimelineRenderer
+    private var currentWidth = 0 // maybe also move to TimelineRenderer
+    private var currentHeight = 0 // maybe also move to TimelineRenderer
     private var currentTotalDisplayedDuration = 0.0
     private var currentFromTime = 0.0
     private var currentToTime = 0.0

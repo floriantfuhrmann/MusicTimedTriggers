@@ -232,8 +232,8 @@ object MoveTriggersManager {
         val triggerX2 = TimelineBackgroundRenderer.timeToX(intensityTrigger.endTime)
         val triggerWidth = triggerX2 - triggerX1
         // lookup line y and height
-        val lineY = TimelineSequenceRenderer.getSequenceLineFromY(triggersLineIndex)
-        val lineHeight = TimelineSequenceRenderer.getSequenceLineHeight(triggersLineIndex)
+        val lineY = TimelineSequenceRenderer.getSequenceLineTopY(triggersLineIndex) ?: return null
+        val lineHeight = TimelineSequenceRenderer.getSequenceLineHeight(triggersLineIndex) ?: return null
         // find keyframe, which contains x, y point
         return intensityTrigger.keyframes().keyframesList.find {
             val keyframeShape = TimelineSequenceRenderer.getKeyframeShape(triggerX1, lineY, triggerWidth, lineHeight, it)
@@ -581,8 +581,8 @@ object MoveTriggersManager {
         currentlyMovedKeyframe = keyframe
         currentlyMovedKeyframeParent = parentTrigger
         // lookup line y and height
-        currentlyMovedKeyframeLineYOffset = TimelineSequenceRenderer.getSequenceLineFromY(parentTriggerLineIndex)
-        currentlyMovedKeyframeLineHeight = TimelineSequenceRenderer.getSequenceLineHeight(parentTriggerLineIndex)
+        currentlyMovedKeyframeLineYOffset = TimelineSequenceRenderer.getSequenceLineTopY(parentTriggerLineIndex) ?: return
+        currentlyMovedKeyframeLineHeight = TimelineSequenceRenderer.getSequenceLineHeight(parentTriggerLineIndex) ?: return
         // calculate min and max time this trigger may be moved to
         when(val keyframeIndex = parentTrigger.keyframes().keyframesList.indexOf(keyframe)) {
             0 -> {
