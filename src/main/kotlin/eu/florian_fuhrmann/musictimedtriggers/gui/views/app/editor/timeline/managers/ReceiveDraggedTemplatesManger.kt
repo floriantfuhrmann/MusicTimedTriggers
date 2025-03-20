@@ -62,7 +62,7 @@ object ReceiveDraggedTemplatesManger {
         //get pointer point
         val p = getPointerPointOnPanel()
         //only proceed if at least x is in timeline area (if y is out of bounds we can still draw the drag indicator)
-        if(p.x < TimelineRenderer.timelineX || p.x > TimelineRenderer.timelineX + TimelineRenderer.timelineWidth) {
+        if(p.x < TimelineRenderer.timelineCoreX || p.x > TimelineRenderer.timelineCoreX + TimelineRenderer.timelineCoreWidth) {
             insertPossible = false
             return
         }

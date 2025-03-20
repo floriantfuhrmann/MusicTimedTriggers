@@ -3,6 +3,10 @@ package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.man
 import androidx.compose.ui.focus.FocusManager
 import java.awt.event.*
 
+/**
+ * Manages the focus of the howl timeline panel even when the core timeline
+ * (sequence lines and second grid) are not drawn to howl panel.
+ */
 object TimelineFocusManager {
     var focusManager: FocusManager? = null
     var timelineFocused = false
@@ -11,16 +15,12 @@ object TimelineFocusManager {
     val mouseListener: MouseListener =
         object : MouseListener {
             override fun mouseClicked(e: MouseEvent?) {}
-
             override fun mousePressed(e: MouseEvent?) {
                 // clicked on timeline, so it should gain focus
                 timelineGainedFocus()
             }
-
             override fun mouseReleased(e: MouseEvent?) {}
-
             override fun mouseEntered(e: MouseEvent?) {}
-
             override fun mouseExited(e: MouseEvent?) {}
         }
 

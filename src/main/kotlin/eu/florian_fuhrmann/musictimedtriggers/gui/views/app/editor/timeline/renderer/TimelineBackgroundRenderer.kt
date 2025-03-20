@@ -39,16 +39,16 @@ object TimelineBackgroundRenderer {
 
     // Conversion functions (also used by other renderers)
     fun timeToX(time: Double): Int {
-        return TimelineRenderer.timelineX + (((time - currentFromTime) / currentTotalDisplayedDuration) * TimelineRenderer.timelineWidth).roundToInt()
+        return TimelineRenderer.timelineCoreX + (((time - currentFromTime) / currentTotalDisplayedDuration) * TimelineRenderer.timelineCoreWidth).roundToInt()
     }
     fun xToTime(x: Int): Double {
-        return currentFromTime + ((x - TimelineRenderer.timelineX).toDouble() / pixelsPerSecond)
+        return currentFromTime + ((x - TimelineRenderer.timelineCoreX).toDouble() / pixelsPerSecond)
     }
     fun durationToWidth(duration: Double): Int {
-        return ((duration / currentTotalDisplayedDuration) * TimelineRenderer.timelineWidth).roundToInt()
+        return ((duration / currentTotalDisplayedDuration) * TimelineRenderer.timelineCoreWidth).roundToInt()
     }
     fun widthToDuration(width: Int): Double {
-        return (width.toDouble() / TimelineRenderer.timelineWidth) * currentTotalDisplayedDuration
+        return (width.toDouble() / TimelineRenderer.timelineCoreWidth) * currentTotalDisplayedDuration
     }
     // Values needed for conversions (updated during rendering)
     var currentTotalDisplayedDuration = 0.0

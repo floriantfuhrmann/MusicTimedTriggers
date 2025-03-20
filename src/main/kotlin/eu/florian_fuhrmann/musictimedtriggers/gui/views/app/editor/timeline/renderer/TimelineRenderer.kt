@@ -12,11 +12,11 @@ object TimelineRenderer {
 
     // Values needed globally
     var secondsGridHeight = 0
-    // Area for the timeline (contains sequence lines with triggers on spectrogram and second grid)
-    var timelineX = 0
-    var timelineY = 0
-    var timelineWidth = 0
-    var timelineHeight = 0
+    // Area for the main timeline (contains sequence lines with placed triggers on spectrogram background and second grid)
+    var timelineCoreX = 0
+    var timelineCoreY = 0
+    var timelineCoreWidth = 0
+    var timelineCoreHeight = 0
 
     fun render(g: Graphics2D, x: Int, y: Int, width: Int, height: Int) {
         // enable antialiasing
@@ -37,10 +37,10 @@ object TimelineRenderer {
             return
         }
         // update timeline area values
-        timelineX = x
-        timelineY = y
-        timelineWidth = width
-        timelineHeight = height
+        timelineCoreX = x
+        timelineCoreY = y
+        timelineCoreWidth = width
+        timelineCoreHeight = height
         // Draw Background
         // calculate height for seconds grid (needed as offset for spectrogram)
         secondsGridHeight = TimelineGridRenderer.calculateSecondsGridHeight(g)

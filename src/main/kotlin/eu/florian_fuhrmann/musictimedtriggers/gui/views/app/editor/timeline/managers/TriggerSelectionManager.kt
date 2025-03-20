@@ -151,11 +151,11 @@ object TriggerSelectionManager {
         val toTime = xToTime(max(selectionX1, selectionX2))
         val fromLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(
             min(selectionY1, selectionY2)
-                .coerceAtLeast(TimelineRenderer.timelineX + TimelineRenderer.secondsGridHeight)
+                .coerceAtLeast(TimelineRenderer.timelineCoreX + TimelineRenderer.secondsGridHeight)
         )
         val toLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(
             max(selectionY1, selectionY2)
-                .coerceAtMost(TimelineRenderer.timelineX + TimelineRenderer.timelineHeight)
+                .coerceAtMost(TimelineRenderer.timelineCoreX + TimelineRenderer.timelineCoreHeight)
         )
         if (fromLineIndex == null || toLineIndex == null) return
         // update triggers in box
@@ -183,10 +183,10 @@ object TriggerSelectionManager {
                 // only proceed if no trigger is hovered
                 if (getTriggerAt(e.x, e.y) != null) return
                 // only proceed if user clicked in timeline area
-                if (e.y <= TimelineRenderer.timelineX + TimelineRenderer.secondsGridHeight
-                    || e.y > TimelineRenderer.timelineX + TimelineRenderer.timelineHeight
-                    || e.x < TimelineRenderer.timelineX
-                    || e.x > TimelineRenderer.timelineX + TimelineRenderer.timelineWidth) {
+                if (e.y <= TimelineRenderer.timelineCoreX + TimelineRenderer.secondsGridHeight
+                    || e.y > TimelineRenderer.timelineCoreX + TimelineRenderer.timelineCoreHeight
+                    || e.x < TimelineRenderer.timelineCoreX
+                    || e.x > TimelineRenderer.timelineCoreX + TimelineRenderer.timelineCoreWidth) {
                     return
                 }
                 // user didn't click a trigger or seconds grid, so start selection box
