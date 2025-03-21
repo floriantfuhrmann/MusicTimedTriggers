@@ -86,6 +86,17 @@ class TriggerSequence(
         return null
     }
 
+    /**
+     * Find the index of the line containing the given trigger in the given range.
+     */
+    fun findLineIndexOf(trigger: AbstractPlacedTrigger, range: IntRange): Int? {
+        range.forEach { index ->
+            val line = lines[index]
+            if(line.getTriggerAt(trigger.startTime) == trigger) return index
+        }
+        return null
+    }
+
     // Saving and Loading
 
     /**

@@ -497,6 +497,7 @@ object MoveTriggersManager {
                             it.startTime = desiredStartTime
                             // add the trigger to the line again (this way the triggers remain sorted)
                             line.addTrigger(it)
+                            // Note: the remove and add are quite expensive and should be replaced with a swap actually
                             anyAffected = true
                         }
                     } else if (desiredStartTime > it.startTime) {
@@ -522,6 +523,7 @@ object MoveTriggersManager {
                             it.startTime = desiredStartTime
                             // add the trigger to the line again (this way the triggers remain sorted)
                             line.addTrigger(it)
+                            // Note: the remove and add are quite expensive and should be replaced with a swap actually
                             anyAffected = true
                         }
                     }

@@ -94,10 +94,26 @@ class Keyframes(
         toTime: Double,
         triggerContext: AbstractPlacedTrigger
     ): List<Keyframe> {
-        val fromProportion = Keyframe.fromAbsoluteSecondPositionToProportion(fromTime, triggerContext)
-        val toProportion = Keyframe.fromAbsoluteSecondPositionToProportion(toTime, triggerContext)
-        val fromIndex = indexOfKeyframeAtOrAfter(fromProportion)
-        return keyframesList.drop(fromIndex).takeWhile { it.position < toProportion }
+        // calculate from index (inclusive)
+        val fromIndex = if(fromTime <= triggerContext.startTime) {
+            0 // automatically 0 if before trigger start time
+        } else {
+            // calculate from proportion and search for keyframe index at or after
+            val fromProportion = Keyframe.fromAbsoluteSecondPositionToProportion(fromTime, triggerContext)
+            indexOfKeyframeAtOrAfter(fromProportion)
+        }
+        // check if we even have to check to proportion
+        if(toTime >= triggerContext.endTime) {
+            // if not return all keyframes after and including from index
+            return keyframesList.drop(fromIndex)
+        } else {
+            // calculate to proportion
+            val toProportion = Keyframe.fromAbsoluteSecondPositionToProportion(toTime, triggerContext)
+            // return all keyframes after and including from index until to proportion (inclusive)
+            return keyframesList
+                .drop(fromIndex)
+                .takeWhile { it.position <= toProportion }
+        }
     }
 
     /**
@@ -144,7 +160,7 @@ class Keyframes(
      *    at the end)
      * @param value proportional value
      */
-    data class Keyframe(var position: Double, var value: Double) {
+    class Keyframe(var position: Double, var value: Double) {
         fun relativeSecondPosition(placedTrigger: AbstractPlacedTrigger) = relativeSecondPosition(position, placedTrigger)
         fun absoluteSecondPosition(placedTrigger: AbstractPlacedTrigger) = absoluteSecondPosition(position, placedTrigger)
 

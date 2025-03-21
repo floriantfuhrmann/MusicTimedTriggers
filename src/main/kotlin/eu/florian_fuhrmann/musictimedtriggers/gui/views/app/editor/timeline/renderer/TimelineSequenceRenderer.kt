@@ -36,11 +36,15 @@ object TimelineSequenceRenderer {
      * Finds the index of the Sequence Line at the [y] coordinate
      */
     fun getSequenceLineIndexAt(y: Int): Int? {
-        // check for every line if y is in bounds
-        for (i in lineTopYs.indices) {
+        // check whether y is out of bounds (under the last line or over the first line)
+        if(y < (lineTopYs.firstOrNull() ?: return null)
+            ||  y > (lineTopYs.lastOrNull() ?: return null) + (lineHeights.lastOrNull() ?: return null)) {
+            return null
+        }
+        // check for every line in reverse order if y is under the topY of the line
+        for (i in lineTopYs.indices.reversed()) {
             val topY = lineTopYs[i] ?: continue
-            val height = lineHeights[i] ?: continue
-            if(y >= topY && y <= topY + height) {
+            if(y >= topY) {
                 return i
             }
         }

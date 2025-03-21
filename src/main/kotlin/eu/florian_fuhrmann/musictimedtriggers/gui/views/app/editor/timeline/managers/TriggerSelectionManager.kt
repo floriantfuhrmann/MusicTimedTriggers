@@ -133,12 +133,17 @@ object TriggerSelectionManager {
         // update selection box corner
         selectionX2 = e.x
         selectionY2 = e.y
-        // calculate period of selection
+        // calculate time period of selection
         val fromTime = xToTime(min(selectionX1, selectionX2))
         val toTime = xToTime(max(selectionX1, selectionX2))
+        // calculate line index range
+        // get line indices of first and last line in selection box
+        val fromLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(min(selectionY1, selectionY2)) ?: 0
+        val toLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(max(selectionY1, selectionY2)) ?: sequence.lines.lastIndex
+        val lineIndexRange = fromLineIndex..toLineIndex
         // update triggers and keyframes in selection box
-        updateTriggersInSelectionBox(fromTime, toTime, sequence)
-        updateKeyframesInSelectionBox(fromTime, toTime, sequence)
+        updateTriggersInSelectionBox(fromTime, toTime, lineIndexRange, sequence)
+        updateKeyframesInSelectionBox(fromTime, toTime, lineIndexRange, sequence)
         // redraw timeline to show selection
         if(redraw) {
             redrawTimeline()
@@ -146,16 +151,13 @@ object TriggerSelectionManager {
     }
 
     fun endSelection(e: MouseEvent) {
+        // update selection one last time
         updateSelection(e, false)
         selecting = false
-        if (e.isShiftDown && selectedTriggers.containsAll(selectionBoxTriggers)) {
-            // if shift is pressed and all triggers in box are already selected, then remove instead
-            selectedTriggers.removeAll(selectionBoxTriggers)
-        } else {
-            // add to selected and clear selection box
-            selectedTriggers.addAll(selectionBoxTriggers)
-        }
-        // Todo: Add Keyframes to selection
+        // update selected triggers and keyframes
+        selectedTriggers.addAll(selectionBoxTriggers)
+        selectedKeyframes.addAll(selectionBoxKeyframes)
+        // reset selection boxes
         selectionBoxTriggers = emptySet()
         selectionBoxKeyframes = emptySet()
         // redraw timeline to show selection
@@ -166,20 +168,11 @@ object TriggerSelectionManager {
     }
 
     /** updates which triggers are in the selection box */
-    private fun updateTriggersInSelectionBox(fromTime: Double, toTime: Double, sequence: TriggerSequence) {
-        val fromLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(
-            min(selectionY1, selectionY2)
-                .coerceAtLeast(TimelineRenderer.timelineCoreX + TimelineRenderer.secondsGridHeight)
-        )
-        val toLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(
-            max(selectionY1, selectionY2)
-                .coerceAtMost(TimelineRenderer.timelineCoreX + TimelineRenderer.timelineCoreHeight)
-        )
-        if (fromLineIndex == null || toLineIndex == null) return
+    private fun updateTriggersInSelectionBox(fromTime: Double, toTime: Double, lineIndexRange: IntRange, sequence: TriggerSequence) {
         // update triggers in box
         selectionBoxTriggers =
             sequence.lines
-                .slice(fromLineIndex..toLineIndex)
+                .slice(lineIndexRange)
                 .flatMap {
                     it.getTriggersInPeriod(fromTime, toTime)
                 }.toSet()
@@ -191,10 +184,45 @@ object TriggerSelectionManager {
      * [updateTriggersInSelectionBox] because it uses the triggers in the
      * selection box.)
      */
-    private fun updateKeyframesInSelectionBox(fromTime: Double, toTime: Double, sequence: TriggerSequence) {
+    private fun updateKeyframesInSelectionBox(fromTime: Double, toTime: Double, lineIndexRange: IntRange, sequence: TriggerSequence) {
+        // get max and min y
+        val minY = min(selectionY1, selectionY2)
+        val maxY = max(selectionY1, selectionY2)
+        // calculate value threshold for first line (values need to be below this threshold to be in selection box)
+        val firstLineHeight = TimelineSequenceRenderer.getSequenceLineHeight(lineIndexRange.first) ?: throw IllegalStateException()
+        val firstLineTopY = TimelineSequenceRenderer.getSequenceLineTopY(lineIndexRange.first) ?: throw IllegalStateException()
+        val firstLineThreshold = 1.0 - ((minY - firstLineTopY) / firstLineHeight.toDouble())
+        // calculate value threshold for last line (values need to be above this threshold to be in selection box)
+        val lastLineHeight = TimelineSequenceRenderer.getSequenceLineHeight(lineIndexRange.last) ?: throw IllegalStateException()
+        val lastLineTopY = TimelineSequenceRenderer.getSequenceLineTopY(lineIndexRange.last) ?: throw IllegalStateException()
+        val lastLineThreshold = 1.0 - ((maxY - lastLineTopY) / lastLineHeight.toDouble())
         selectionBoxKeyframes = selectionBoxTriggers.filterIsInstance<AbstractPlacedIntensityTrigger>()
             .flatMap { trigger: AbstractPlacedIntensityTrigger ->
-                trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger)
+                // find line index of trigger
+                val lineIndex = sequence.findLineIndexOf(trigger, lineIndexRange)
+                // check y for lines, which are not fully contained in selection box
+                if(lineIndex == lineIndexRange.first) {
+                    // check if also the last line (so selection box only includes one line)
+                    if(lineIndex == lineIndexRange.last) {
+                        // so we have to check both directions
+                        trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger).filter { keyframe ->
+                            keyframe.value in lastLineThreshold..firstLineThreshold
+                        }
+                    } else {
+                        // so we just have to check the keyframes values are not above threshold
+                        trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger).filter { keyframe ->
+                            keyframe.value <= firstLineThreshold
+                        }
+                    }
+                } else if(lineIndex == lineIndexRange.last) {
+                    // so we just have to check the keyframes values are not below threshold
+                    trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger).filter { keyframe ->
+                        keyframe.value >= lastLineThreshold
+                    }
+                } else {
+                    // otherwise we can just return all keyframes in time period
+                    trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger)
+                }
             }.toSet()
     }
 
