@@ -75,6 +75,31 @@ class Keyframes(
         return index > 0 && index < keyframesList.size - 1
     }
 
+    // similar to logic for triggers
+    private fun indexOfKeyframeAt(proportionalPosition: Double): Int {
+        return keyframesList.binarySearch { it.position.compareTo(proportionalPosition) }
+    }
+
+    // similar to logic for triggers
+    private fun indexOfKeyframeAtOrAfter(proportionalPosition: Double): Int {
+        val index = indexOfKeyframeAt(proportionalPosition)
+        return if(index < 0) { -(index + 1) } else { index }
+    }
+
+    /**
+     * Returns the Keyframes in the time period from [fromTime] to [toTime].
+     */
+    fun getKeyframesInTimePeriod(
+        fromTime: Double,
+        toTime: Double,
+        triggerContext: AbstractPlacedTrigger
+    ): List<Keyframe> {
+        val fromProportion = Keyframe.fromAbsoluteSecondPositionToProportion(fromTime, triggerContext)
+        val toProportion = Keyframe.fromAbsoluteSecondPositionToProportion(toTime, triggerContext)
+        val fromIndex = indexOfKeyframeAtOrAfter(fromProportion)
+        return keyframesList.drop(fromIndex).takeWhile { it.position < toProportion }
+    }
+
     /**
      * Calculates the intensity at a given proportional position by
      * interpolating between keyframes.

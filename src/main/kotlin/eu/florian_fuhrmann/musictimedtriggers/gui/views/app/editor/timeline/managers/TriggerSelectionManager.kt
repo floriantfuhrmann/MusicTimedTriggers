@@ -8,7 +8,10 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.rend
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.updateCursor
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedIntensityTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
+import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
 import java.awt.Color
 import java.awt.Graphics2D
@@ -19,16 +22,12 @@ import javax.swing.SwingUtilities
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * Manages the selection of triggers in the timeline.
- */
+/** Manages the selection of triggers and keyframes in the timeline. */
 object TriggerSelectionManager {
 
     // Variables
 
-    /**
-     * bool to mark whether we are currently selecting triggers
-     */
+    /** bool to mark whether we are currently selecting triggers */
     var selecting = false
         private set
 
@@ -50,6 +49,11 @@ object TriggerSelectionManager {
      */
     val selectedTriggers: MutableSet<AbstractPlacedTrigger> = mutableSetOf()
 
+    /** keyframes currently in the selection box */
+    private var selectionBoxKeyframes: Set<Keyframes.Keyframe> = emptySet()
+    /** keyframes that are currently fully selected */
+    private var selectedKeyframes: MutableSet<Keyframes.Keyframe> = mutableSetOf()
+    
     // General Selection Logic
 
     fun selectTrigger(
@@ -89,6 +93,16 @@ object TriggerSelectionManager {
      */
     fun isSelected(trigger: AbstractPlacedTrigger) = selectedTriggers.contains(trigger)
 
+    /**
+     * @return whether the [keyframe] is visually selected (so either in the
+     *    selection box or fully selected)
+     */
+    fun isVisuallySelected(keyframe: Keyframes.Keyframe) =
+        selectionBoxKeyframes.contains(keyframe) || selectedKeyframes.contains(keyframe)
+
+    /** @return whether the [keyframe] is fully selected */
+    fun isSelected(keyframe: Keyframes.Keyframe) = selectedKeyframes.contains(keyframe)
+
     // Selection Box Logic
 
     /**
@@ -100,6 +114,7 @@ object TriggerSelectionManager {
         // only keep others when shift is pressed
         if (!e.isShiftDown) {
             selectedTriggers.clear()
+            selectedKeyframes.clear()
         }
         // start selection
         selecting = true
@@ -113,9 +128,17 @@ object TriggerSelectionManager {
      * updates the selection box to the current mouse position
      */
     private fun updateSelection(e: MouseEvent, redraw: Boolean = true) {
+        // get sequence
+        val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: throw IllegalStateException("No sequence")
+        // update selection box corner
         selectionX2 = e.x
         selectionY2 = e.y
-        updateTriggersInSelectionBox()
+        // calculate period of selection
+        val fromTime = xToTime(min(selectionX1, selectionX2))
+        val toTime = xToTime(max(selectionX1, selectionX2))
+        // update triggers and keyframes in selection box
+        updateTriggersInSelectionBox(fromTime, toTime, sequence)
+        updateKeyframesInSelectionBox(fromTime, toTime, sequence)
         // redraw timeline to show selection
         if(redraw) {
             redrawTimeline()
@@ -132,7 +155,9 @@ object TriggerSelectionManager {
             // add to selected and clear selection box
             selectedTriggers.addAll(selectionBoxTriggers)
         }
+        // Todo: Add Keyframes to selection
         selectionBoxTriggers = emptySet()
+        selectionBoxKeyframes = emptySet()
         // redraw timeline to show selection
         redrawTimeline()
         // also update trigger hovered because pointer could have stopped on a trigger
@@ -140,15 +165,8 @@ object TriggerSelectionManager {
         updateCursor() // we update here ourselves so the cursor is always updated
     }
 
-    /**
-     * updates which triggers are in the selection box
-     */
-    private fun updateTriggersInSelectionBox() {
-        // get sequence
-        val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: throw IllegalStateException("No sequence")
-        // calculate period of selection
-        val fromTime = xToTime(min(selectionX1, selectionX2))
-        val toTime = xToTime(max(selectionX1, selectionX2))
+    /** updates which triggers are in the selection box */
+    private fun updateTriggersInSelectionBox(fromTime: Double, toTime: Double, sequence: TriggerSequence) {
         val fromLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(
             min(selectionY1, selectionY2)
                 .coerceAtLeast(TimelineRenderer.timelineCoreX + TimelineRenderer.secondsGridHeight)
@@ -165,6 +183,19 @@ object TriggerSelectionManager {
                 .flatMap {
                     it.getTriggersInPeriod(fromTime, toTime)
                 }.toSet()
+    }
+
+    /**
+     * Updates which keyframes of the triggers in selection box
+     * are themselves in the selection box. (Must be called after
+     * [updateTriggersInSelectionBox] because it uses the triggers in the
+     * selection box.)
+     */
+    private fun updateKeyframesInSelectionBox(fromTime: Double, toTime: Double, sequence: TriggerSequence) {
+        selectionBoxKeyframes = selectionBoxTriggers.filterIsInstance<AbstractPlacedIntensityTrigger>()
+            .flatMap { trigger: AbstractPlacedIntensityTrigger ->
+                trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger)
+            }.toSet()
     }
 
     // Selection Listeners

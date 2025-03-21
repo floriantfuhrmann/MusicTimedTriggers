@@ -160,6 +160,7 @@ object TimelineSequenceRenderer {
                 TriggerStateStyle.Normal
             },
             MoveTriggersManager.isTriggerHovered(trigger),
+            TriggerSelectionManager.isVisuallySelected(trigger),
             if (trigger is AbstractPlacedIntensityTrigger) {
                 trigger.keyframes()
             } else {
@@ -187,6 +188,7 @@ object TimelineSequenceRenderer {
         triggerColor: GenericColor,
         name: String,
         style: TriggerStateStyle = TriggerStateStyle.Normal,
+        selected: Boolean = false,
         hovered: Boolean = false,
         keyframes: Keyframes? = null
     ) {
@@ -247,8 +249,8 @@ object TimelineSequenceRenderer {
         }
         RenderUtils.drawStringVerticallyCentered(g, nameX, y, height, name)
         g.clip = null
-        // draw keyframes (only if trigger is hovered)
-        if(hovered && keyframes != null) {
+        // draw keyframes (only if trigger is hovered or visually selected)
+        if((hovered || selected) && keyframes != null) {
             drawKeyframes(g, x, y, width, height, keyframes)
         }
     }
@@ -281,16 +283,14 @@ object TimelineSequenceRenderer {
     ) {
         keyframes.keyframesList.forEach {
             val keyframeRhombus = getKeyframeShape(x, y, width, height, it)
-            g.color = if(MoveTriggersManager.isKeyframeHovered(it)) {
-                Color.red
-            } else {
-                Color.yellow
-            }
+            val hovered = MoveTriggersManager.isKeyframeHovered(it)
+            val selected = TriggerSelectionManager.isVisuallySelected(it)
+            g.color = if(hovered || selected) { Color.red } else { Color.yellow }
             g.fillPolygon(keyframeRhombus)
             // draw border
-            g.color = Color.black
+            g.color = if (selected) { Color.white } else { Color.black }
             val restoreStroke = g.stroke
-            g.stroke = BasicStroke(1.5f)
+            g.stroke = BasicStroke(if (selected) { 2.5f } else { 1.5f })
             g.drawPolygon(keyframeRhombus)
             g.stroke = restoreStroke
         }
@@ -303,12 +303,12 @@ object TimelineSequenceRenderer {
         triggerHeight: Int,
         keyframe: Keyframes.Keyframe
     ): Polygon {
-        val halfHeight = (triggerHeight / 8.0).coerceIn(5.0, 7.0)
-        val kfX = (triggerX + keyframe.position * triggerWidth)
-        val kfY = (triggerY + (1 - keyframe.value) * triggerHeight)
+        val halfHeight = (triggerHeight / 8.0).roundToInt().coerceIn(5, 7)
+        val kfX = (triggerX + keyframe.position * triggerWidth).roundToInt()
+        val kfY = (triggerY + (1 - keyframe.value) * triggerHeight).roundToInt()
         return Polygon(
-            intArrayOf((kfX - halfHeight).roundToInt(), kfX.roundToInt(), (kfX + halfHeight).roundToInt(), kfX.roundToInt()),
-            intArrayOf(kfY.roundToInt(), (kfY - halfHeight).roundToInt(), kfY.roundToInt(), (kfY + halfHeight).roundToInt()),
+            intArrayOf(kfX - halfHeight, kfX, kfX + halfHeight, kfX),
+            intArrayOf(kfY, kfY - halfHeight, kfY, kfY + halfHeight),
             4
         )
     }
