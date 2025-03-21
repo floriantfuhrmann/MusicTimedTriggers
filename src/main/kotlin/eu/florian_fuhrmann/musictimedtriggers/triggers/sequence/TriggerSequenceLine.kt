@@ -196,13 +196,25 @@ class TriggerSequenceLine(
     }
 
     /**
-     * Checks if there are no triggers in time period from [fromTime] to [toTime], which should not be ignored (so are
-     * not in [ignoreSet])
+     * Checks if there are no triggers in time period from [fromTime] to
+     * [toTime], which should not be ignored (so are not in [ignoreSet])
      *
-     * @return whether no time of time period is occupied by any trigger
+     * @return whether no time position in the time period is occupied by any
+     *    trigger
      */
     fun isPeriodFree(fromTime: Double, toTime: Double, ignoreSet: Set<AbstractPlacedTrigger>): Boolean {
         return !getTriggersInPeriod(fromTime, toTime, true).fastAny { !ignoreSet.contains(it) }
+    }
+
+    /**
+     * Checks if there are no triggers in time period from [fromTime] to
+     * [toTime]
+     *
+     * @return whether no time position in the time period is occupied by any
+     *    trigger
+     */
+    fun isPeriodFree(fromTime: Double, toTime: Double): Boolean {
+        return !getTriggersInPeriod(fromTime, toTime, true).any()
     }
 
     fun addTrigger(trigger: AbstractPlacedTrigger) {

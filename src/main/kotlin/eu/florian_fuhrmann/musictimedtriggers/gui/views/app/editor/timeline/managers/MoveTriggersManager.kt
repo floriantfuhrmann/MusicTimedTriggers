@@ -474,37 +474,37 @@ object MoveTriggersManager {
                 // try moving all selected trigger's start time to the pointer time + their offset when moving started
                 TriggerSelectionManager.selectedTriggers.forEach {
                     // calculated the triggers desired start time
-                    val desiredStartTime =
-                        pointerTime + (
-                            moveOffsets[it]
-                                ?: throw IllegalStateException("Updating move for a trigger without an offset in map")
-                        )
+                    val desiredStartTime = pointerTime + (moveOffsets[it] ?: throw IllegalStateException("Updating move for a trigger without an offset in map"))
                     // check in what direction we are moving
                     if (desiredStartTime < it.startTime) {
                         // moving start time to left
                         // get the triggers line
-                        val line =
-                            sequence.findLineOf(it)
-                                ?: throw IllegalStateException("Updating move for a trigger without a line in sequence")
+                        val line = sequence.findLineOf(it) ?: throw IllegalStateException("Updating move for a trigger without a line in sequence")
                         // calculate by how much we should move left
-                        val moveLeftTime =
-                            (it.startTime - desiredStartTime)
-                                // limit to space on the left
-                                .coerceAtMost(line.getFreeDurationUntil(it.startTime, true))
+                        val moveLeftTime = (it.startTime - desiredStartTime)
+                            // limit to space on the left
+                            .coerceAtMost(line.getFreeDurationUntil(it.startTime, true))
                         // update the triggers start time
                         if (moveLeftTime > 0) {
                             it.startTime -= moveLeftTime
+                            anyAffected = true
+                        } else if(desiredStartTime >= 0.0 && line.isPeriodFree(desiredStartTime, desiredStartTime+it.duration)) {
+                            // so moving left on the line was not possible, because of a trigger obstructing. But the
+                            // targeted period is free, so instead the trigger can "jump" over the obstruction.
+                            // So first remove the trigger from the line
+                            line.removeTrigger(it)
+                            // Update the triggers start time
+                            it.startTime = desiredStartTime
+                            // add the trigger to the line again (this way the triggers remain sorted)
+                            line.addTrigger(it)
                             anyAffected = true
                         }
                     } else if (desiredStartTime > it.startTime) {
                         // moving start time to the right
                         // get the triggers line
-                        val line =
-                            sequence.findLineOf(it)
-                                ?: throw IllegalStateException("Updating move for a trigger without a line in sequence")
+                        val line = sequence.findLineOf(it) ?: throw IllegalStateException("Updating move for a trigger without a line in sequence")
                         // calculate by how much we should move right
-                        val moveRightTime =
-                            (desiredStartTime - it.startTime)
+                        val moveRightTime = (desiredStartTime - it.startTime)
                                 // limit to space on the right
                                 .coerceAtMost(line.getFreeDurationFrom(it.endTime, true))
                                 // prevent moving start past sequence end
@@ -512,6 +512,16 @@ object MoveTriggersManager {
                         // update the triggers start time
                         if (moveRightTime > 0) {
                             it.startTime += moveRightTime
+                            anyAffected = true
+                        } else if(desiredStartTime < sequence.duration && line.isPeriodFree(desiredStartTime, desiredStartTime+it.duration)) {
+                            // so moving right on the line was not possible, because of a trigger obstructing. But the
+                            // targeted period is free, so instead the trigger can "jump" over the obstruction.
+                            // So first remove the trigger from the line
+                            line.removeTrigger(it)
+                            // Update the triggers start time
+                            it.startTime = desiredStartTime
+                            // add the trigger to the line again (this way the triggers remain sorted)
+                            line.addTrigger(it)
                             anyAffected = true
                         }
                     }
@@ -521,22 +531,14 @@ object MoveTriggersManager {
                 // try moving all selected trigger's end time to pointer time + their offset
                 TriggerSelectionManager.selectedTriggers.forEach {
                     // calculate the triggers desired end time
-                    val desiredEndTime =
-                        pointerTime + (
-                            moveOffsets[it]
-                                ?: throw IllegalStateException("Updating move for a trigger without an offset in map")
-                        )
+                    val desiredEndTime = pointerTime + (moveOffsets[it] ?: throw IllegalStateException("Updating move for a trigger without an offset in map"))
                     // check in what direction we are moving
                     if (desiredEndTime > it.endTime) {
                         // extending end time to the right
                         // get the triggers line
-                        val line =
-                            sequence.findLineOf(it)
-                                ?: throw IllegalStateException("Updating move for a trigger without a line in sequence")
+                        val line = sequence.findLineOf(it) ?: throw IllegalStateException("Updating move for a trigger without a line in sequence")
                         // calculate by how much we should move end time to the right
-                        val extendTime =
-                            (desiredEndTime - it.endTime)
-                                .coerceAtMost(line.getFreeDurationFrom(it.endTime))
+                        val extendTime = (desiredEndTime - it.endTime).coerceAtMost(line.getFreeDurationFrom(it.endTime))
                         // update the triggers end time
                         if (extendTime > 0) {
                             it.duration += extendTime
