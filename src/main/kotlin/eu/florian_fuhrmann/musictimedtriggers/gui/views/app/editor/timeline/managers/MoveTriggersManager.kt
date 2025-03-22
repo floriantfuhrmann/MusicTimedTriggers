@@ -82,9 +82,13 @@ object MoveTriggersManager {
             val trigger = triggerAtResult.trigger
             // check if also clicked on a keyframe
             if (triggerAtResult.keyframe != null) {
-                // is so start moving keyframe
+                // is so start moving keyframes
                 require(trigger is AbstractPlacedIntensityTrigger) { "Only intensity triggers can have keyframes" }
-                startMovingKeyframe(e, triggerAtResult.keyframe, trigger, triggerAtResult.lineIndex)
+                // make sure the keyframe is selected
+                if (!TriggerSelectionManager.isSelected(triggerAtResult.keyframe)) {
+                    TriggerSelectionManager.selectKeyframe(triggerAtResult.keyframe, trigger, e.isShiftDown)
+                }
+                startMovingSelectedKeyframes(e, triggerAtResult.keyframe, triggerAtResult.lineIndex)
             } else {
                 // make sure that the clicked trigger is selected
                 if (!TriggerSelectionManager.isSelected(trigger)) {
@@ -103,7 +107,7 @@ object MoveTriggersManager {
             // end moving (if currently moving)
             if (moving) {
                 endMove(e)
-            } else if (isMovingKeyframe) { // end moving keyframe (if currently moving keyframe)
+            } else if (isMovingKeyframes) { // end moving keyframe (if currently moving keyframe)
                 endKeyframeMove(e)
             }
         }
@@ -119,8 +123,8 @@ object MoveTriggersManager {
                 if (e == null) return
                 if (moving) {
                     updateMove(e)
-                } else if (isMovingKeyframe) {
-                    updateKeyframeMove(e)
+                } else if (isMovingKeyframes) {
+                    updateKeyframesMove(e)
                 }
             }
 
@@ -129,8 +133,8 @@ object MoveTriggersManager {
                 if (e == null) return
                 if (moving) {
                     updateMove(e)
-                } else if (isMovingKeyframe) {
-                    updateKeyframeMove(e)
+                } else if (isMovingKeyframes) {
+                    updateKeyframesMove(e)
                 } else if (currentAudioPlayer.value?.playing?.value == false) {
                     updateTriggerHover(e)
                 }
@@ -584,78 +588,185 @@ object MoveTriggersManager {
 
     // Keyframe Movement
 
-    private const val KEYFRAME_MIN_DISTANCE_SECONDS = 0.05 // 50ms
-    val isMovingKeyframe: Boolean
-        get() = currentlyMovedKeyframe != null
-    private var currentlyMovedKeyframe: Keyframes.Keyframe? = null
-    private var currentlyMovedKeyframeParent: AbstractPlacedIntensityTrigger? = null
-    private var currentlyMovedKeyframeMoveMinTime = 0.0
-    private var currentlyMovedKeyframeMoveMaxTime = 0.0
-    private var currentlyMovedKeyframeLineYOffset = 0
-    private var currentlyMovedKeyframeLineHeight = 0
+    private const val KEYFRAMES_PREVENT_CROWDING_TIME_PERIOD_IN_SECONDS = 0.039_999_999_999_999 // slightly less than 40ms
+    private const val KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS = 0.02 // 20ms
+    val isMovingKeyframes: Boolean
+        get() = keyframeMoveCaptain != null
+    private var keyframeMoveCaptain: Keyframes.Keyframe? = null
+    private var keyframeMoveCaptainLineIndex: Int? = null
+    private var keyframeMoveOffsets: Map<Keyframes.Keyframe, KeyframeMoveOffset> = emptyMap()
 
-    fun startMovingKeyframe(
+    private data class KeyframeMoveOffset(val timeOffset: Double, val intensityOffset: Double)
+
+    private fun calculateIntensityValueAtY(y: Int, lineIndex: Int): Double {
+        val captainLineTopY = TimelineSequenceRenderer.getSequenceLineTopY(lineIndex) ?: throw IllegalArgumentException("No line at index $lineIndex")
+        val captainLineHeight = TimelineSequenceRenderer.getSequenceLineHeight(lineIndex) ?: throw IllegalArgumentException("No line at index $lineIndex")
+        return (1.0 - (y - captainLineTopY).toDouble() / captainLineHeight)
+    }
+
+    fun startMovingSelectedKeyframes(
         event: MouseEvent,
-        keyframe: Keyframes.Keyframe,
-        parentTrigger: AbstractPlacedIntensityTrigger,
-        parentTriggerLineIndex: Int
+        captain: Keyframes.Keyframe,
+        captainLineIndex: Int
     ) {
-        // set currently moved keyframe and parent
-        currentlyMovedKeyframe = keyframe
-        currentlyMovedKeyframeParent = parentTrigger
-        // lookup line y and height
-        currentlyMovedKeyframeLineYOffset = TimelineSequenceRenderer.getSequenceLineTopY(parentTriggerLineIndex) ?: return
-        currentlyMovedKeyframeLineHeight = TimelineSequenceRenderer.getSequenceLineHeight(parentTriggerLineIndex) ?: return
-        // calculate min and max time this trigger may be moved to
-        when(val keyframeIndex = parentTrigger.keyframes().keyframesList.indexOf(keyframe)) {
-            0 -> {
-                currentlyMovedKeyframeMoveMinTime = parentTrigger.startTime
-                currentlyMovedKeyframeMoveMaxTime = parentTrigger.startTime
+        // set captain
+        keyframeMoveCaptain = captain
+        keyframeMoveCaptainLineIndex = captainLineIndex
+        // calculate pointer time and intensity
+        val pointerTime = xToTime(event.x)
+        val pointerIntensityValue = calculateIntensityValueAtY(event.y, captainLineIndex)
+        // calculate offsets
+        keyframeMoveOffsets = TriggerSelectionManager.selectedKeyframes.map { entry ->
+            val absoluteSecondPosition = entry.key.absoluteSecondPosition(entry.value)
+            entry.key to KeyframeMoveOffset(absoluteSecondPosition - pointerTime, entry.key.value - pointerIntensityValue)
+        }.toMap()
+        // update cursor
+        updateCursor()
+    }
+
+    private fun updateKeyframesMove(e: MouseEvent) {
+        // calculate pointer time and intensity
+        val pointerTime = xToTime(e.x)
+        val pointerIntensityValue = calculateIntensityValueAtY(e.y, keyframeMoveCaptainLineIndex ?: throw IllegalStateException())
+        // update selected keyframes positions
+        TriggerSelectionManager.selectedKeyframes.forEach { entry ->
+            // get keyframe, parent, offset and parent keyframes
+            val keyframe = entry.key
+            val keyframeParent = entry.value
+            val parentKeyframes = keyframeParent.keyframes()
+            val offset = keyframeMoveOffsets[keyframe] ?: throw IllegalStateException("Keyframe not in offsets map")
+            // update keyframe value
+            keyframe.value = (pointerIntensityValue + offset.intensityOffset).coerceIn(0.0, 1.0)
+            // don't update keyframe position for first and last keyframe
+            if(parentKeyframes.keyframesList.first() == keyframe || parentKeyframes.keyframesList.last() == keyframe) {
+                return@forEach
             }
-            parentTrigger.keyframes().keyframesList.size - 1 -> {
-                currentlyMovedKeyframeMoveMinTime = parentTrigger.endTime
-                currentlyMovedKeyframeMoveMaxTime = parentTrigger.endTime
+            // update keyframe position
+            // calculate new position (ensuring it doesn't get to close to the very first or very last keyframe)
+            val minPositionTotal = Keyframes.Keyframe.fromRelativeSecondPositionToProportion(KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS, keyframeParent)
+            val maxPositionTotal = Keyframes.Keyframe.fromRelativeSecondPositionToProportion(keyframeParent.duration - KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS, keyframeParent)
+            var newPosition = Keyframes.Keyframe.fromAbsoluteSecondPositionToProportion(pointerTime + offset.timeOffset, keyframeParent).coerceIn(minPositionTotal, maxPositionTotal)
+            // check if the position is even changing
+            if(newPosition == keyframe.position) {
+                return@forEach
             }
-            else -> {
-                // get previous and next keyframe
-                val previousKeyframe = parentTrigger.keyframes().keyframesList[keyframeIndex - 1]
-                val nextKeyframe = parentTrigger.keyframes().keyframesList[keyframeIndex + 1]
-                // calculate min and max time this keyframe may be moved to
-                currentlyMovedKeyframeMoveMinTime = previousKeyframe.absoluteSecondPosition(parentTrigger) + KEYFRAME_MIN_DISTANCE_SECONDS
-                currentlyMovedKeyframeMoveMaxTime = nextKeyframe.absoluteSecondPosition(parentTrigger) - KEYFRAME_MIN_DISTANCE_SECONDS
-                // set keyframe min and max time to current keyframe time position if min is not smaller than max
-                if(currentlyMovedKeyframeMoveMinTime >= currentlyMovedKeyframeMoveMaxTime) {
-                    currentlyMovedKeyframeMoveMinTime = keyframe.absoluteSecondPosition(parentTrigger)
-                    currentlyMovedKeyframeMoveMaxTime = currentlyMovedKeyframeMoveMinTime
+            // get current keyframe index
+            val keyframeIndex = parentKeyframes.indexOfKeyframeAt(keyframe.position)
+            // distinct in which direction the keyframe is moved
+            if(newPosition < keyframe.position) {
+                // so we are moving left
+                // get the previous keyframe
+                val previousKeyframe = parentKeyframes.keyframesList[keyframeIndex - 1]
+                // calculate how far we can move left without jumping over the previous keyframe
+                val minTimePositionWithoutJumping = previousKeyframe.absoluteSecondPosition(keyframeParent) + KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS
+                val minPositionWithoutJumping = Keyframes.Keyframe.fromAbsoluteSecondPositionToProportion(minTimePositionWithoutJumping, keyframeParent)
+                // check whether we are still after the previous keyframe
+                if(previousKeyframe.position < newPosition) {
+                    // so we are moving left, but not jumping over the previous keyframe
+                    keyframe.position = newPosition
+                        // ensure the keyframe does not get to close to the previous keyframe
+                        .coerceAtLeast(minPositionWithoutJumping)
+                } else {
+                    // so we are jumping over at least one keyframe
+                    // get keyframes before and after the new position
+                    val indexOfKeyframeAfterNewPosition = parentKeyframes.indexOfKeyframeAtOrAfter(newPosition)
+                    val keyframeAfterNewPosition = parentKeyframes.keyframesList[indexOfKeyframeAfterNewPosition]
+                    val keyframeBeforeNewPosition = parentKeyframes.keyframesList[indexOfKeyframeAfterNewPosition - 1]
+                    // don't allow move if these are too close
+                    if(keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent) < KEYFRAMES_PREVENT_CROWDING_TIME_PERIOD_IN_SECONDS) {
+                        println("Forbidden because difference is only: ${keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent)}")
+                        // so jumping between these keyframes is not allowed, instead move as close to the previous keyframe as possible
+                        keyframe.position = minPositionWithoutJumping
+                        return@forEach
+                    }
+                    // ensure enough space between keyframe before and new position and keyframe after and new position
+                    val minPosition = Keyframes.Keyframe.fromAbsoluteSecondPositionToProportion(keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent) + KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS, keyframeParent)
+                    val maxPosition = Keyframes.Keyframe.fromAbsoluteSecondPositionToProportion(keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS, keyframeParent)
+                    newPosition = if (minPosition < maxPosition) {
+                        newPosition.coerceIn(minPosition, maxPosition)
+                    } else {
+                        // so keyframes are extremely close, but we want to allow jumping exactly between them
+                        (keyframeBeforeNewPosition.position + keyframeAfterNewPosition.position) / 2
+                    }
+                    // move keyframe to new position while keeping the keyframes list sorted
+                    // shift keyframes from indexOfKeyframeAfterNewPosition until keyframeIndex one position to the right
+                    for(i in keyframeIndex downTo indexOfKeyframeAfterNewPosition + 1) {
+                        parentKeyframes.keyframesList[i] = parentKeyframes.keyframesList[i - 1]
+                    }
+                    parentKeyframes.keyframesList[indexOfKeyframeAfterNewPosition] = keyframe
+                    keyframe.position = newPosition
+                    // TODO: TESTING! Remove this line after testing
+                    parentKeyframes.checkSorted()
+                }
+            } else if (newPosition > keyframe.position) {
+                // so we are moving right
+                // get the next keyframe
+                val nextKeyframe = parentKeyframes.keyframesList[keyframeIndex + 1]
+                // calculate how far we can move right without jumping over the next keyframe
+                val maxTimePositionWithOutJumping = nextKeyframe.absoluteSecondPosition(keyframeParent) - KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS
+                val maxPositionWithoutJumping = Keyframes.Keyframe.fromAbsoluteSecondPositionToProportion(maxTimePositionWithOutJumping, keyframeParent)
+                // check whether we are still before the next keyframe
+                if (nextKeyframe.position > newPosition) {
+                    // so we are moving right, but not jumping over the next keyframe
+                    keyframe.position = newPosition
+                        // ensure the keyframe does not get to close to the next keyframe
+                        .coerceAtMost(maxPositionWithoutJumping)
+                } else {
+                    // so we are jumping over at least one keyframe
+                    // get keyframes before and after the new position
+                    val indexOfKeyframeAfterNewPosition = parentKeyframes.indexOfKeyframeAtOrAfter(newPosition)
+                    val keyframeAfterNewPosition = parentKeyframes.keyframesList[indexOfKeyframeAfterNewPosition]
+                    val keyframeBeforeNewPosition = parentKeyframes.keyframesList[indexOfKeyframeAfterNewPosition - 1]
+                    // don't allow move if these are too close
+                    if(keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent) < KEYFRAMES_PREVENT_CROWDING_TIME_PERIOD_IN_SECONDS) {
+                        println("Forbidden because difference is only: ${keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent)}")
+                        // so jumping between these keyframes is not allowed, instead move as close to the next keyframe as possible
+                        keyframe.position = maxPositionWithoutJumping
+                        return@forEach
+                    }
+                    // ensure enough space between keyframe before and new position and keyframe after and new position
+                    val minPosition = Keyframes.Keyframe.fromAbsoluteSecondPositionToProportion(keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent) + KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS, keyframeParent)
+                    val maxPosition = Keyframes.Keyframe.fromAbsoluteSecondPositionToProportion(keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS, keyframeParent)
+                    newPosition = if (minPosition < maxPosition) {
+                        newPosition.coerceIn(minPosition, maxPosition)
+                    } else {
+                        // so keyframes are extremely close, but we want to allow jumping exactly between them
+                        (keyframeBeforeNewPosition.position + keyframeAfterNewPosition.position) / 2
+                    }
+                    // move keyframe to new position while keeping the keyframes list sorted
+                    // shift keyframes from keyframeIndex until keyframeBeforeNewPosition one position to the left
+                    for(i in keyframeIndex until indexOfKeyframeAfterNewPosition - 1) {
+                        parentKeyframes.keyframesList[i] = parentKeyframes.keyframesList[i + 1]
+                    }
+                    parentKeyframes.keyframesList[indexOfKeyframeAfterNewPosition - 1] = keyframe
+                    keyframe.position = newPosition
+                    // TODO: TESTING! Remove this line after testing
+                    parentKeyframes.checkSorted()
                 }
             }
         }
-        // update cursor
-        updateCursor()
-        // do first update
-        updateKeyframeMove(event)
-    }
-
-    private fun updateKeyframeMove(e: MouseEvent) {
-        val keyframe = currentlyMovedKeyframe ?: return
-        val keyframeParent = currentlyMovedKeyframeParent ?: return
-        // get cursor time
-        val cursorTime = xToTime(e.x).coerceIn(currentlyMovedKeyframeMoveMinTime, currentlyMovedKeyframeMoveMaxTime)
-        // calculate new position and set it
-        keyframe.position = Keyframes.Keyframe.fromAbsoluteSecondPositionToProportion(cursorTime, keyframeParent)
-        // calculate new keyframe value and set it
-        keyframe.value = (1.0 - (e.y - currentlyMovedKeyframeLineYOffset).toDouble() / currentlyMovedKeyframeLineHeight).coerceIn(0.0, 1.0)
-        // redraw timeline to show keyframe move
         redrawTimeline()
     }
 
     fun endKeyframeMove(e: MouseEvent) {
-        updateKeyframeMove(e)
+        // do one last update
+        updateKeyframesMove(e)
         // end moving keyframe
-        currentlyMovedKeyframe = null
-        currentlyMovedKeyframeParent = null
+        keyframeMoveCaptain = null
+        keyframeMoveCaptainLineIndex = null
+        keyframeMoveOffsets = emptyMap()
         // update cursor
         updateCursor()
+        // save affected lines
+        val affectedLines = mutableSetOf<TriggerSequenceLine>()
+        val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: throw IllegalStateException("No sequence")
+        TriggerSelectionManager.selectedKeyframes.values.forEach { trigger ->
+            affectedLines.add(sequence.findLineOf(trigger) ?: throw IllegalStateException("Trigger without line"))
+        }
+        affectedLines.forEach { line ->
+            line.saveToFile()
+            println("Saved line: ${line.name}")
+        }
     }
 
 }

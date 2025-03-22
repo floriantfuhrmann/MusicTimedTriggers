@@ -20,7 +20,7 @@ object EditTriggersManager {
             require(line != null) {"Failed to find the selected triggers line"}
             line.removeTrigger(firstSelectedTrigger)
             //make sure the trigger is no longer selected
-            TriggerSelectionManager.deselectAllTriggers(false)
+            TriggerSelectionManager.deselectAllTriggersAndKeyframes(false)
             //redraw timeline so change becomes visible
             redrawTimeline()
             //also save the affected line
@@ -44,7 +44,7 @@ object EditTriggersManager {
                             affectedLines.add(line)
                         }
                         //make sure the triggers are no longer selected
-                        TriggerSelectionManager.deselectAllTriggers(false)
+                        TriggerSelectionManager.deselectAllTriggersAndKeyframes(false)
                         //redraw timeline so change becomes visible
                         redrawTimeline()
                         //also save the affected lines

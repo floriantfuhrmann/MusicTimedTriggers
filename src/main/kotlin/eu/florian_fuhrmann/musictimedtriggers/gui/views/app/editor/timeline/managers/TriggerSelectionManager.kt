@@ -50,9 +50,9 @@ object TriggerSelectionManager {
     val selectedTriggers: MutableSet<AbstractPlacedTrigger> = mutableSetOf()
 
     /** keyframes currently in the selection box */
-    private var selectionBoxKeyframes: Set<Keyframes.Keyframe> = emptySet()
-    /** keyframes that are currently fully selected */
-    private var selectedKeyframes: MutableSet<Keyframes.Keyframe> = mutableSetOf()
+    private var selectionBoxKeyframes: Map<Keyframes.Keyframe, AbstractPlacedIntensityTrigger> = emptyMap()
+    /** keyframes that are currently fully selected mapped to their parents */
+    var selectedKeyframes: HashMap<Keyframes.Keyframe, AbstractPlacedIntensityTrigger> = HashMap()
     
     // General Selection Logic
 
@@ -69,6 +69,16 @@ object TriggerSelectionManager {
         redrawTimeline()
     }
 
+    fun selectKeyframe(keyframe: Keyframes.Keyframe, parent: AbstractPlacedIntensityTrigger, keepOthers: Boolean = false) {
+        // update selected keyframes
+        if (!keepOthers) {
+            selectedKeyframes.clear()
+        }
+        selectedKeyframes[keyframe] = parent
+        // redraw timeline to show selection
+        redrawTimeline()
+    }
+
     fun deselectTrigger(trigger: AbstractPlacedTrigger, redraw: Boolean = true) {
         val removed = selectedTriggers.remove(trigger)
         if (removed && redraw) {
@@ -76,8 +86,9 @@ object TriggerSelectionManager {
         }
     }
 
-    fun deselectAllTriggers(redraw: Boolean = true) {
+    fun deselectAllTriggersAndKeyframes(redraw: Boolean = true) {
         selectedTriggers.clear()
+        selectedKeyframes.clear()
         if (redraw) {
             redrawTimeline()
         }
@@ -156,10 +167,10 @@ object TriggerSelectionManager {
         selecting = false
         // update selected triggers and keyframes
         selectedTriggers.addAll(selectionBoxTriggers)
-        selectedKeyframes.addAll(selectionBoxKeyframes)
+        selectedKeyframes.putAll(selectionBoxKeyframes)
         // reset selection boxes
         selectionBoxTriggers = emptySet()
-        selectionBoxKeyframes = emptySet()
+        selectionBoxKeyframes = emptyMap()
         // redraw timeline to show selection
         redrawTimeline()
         // also update trigger hovered because pointer could have stopped on a trigger
@@ -207,23 +218,23 @@ object TriggerSelectionManager {
                         // so we have to check both directions
                         trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger).filter { keyframe ->
                             keyframe.value in lastLineThreshold..firstLineThreshold
-                        }
+                        }.map { k -> k to trigger }
                     } else {
                         // so we just have to check the keyframes values are not above threshold
                         trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger).filter { keyframe ->
                             keyframe.value <= firstLineThreshold
-                        }
+                        }.map { k -> k to trigger }
                     }
                 } else if(lineIndex == lineIndexRange.last) {
                     // so we just have to check the keyframes values are not below threshold
                     trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger).filter { keyframe ->
                         keyframe.value >= lastLineThreshold
-                    }
+                    }.map { k -> k to trigger }
                 } else {
                     // otherwise we can just return all keyframes in time period
-                    trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger)
+                    trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger).map { k -> k to trigger }
                 }
-            }.toSet()
+            }.toMap()
     }
 
     // Selection Listeners

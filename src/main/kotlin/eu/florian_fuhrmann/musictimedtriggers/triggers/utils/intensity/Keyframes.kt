@@ -6,7 +6,9 @@ class Keyframes(
     val keyframesList: MutableList<Keyframe>
 ) {
     fun findIndex(keyframe: Keyframe): Int {
-        return keyframesList.indexOf(keyframe)
+        val index = indexOfKeyframeAt(keyframe.position)
+        require(index >= 0) { "Keyframe not found" }
+        return index
     }
 
     /**
@@ -76,12 +78,12 @@ class Keyframes(
     }
 
     // similar to logic for triggers
-    private fun indexOfKeyframeAt(proportionalPosition: Double): Int {
+    fun indexOfKeyframeAt(proportionalPosition: Double): Int {
         return keyframesList.binarySearch { it.position.compareTo(proportionalPosition) }
     }
 
     // similar to logic for triggers
-    private fun indexOfKeyframeAtOrAfter(proportionalPosition: Double): Int {
+    fun indexOfKeyframeAtOrAfter(proportionalPosition: Double): Int {
         val index = indexOfKeyframeAt(proportionalPosition)
         return if(index < 0) { -(index + 1) } else { index }
     }
@@ -138,6 +140,18 @@ class Keyframes(
                 (proportionalPosition - keyframesList[beforeIndex].position) / (keyframesList[afterIndex].position - keyframesList[beforeIndex].position)
             // interpolate value between keyframes
             return keyframesList[beforeIndex].value + relativePositionBetweenKeyframes * (keyframesList[afterIndex].value - keyframesList[beforeIndex].value)
+        }
+    }
+
+    /**
+     * Checks whether the keyframe positions are ascending. Useful for checking
+     * the movement code doesn't break anything. Calls to this should be
+     * removed before release.
+     */
+    fun checkSorted() {
+        // check whether keyframes are sorted
+        for (i in 1 until keyframesList.size) {
+            require(keyframesList[i - 1].position < keyframesList[i].position) { "Keyframes are not sorted" }
         }
     }
 

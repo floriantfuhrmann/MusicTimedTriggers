@@ -36,7 +36,7 @@ fun updateCursor() {
                 MoveTriggersManager.TriggerPart.End -> Cursor.E_RESIZE_CURSOR
             },
         )
-    } else if(MoveTriggersManager.isMovingKeyframe) {
+    } else if(MoveTriggersManager.isMovingKeyframes) {
         setCursor(Cursor.MOVE_CURSOR)
     } else if (currentAudioPlayer.value?.playing?.value == false && MoveTriggersManager.hoveredTriggerPart != null) {
         if(MoveTriggersManager.hoveredKeyframe != null) {
