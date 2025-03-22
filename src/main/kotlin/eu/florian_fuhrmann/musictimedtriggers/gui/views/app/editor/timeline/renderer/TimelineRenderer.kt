@@ -45,7 +45,8 @@ object TimelineRenderer {
         // calculate height for seconds grid (needed as offset for spectrogram)
         secondsGridHeight = TimelineGridRenderer.calculateSecondsGridHeight(g)
         // draw spectrogram background
-        TimelineBackgroundRenderer.render(g, spectrogram, audioPlayer.secondPosition, audioPlayer.secondDuration, x,
+        val middleTimePosition = audioPlayer.secondPosition
+        TimelineBackgroundRenderer.render(g, spectrogram, middleTimePosition, audioPlayer.secondDuration, x,
             y + secondsGridHeight, width, height - secondsGridHeight)
         // Draw Content
         // draw second grid
@@ -57,6 +58,6 @@ object TimelineRenderer {
         // draw selection
         TriggerSelectionManager.drawSelectionBox(g)
         // draw play head
-        TimelineGridRenderer.drawPlayHead(g, x, y, width, height, audioPlayer.secondPosition, secondsGridHeight)
+        TimelineGridRenderer.drawPlayHead(g, x, y, width, height, middleTimePosition, secondsGridHeight)
     }
 }
