@@ -18,7 +18,7 @@ object TimelineSequenceRenderer {
     // arrays contain top y coordinates and heights of every sequence line (same index in this array as in TriggerSequence#lines)
     private var lineTopYs: Array<Int?> = Array(0) { null } // must be ascending
     private var lineHeights: Array<Int?> = Array(0) { null }
-    private var minimumLineHeight = 20 // this should be configurable in the future
+    private var minimumLineHeight = 16 // this should be configurable in the future
 
     fun getSequenceLineTopY(lineIndex: Int) = lineTopYs[lineIndex]
     fun getSequenceLineHeight(lineIndex: Int) = lineHeights[lineIndex]
@@ -37,10 +37,8 @@ object TimelineSequenceRenderer {
      * Finds the index of the Sequence Line at the [y] coordinate
      */
     fun getSequenceLineIndexAt(y: Int): Int? {
-        // check whether y is out of bounds (under the last line or over the first line)
-        // todo: update this to support scrolling
-        if(y < (lineTopYs.firstOrNull() ?: return null)
-            ||  y > (lineTopYs.lastOrNull() ?: return null) + (lineHeights.lastOrNull() ?: return null)) {
+        // check whether y is out of bounds
+        if(y < TimelineRenderer.timelineCoreY + TimelineRenderer.secondsGridHeight || y > TimelineRenderer.timelineCoreY + TimelineRenderer.timelineCoreHeight) {
             return null
         }
         // check for every line in reverse order if y is under the topY of the line
@@ -278,8 +276,11 @@ object TimelineSequenceRenderer {
         g.drawRoundRect(x, y, width - 1, height - 1, arcDiameter, arcDiameter)
         g.stroke = restoreStroke
         // set a clip around the trigger (so the name is not drawn outside the trigger)
+        // Note: this also has the side effect of the name being cut of when drawing a ghost, which does not fit
+        //       entirely on the line, but the rest of the trigger still being visible. This could be solved by not
+        //       applying the intersection for ghosts, but I actually quite like this behavior.
         val restoreClip = g.clip
-        g.clip = Rectangle(x, y, width, height).intersection(
+        g.clip = Rectangle(x, y, width - 3, height).intersection(
             Rectangle(
                 TimelineRenderer.timelineCoreX,
                 TimelineRenderer.timelineCoreY + TimelineRenderer.secondsGridHeight,
