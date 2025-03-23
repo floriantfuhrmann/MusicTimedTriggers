@@ -54,8 +54,11 @@ object TimelineSequenceRenderer {
         return null
     }
 
-    val SEPERATOR_HEIGHT = 1.0
-    var scrollOffsetFactor = 1.0 // todo: connect to some input
+    private const val SEPARATOR_HEIGHT = 1.0
+    var verticalScrollOffsetFactor = 0.0
+    var maxVerticalScrollOffsetInPixels = 0
+    var isScrollingVertically = false
+        private set
 
     fun drawSequence(
         g: Graphics2D,
@@ -72,16 +75,23 @@ object TimelineSequenceRenderer {
         val fromTime = TimelineBackgroundRenderer.xToTime(x)
         val toTime = TimelineBackgroundRenderer.xToTime(x + width)
         // calculate heights
-        var heightPerLine = ((height + SEPERATOR_HEIGHT) / sequence.lines.size) - SEPERATOR_HEIGHT
+        var heightPerLine = ((height + SEPARATOR_HEIGHT) / sequence.lines.size) - SEPARATOR_HEIGHT
         var yOffset = 0.0
         if(heightPerLine < minimumLineHeight) {
             // se we need to do vertical scrolling
             // calculate total height of all lines (including separators)
-            val totalHeight = sequence.lines.size * (minimumLineHeight + SEPERATOR_HEIGHT) - SEPERATOR_HEIGHT
+            val totalHeight = sequence.lines.size * (minimumLineHeight + SEPARATOR_HEIGHT) - SEPARATOR_HEIGHT
+            // calculate max vertical scroll offset
+            maxVerticalScrollOffsetInPixels = (totalHeight - height).toInt()
             // calculate the scroll offset
-            yOffset = (totalHeight - height) * scrollOffsetFactor
+            yOffset = maxVerticalScrollOffsetInPixels * verticalScrollOffsetFactor
             // set height per line to minimum height
             heightPerLine = minimumLineHeight.toDouble()
+            // set scrolling flag
+            isScrollingVertically = true
+        } else {
+            // reset scrolling flag
+            isScrollingVertically = false
         }
         // set clip
         val restoreClip = g.clip
@@ -96,7 +106,7 @@ object TimelineSequenceRenderer {
                 if(separatorY < y + height && separatorY > y) {
                     g.drawLine(x, separatorY, x + width, separatorY)
                 }
-                currentY += SEPERATOR_HEIGHT // add height of separator line
+                currentY += SEPARATOR_HEIGHT // add height of separator line
             }
             // add (average) height of sequence line
             currentY += heightPerLine
@@ -106,7 +116,7 @@ object TimelineSequenceRenderer {
         sequence.lines.forEachIndexed { index, line ->
             // add height of separator line (if this is not the first line)
             if(index != 0) {
-                currentY += SEPERATOR_HEIGHT
+                currentY += SEPARATOR_HEIGHT
             }
             val topY = currentY.roundToInt()
             currentY += heightPerLine // add (average) height of sequence line

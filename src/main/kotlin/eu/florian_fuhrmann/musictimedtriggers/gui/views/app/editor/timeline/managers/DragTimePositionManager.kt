@@ -3,10 +3,10 @@ package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.man
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineRenderer
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.updateCursor
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
-import eu.florian_fuhrmann.musictimedtriggers.utils.os.OsUtils
 import java.awt.event.*
 
 /**
@@ -86,9 +86,13 @@ object DragTimePositionManager {
     val mouseWheelListener: MouseWheelListener = object : MouseWheelListener {
         override fun mouseWheelMoved(e: MouseWheelEvent?) {
             if (e == null || !isReady()) return
-            if (OsUtils.isMacOs && !e.isShiftDown) return // on macOS shift down indicates horizontal
-            currentAudioPlayer.value?.apply {
-                secondPosition += WHEEL_ROTATION_MULTIPLIER * (e.preciseWheelRotation / TimelineBackgroundRenderer.pixelsPerSecond)
+            if(e.isShiftDown || !TimelineSequenceRenderer.isScrollingVertically) {
+                currentAudioPlayer.value?.apply {
+                    secondPosition += WHEEL_ROTATION_MULTIPLIER * (e.scrollAmount * e.preciseWheelRotation / TimelineBackgroundRenderer.pixelsPerSecond)
+                }
+            } else {
+                val newVerticalScrollOffsetFactor = TimelineSequenceRenderer.verticalScrollOffsetFactor + (e.scrollAmount * e.preciseWheelRotation) / TimelineSequenceRenderer.maxVerticalScrollOffsetInPixels
+                TimelineSequenceRenderer.verticalScrollOffsetFactor = newVerticalScrollOffsetFactor.coerceIn(0.0, 1.0)
             }
             redrawTimeline()
         }
