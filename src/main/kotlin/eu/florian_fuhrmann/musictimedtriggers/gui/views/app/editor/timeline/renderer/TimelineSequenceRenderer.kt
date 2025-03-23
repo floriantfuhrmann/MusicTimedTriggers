@@ -18,6 +18,7 @@ object TimelineSequenceRenderer {
     // arrays contain top y coordinates and heights of every sequence line (same index in this array as in TriggerSequence#lines)
     private var lineTopYs: Array<Int?> = Array(0) { null } // must be ascending
     private var lineHeights: Array<Int?> = Array(0) { null }
+    private var minimumLineHeight = 20 // this should be configurable in the future
 
     fun getSequenceLineTopY(lineIndex: Int) = lineTopYs[lineIndex]
     fun getSequenceLineHeight(lineIndex: Int) = lineHeights[lineIndex]
@@ -37,6 +38,7 @@ object TimelineSequenceRenderer {
      */
     fun getSequenceLineIndexAt(y: Int): Int? {
         // check whether y is out of bounds (under the last line or over the first line)
+        // todo: update this to support scrolling
         if(y < (lineTopYs.firstOrNull() ?: return null)
             ||  y > (lineTopYs.lastOrNull() ?: return null) + (lineHeights.lastOrNull() ?: return null)) {
             return null
@@ -51,6 +53,9 @@ object TimelineSequenceRenderer {
         // y is out of bounds
         return null
     }
+
+    val SEPERATOR_HEIGHT = 1.0
+    var scrollOffsetFactor = 1.0 // todo: connect to some input
 
     fun drawSequence(
         g: Graphics2D,
@@ -67,38 +72,56 @@ object TimelineSequenceRenderer {
         val fromTime = TimelineBackgroundRenderer.xToTime(x)
         val toTime = TimelineBackgroundRenderer.xToTime(x + width)
         // calculate heights
-        val heightOfSeparatorLines = sequence.lines.size - 1 // one separator line between each sequence line
-        val heightForAllSequenceLines = height - heightOfSeparatorLines // total height of all sequence lines
-        val heightPerSequenceLine = heightForAllSequenceLines.toDouble() / sequence.lines.size // height of one sequence line (excluding separators) (not an integer!)
+        var heightPerLine = ((height + SEPERATOR_HEIGHT) / sequence.lines.size) - SEPERATOR_HEIGHT
+        var yOffset = 0.0
+        if(heightPerLine < minimumLineHeight) {
+            // se we need to do vertical scrolling
+            // calculate total height of all lines (including separators)
+            val totalHeight = sequence.lines.size * (minimumLineHeight + SEPERATOR_HEIGHT) - SEPERATOR_HEIGHT
+            // calculate the scroll offset
+            yOffset = (totalHeight - height) * scrollOffsetFactor
+            // set height per line to minimum height
+            heightPerLine = minimumLineHeight.toDouble()
+        }
+        // set clip
+        val restoreClip = g.clip
+        g.clip = Rectangle(x, y, width, height)
         // first draw separator lines only (so they appear bellow the placed triggers)
         g.color = Color.white
-        var currentY = y.toDouble()
+        var currentY = y - yOffset
         sequence.lines.forEachIndexed { index, _ ->
             // draw separator (if not first line)
             if(index != 0) {
                 val separatorY = currentY.roundToInt()
-                g.drawLine(x, separatorY, x + width, separatorY)
-                currentY += 1.0 // add height of separator line
+                if(separatorY < y + height && separatorY > y) {
+                    g.drawLine(x, separatorY, x + width, separatorY)
+                }
+                currentY += SEPERATOR_HEIGHT // add height of separator line
             }
             // add (average) height of sequence line
-            currentY += heightPerSequenceLine
+            currentY += heightPerLine
         }
         // draw placed triggers and rest of sequence line above
-        currentY = y.toDouble() // reset y
+        currentY = y - yOffset // reset y
         sequence.lines.forEachIndexed { index, line ->
             // add height of separator line (if this is not the first line)
             if(index != 0) {
-                currentY += 1.0
+                currentY += SEPERATOR_HEIGHT
             }
             val topY = currentY.roundToInt()
-            currentY += heightPerSequenceLine // add (average) height of sequence line
+            currentY += heightPerLine // add (average) height of sequence line
             val bottomY = currentY.roundToInt() - 1
             val lineHeight = bottomY - topY + 1
-            drawSequenceLine(g, x, topY, width, lineHeight, fromTime, toTime, line)
+            // draw sequence line (if in bounds)
+            if(topY < y + height && bottomY > y) {
+                drawSequenceLine(g, x, topY, width, lineHeight, fromTime, toTime, line)
+            }
             // save top y and height
             lineTopYs[index] = topY
             lineHeights[index] = lineHeight
         }
+        // restore clip
+        g.clip = restoreClip
     }
 
     private fun drawSequenceLine(
@@ -244,15 +267,25 @@ object TimelineSequenceRenderer {
         g.stroke = BasicStroke(borderWidth)
         g.drawRoundRect(x, y, width - 1, height - 1, arcDiameter, arcDiameter)
         g.stroke = restoreStroke
+        // set a clip around the trigger (so the name is not drawn outside the trigger)
+        val restoreClip = g.clip
+        g.clip = Rectangle(x, y, width, height).intersection(
+            Rectangle(
+                TimelineRenderer.timelineCoreX,
+                TimelineRenderer.timelineCoreY + TimelineRenderer.secondsGridHeight,
+                TimelineRenderer.timelineCoreWidth,
+                TimelineRenderer.timelineCoreHeight - TimelineRenderer.secondsGridHeight
+            )
+        )
         // draw trigger name
         g.color = textColor
-        g.setClip(x, y, width, height)
         var nameX = x + 3
         if (lineX != null && nameX < lineX + 3) {
             nameX = lineX + 3
         }
         RenderUtils.drawStringVerticallyCentered(g, nameX, y, height, name)
-        g.clip = null
+        // restore previous clip, so keyframes may extend outside the trigger
+        g.clip = restoreClip
         // draw keyframes (only if trigger is hovered or visually selected)
         if((hovered || selected) && keyframes != null) {
             drawKeyframes(g, x, y, width, height, keyframes)
