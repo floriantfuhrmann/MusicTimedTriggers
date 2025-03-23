@@ -6,7 +6,9 @@ class Keyframes(
     val keyframesList: MutableList<Keyframe>
 ) {
     fun findIndex(keyframe: Keyframe): Int {
-        return keyframesList.indexOf(keyframe)
+        val index = indexOfKeyframeAt(keyframe.position)
+        require(index >= 0) { "Keyframe not found" }
+        return index
     }
 
     /**
@@ -75,6 +77,47 @@ class Keyframes(
         return index > 0 && index < keyframesList.size - 1
     }
 
+    // similar to logic for triggers
+    fun indexOfKeyframeAt(proportionalPosition: Double): Int {
+        return keyframesList.binarySearch { it.position.compareTo(proportionalPosition) }
+    }
+
+    // similar to logic for triggers
+    fun indexOfKeyframeAtOrAfter(proportionalPosition: Double): Int {
+        val index = indexOfKeyframeAt(proportionalPosition)
+        return if(index < 0) { -(index + 1) } else { index }
+    }
+
+    /**
+     * Returns the Keyframes in the time period from [fromTime] to [toTime].
+     */
+    fun getKeyframesInTimePeriod(
+        fromTime: Double,
+        toTime: Double,
+        triggerContext: AbstractPlacedTrigger
+    ): List<Keyframe> {
+        // calculate from index (inclusive)
+        val fromIndex = if(fromTime <= triggerContext.startTime) {
+            0 // automatically 0 if before trigger start time
+        } else {
+            // calculate from proportion and search for keyframe index at or after
+            val fromProportion = Keyframe.fromAbsoluteSecondPositionToProportion(fromTime, triggerContext)
+            indexOfKeyframeAtOrAfter(fromProportion)
+        }
+        // check if we even have to check to proportion
+        if(toTime >= triggerContext.endTime) {
+            // if not return all keyframes after and including from index
+            return keyframesList.drop(fromIndex)
+        } else {
+            // calculate to proportion
+            val toProportion = Keyframe.fromAbsoluteSecondPositionToProportion(toTime, triggerContext)
+            // return all keyframes after and including from index until to proportion (inclusive)
+            return keyframesList
+                .drop(fromIndex)
+                .takeWhile { it.position <= toProportion }
+        }
+    }
+
     /**
      * Calculates the intensity at a given proportional position by
      * interpolating between keyframes.
@@ -100,6 +143,18 @@ class Keyframes(
         }
     }
 
+    /**
+     * Checks whether the keyframe positions are ascending. Useful for checking
+     * the movement code doesn't break anything. Calls to this should be
+     * removed before release.
+     */
+    fun checkSorted() {
+        // check whether keyframes are sorted
+        for (i in 1 until keyframesList.size) {
+            require(keyframesList[i - 1].position < keyframesList[i].position) { "Keyframes are not sorted" }
+        }
+    }
+
     companion object {
         /** Dummy Keyframes, which should not be modified. */
         val DUMMY_KEYFRAMES = create()
@@ -119,7 +174,7 @@ class Keyframes(
      *    at the end)
      * @param value proportional value
      */
-    data class Keyframe(var position: Double, var value: Double) {
+    class Keyframe(var position: Double, var value: Double) {
         fun relativeSecondPosition(placedTrigger: AbstractPlacedTrigger) = relativeSecondPosition(position, placedTrigger)
         fun absoluteSecondPosition(placedTrigger: AbstractPlacedTrigger) = absoluteSecondPosition(position, placedTrigger)
 

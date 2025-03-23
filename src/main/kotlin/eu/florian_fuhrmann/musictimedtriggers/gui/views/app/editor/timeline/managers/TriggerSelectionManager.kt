@@ -8,7 +8,10 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.rend
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.updateCursor
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedIntensityTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
+import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
 import java.awt.Color
 import java.awt.Graphics2D
@@ -19,23 +22,19 @@ import javax.swing.SwingUtilities
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * Manages the selection of triggers in the timeline.
- */
+/** Manages the selection of triggers and keyframes in the timeline. */
 object TriggerSelectionManager {
 
     // Variables
 
-    /**
-     * bool to mark whether we are currently selecting triggers
-     */
+    /** bool to mark whether we are currently selecting triggers */
     var selecting = false
         private set
 
     // corners of selection (not determined whether x1 or x2 is smaller, same for y)
     private var selectionX1 = 0
-    private var selectionX2 = 0
     private var selectionY1 = 0
+    private var selectionX2 = 0
     private var selectionY2 = 0
 
     /**
@@ -50,6 +49,11 @@ object TriggerSelectionManager {
      */
     val selectedTriggers: MutableSet<AbstractPlacedTrigger> = mutableSetOf()
 
+    /** keyframes currently in the selection box */
+    private var selectionBoxKeyframes: Map<Keyframes.Keyframe, AbstractPlacedIntensityTrigger> = emptyMap()
+    /** keyframes that are currently fully selected mapped to their parents */
+    var selectedKeyframes: HashMap<Keyframes.Keyframe, AbstractPlacedIntensityTrigger> = HashMap()
+    
     // General Selection Logic
 
     fun selectTrigger(
@@ -65,6 +69,16 @@ object TriggerSelectionManager {
         redrawTimeline()
     }
 
+    fun selectKeyframe(keyframe: Keyframes.Keyframe, parent: AbstractPlacedIntensityTrigger, keepOthers: Boolean = false) {
+        // update selected keyframes
+        if (!keepOthers) {
+            selectedKeyframes.clear()
+        }
+        selectedKeyframes[keyframe] = parent
+        // redraw timeline to show selection
+        redrawTimeline()
+    }
+
     fun deselectTrigger(trigger: AbstractPlacedTrigger, redraw: Boolean = true) {
         val removed = selectedTriggers.remove(trigger)
         if (removed && redraw) {
@@ -72,8 +86,9 @@ object TriggerSelectionManager {
         }
     }
 
-    fun deselectAllTriggers(redraw: Boolean = true) {
+    fun deselectAllTriggersAndKeyframes(redraw: Boolean = true) {
         selectedTriggers.clear()
+        selectedKeyframes.clear()
         if (redraw) {
             redrawTimeline()
         }
@@ -89,24 +104,33 @@ object TriggerSelectionManager {
      */
     fun isSelected(trigger: AbstractPlacedTrigger) = selectedTriggers.contains(trigger)
 
+    /**
+     * @return whether the [keyframe] is visually selected (so either in the
+     *    selection box or fully selected)
+     */
+    fun isVisuallySelected(keyframe: Keyframes.Keyframe) =
+        selectionBoxKeyframes.contains(keyframe) || selectedKeyframes.contains(keyframe)
+
+    /** @return whether the [keyframe] is fully selected */
+    fun isSelected(keyframe: Keyframes.Keyframe) = selectedKeyframes.contains(keyframe)
+
     // Selection Box Logic
 
     /**
      * begins selection of triggers using a selection box
      */
     fun beginSelection(e: MouseEvent) {
-        // only start selection when audio player is not playing
-        if (currentAudioPlayer.value?.playing?.value != false) return
         // set to no trigger hovered
         MoveTriggersManager.resetHovered()
         // only keep others when shift is pressed
         if (!e.isShiftDown) {
             selectedTriggers.clear()
+            selectedKeyframes.clear()
         }
         // start selection
         selecting = true
         selectionX1 = e.x
-        selectionX2 = e.y
+        selectionY1 = e.y
         // and update for the first time
         updateSelection(e)
     }
@@ -114,25 +138,39 @@ object TriggerSelectionManager {
     /**
      * updates the selection box to the current mouse position
      */
-    private fun updateSelection(e: MouseEvent) {
-        selectionY1 = e.x
+    private fun updateSelection(e: MouseEvent, redraw: Boolean = true) {
+        // get sequence
+        val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: throw IllegalStateException("No sequence")
+        // update selection box corner
+        selectionX2 = e.x
         selectionY2 = e.y
-        updateTriggersInSelectionBox()
+        // calculate time period of selection
+        val fromTime = xToTime(min(selectionX1, selectionX2))
+        val toTime = xToTime(max(selectionX1, selectionX2))
+        // calculate line index range
+        // get line indices of first and last line in selection box
+        val fromLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(min(selectionY1, selectionY2)) ?: 0
+        val toLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(max(selectionY1, selectionY2)) ?: sequence.lines.lastIndex
+        val lineIndexRange = fromLineIndex..toLineIndex
+        // update triggers and keyframes in selection box
+        updateTriggersInSelectionBox(fromTime, toTime, lineIndexRange, sequence)
+        updateKeyframesInSelectionBox(fromTime, toTime, lineIndexRange, sequence)
         // redraw timeline to show selection
-        redrawTimeline()
+        if(redraw) {
+            redrawTimeline()
+        }
     }
 
     fun endSelection(e: MouseEvent) {
-        updateSelection(e)
+        // update selection one last time
+        updateSelection(e, false)
         selecting = false
-        if (e.isShiftDown && selectedTriggers.containsAll(selectionBoxTriggers)) {
-            // if shift is pressed and all triggers in box are already selected, then remove instead
-            selectedTriggers.removeAll(selectionBoxTriggers)
-        } else {
-            // add to selected and clear selection box
-            selectedTriggers.addAll(selectionBoxTriggers)
-        }
+        // update selected triggers and keyframes
+        selectedTriggers.addAll(selectionBoxTriggers)
+        selectedKeyframes.putAll(selectionBoxKeyframes)
+        // reset selection boxes
         selectionBoxTriggers = emptySet()
+        selectionBoxKeyframes = emptyMap()
         // redraw timeline to show selection
         redrawTimeline()
         // also update trigger hovered because pointer could have stopped on a trigger
@@ -140,25 +178,63 @@ object TriggerSelectionManager {
         updateCursor() // we update here ourselves so the cursor is always updated
     }
 
-    /**
-     * updates which triggers are in the selection box
-     */
-    private fun updateTriggersInSelectionBox() {
-        // get sequence
-        val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: throw IllegalStateException("No sequence")
-        // calculate period of selection
-        val fromTime = xToTime(min(selectionX1, selectionY1))
-        val toTime = xToTime(max(selectionX1, selectionY1))
-        val fromLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(min(selectionX2, selectionY2))
-        val toLineIndex = TimelineSequenceRenderer.getSequenceLineIndexAt(max(selectionX2, selectionY2))
-        if (fromLineIndex == null || toLineIndex == null) return
+    /** updates which triggers are in the selection box */
+    private fun updateTriggersInSelectionBox(fromTime: Double, toTime: Double, lineIndexRange: IntRange, sequence: TriggerSequence) {
         // update triggers in box
         selectionBoxTriggers =
             sequence.lines
-                .slice(fromLineIndex..toLineIndex)
+                .slice(lineIndexRange)
                 .flatMap {
                     it.getTriggersInPeriod(fromTime, toTime)
                 }.toSet()
+    }
+
+    /**
+     * Updates which keyframes of the triggers in selection box
+     * are themselves in the selection box. (Must be called after
+     * [updateTriggersInSelectionBox] because it uses the triggers in the
+     * selection box.)
+     */
+    private fun updateKeyframesInSelectionBox(fromTime: Double, toTime: Double, lineIndexRange: IntRange, sequence: TriggerSequence) {
+        // get max and min y
+        val minY = min(selectionY1, selectionY2)
+        val maxY = max(selectionY1, selectionY2)
+        // calculate value threshold for first line (values need to be below this threshold to be in selection box)
+        val firstLineHeight = TimelineSequenceRenderer.getSequenceLineHeight(lineIndexRange.first) ?: throw IllegalStateException()
+        val firstLineTopY = TimelineSequenceRenderer.getSequenceLineTopY(lineIndexRange.first) ?: throw IllegalStateException()
+        val firstLineThreshold = 1.0 - ((minY - firstLineTopY) / firstLineHeight.toDouble())
+        // calculate value threshold for last line (values need to be above this threshold to be in selection box)
+        val lastLineHeight = TimelineSequenceRenderer.getSequenceLineHeight(lineIndexRange.last) ?: throw IllegalStateException()
+        val lastLineTopY = TimelineSequenceRenderer.getSequenceLineTopY(lineIndexRange.last) ?: throw IllegalStateException()
+        val lastLineThreshold = 1.0 - ((maxY - lastLineTopY) / lastLineHeight.toDouble())
+        selectionBoxKeyframes = selectionBoxTriggers.filterIsInstance<AbstractPlacedIntensityTrigger>()
+            .flatMap { trigger: AbstractPlacedIntensityTrigger ->
+                // find line index of trigger
+                val lineIndex = sequence.findLineIndexOf(trigger, lineIndexRange)
+                // check y for lines, which are not fully contained in selection box
+                if(lineIndex == lineIndexRange.first) {
+                    // check if also the last line (so selection box only includes one line)
+                    if(lineIndex == lineIndexRange.last) {
+                        // so we have to check both directions
+                        trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger).filter { keyframe ->
+                            keyframe.value in lastLineThreshold..firstLineThreshold
+                        }.map { k -> k to trigger }
+                    } else {
+                        // so we just have to check the keyframes values are not above threshold
+                        trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger).filter { keyframe ->
+                            keyframe.value <= firstLineThreshold
+                        }.map { k -> k to trigger }
+                    }
+                } else if(lineIndex == lineIndexRange.last) {
+                    // so we just have to check the keyframes values are not below threshold
+                    trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger).filter { keyframe ->
+                        keyframe.value >= lastLineThreshold
+                    }.map { k -> k to trigger }
+                } else {
+                    // otherwise we can just return all keyframes in time period
+                    trigger.keyframes().getKeyframesInTimePeriod(fromTime, toTime, trigger).map { k -> k to trigger }
+                }
+            }.toMap()
     }
 
     // Selection Listeners
@@ -176,8 +252,13 @@ object TriggerSelectionManager {
                 if (currentAudioPlayer.value?.playing?.value != false) return
                 // only proceed if no trigger is hovered
                 if (getTriggerAt(e.x, e.y) != null) return
-                // only proceed if user clicked bellow seconds grid header
-                if (e.y <= TimelineRenderer.currentSecondsGridHeight) return
+                // only proceed if user clicked in timeline area
+                if (e.y <= TimelineRenderer.timelineCoreX + TimelineRenderer.secondsGridHeight
+                    || e.y > TimelineRenderer.timelineCoreX + TimelineRenderer.timelineCoreHeight
+                    || e.x < TimelineRenderer.timelineCoreX
+                    || e.x > TimelineRenderer.timelineCoreX + TimelineRenderer.timelineCoreWidth) {
+                    return
+                }
                 // user didn't click a trigger or seconds grid, so start selection box
                 beginSelection(e)
             }
@@ -224,10 +305,10 @@ object TriggerSelectionManager {
         // only draw when selecting
         if (!selecting) return
         // calculate corners
-        val minX = min(selectionX1, selectionY1)
-        val maxX = max(selectionX1, selectionY1)
-        val minY = min(selectionX2, selectionY2)
-        val maxY = max(selectionX2, selectionY2)
+        val minX = min(selectionX1, selectionX2)
+        val maxX = max(selectionX1, selectionX2)
+        val minY = min(selectionY1, selectionY2)
+        val maxY = max(selectionY1, selectionY2)
         // draw selection box
         g.color = Color(255, 255, 255, 64)
         g.fillRect(minX, minY, maxX - minX, maxY - minY)

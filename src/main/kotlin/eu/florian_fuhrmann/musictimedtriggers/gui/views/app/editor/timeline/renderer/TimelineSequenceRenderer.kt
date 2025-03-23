@@ -14,42 +14,49 @@ import kotlin.math.roundToInt
 
 object TimelineSequenceRenderer {
 
-    // array contains from y coordinate for every sequence line (same index in this array as in TriggerSequence#lines)
-    private var linesFromY: IntArray = IntArray(0)
-    private var linesHeight: IntArray = IntArray(0)
+    // Values needed for conversions (updated during rendering)
+    // arrays contain top y coordinates and heights of every sequence line (same index in this array as in TriggerSequence#lines)
+    private var lineTopYs: Array<Int?> = Array(0) { null } // must be ascending
+    private var lineHeights: Array<Int?> = Array(0) { null }
+    private var minimumLineHeight = 16 // this should be configurable in the future
 
-    fun getSequenceLineFromY(lineIndex: Int) = linesFromY[lineIndex]
-    fun getSequenceLineHeight(lineIndex: Int) = linesHeight[lineIndex]
+    fun getSequenceLineTopY(lineIndex: Int) = lineTopYs[lineIndex]
+    fun getSequenceLineHeight(lineIndex: Int) = lineHeights[lineIndex]
 
     /**
-     * Finds which Sequence Line is at the [y] coordinate by checking fromY for every line
+     * Finds which Sequence Line is at the [y] coordinate
      */
     fun getSequenceLineAt(y: Int): TriggerSequenceLine? {
-        //get sequence
+        // get current sequence
         val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: return null
-        //check in reverse order on which sequence line the y coordinate is
-        for (i in linesFromY.indices.reversed()) {
-            if(y >= linesFromY[i]) {
-                return sequence.lines[i]
-            }
-        }
-        //y is so small, that no sequence line matches
-        return null
+        // return the line at the index
+        return sequence.lines[getSequenceLineIndexAt(y) ?: return null]
     }
 
     /**
-     * Finds the index of the Sequence Line at the [y] coordinate by checking fromY for every line
+     * Finds the index of the Sequence Line at the [y] coordinate
      */
     fun getSequenceLineIndexAt(y: Int): Int? {
-        //check in reverse order on which sequence line the y coordinate is
-        for (i in linesFromY.indices.reversed()) {
-            if(y >= linesFromY[i]) {
+        // check whether y is out of bounds
+        if(y < TimelineRenderer.timelineCoreY + TimelineRenderer.secondsGridHeight || y > TimelineRenderer.timelineCoreY + TimelineRenderer.timelineCoreHeight) {
+            return null
+        }
+        // check for every line in reverse order if y is under the topY of the line
+        for (i in lineTopYs.indices.reversed()) {
+            val topY = lineTopYs[i] ?: continue
+            if(y >= topY) {
                 return i
             }
         }
-        //y is so small, that no sequence line matches
+        // y is out of bounds
         return null
     }
+
+    private const val SEPARATOR_HEIGHT = 1.0
+    var verticalScrollOffsetFactor = 0.0
+    var maxVerticalScrollOffsetInPixels = 0
+    var isScrollingVertically = false
+        private set
 
     fun drawSequence(
         g: Graphics2D,
@@ -59,49 +66,70 @@ object TimelineSequenceRenderer {
         height: Int, //total height of the content drawn
         sequence: TriggerSequence
     ) {
-        //reset linesFromY array
-        linesFromY = IntArray(sequence.lines.size)
-        linesHeight = IntArray(sequence.lines.size)
-        //calculate times
-        val fromTime = TimelineBackgroundRenderer.xToTime(0)
-        val toTime = TimelineBackgroundRenderer.xToTime(width)
-        //calculate heights
-        val heightOfSeparatorLines = sequence.lines.size - 1
-        val heightForSequenceLines = height - heightOfSeparatorLines
-        val heightPerSequenceLine = heightForSequenceLines.toDouble() / sequence.lines.size
-        //draw separator lines only
-        var currentY = y.toDouble()
+        // reset line topYs and heights
+        lineTopYs = Array(sequence.lines.size) { null }
+        lineHeights = Array(sequence.lines.size) { null }
+        // calculate from and to time
+        val fromTime = TimelineBackgroundRenderer.xToTime(x)
+        val toTime = TimelineBackgroundRenderer.xToTime(x + width)
+        // calculate heights
+        var heightPerLine = ((height + SEPARATOR_HEIGHT) / sequence.lines.size) - SEPARATOR_HEIGHT
+        var yOffset = 0.0
+        if(heightPerLine < minimumLineHeight) {
+            // se we need to do vertical scrolling
+            // calculate total height of all lines (including separators)
+            val totalHeight = sequence.lines.size * (minimumLineHeight + SEPARATOR_HEIGHT) - SEPARATOR_HEIGHT
+            // calculate max vertical scroll offset
+            maxVerticalScrollOffsetInPixels = (totalHeight - height).toInt()
+            // calculate the scroll offset
+            yOffset = maxVerticalScrollOffsetInPixels * verticalScrollOffsetFactor
+            // set height per line to minimum height
+            heightPerLine = minimumLineHeight.toDouble()
+            // set scrolling flag
+            isScrollingVertically = true
+        } else {
+            // reset scrolling flag
+            isScrollingVertically = false
+        }
+        // set clip
+        val restoreClip = g.clip
+        g.clip = Rectangle(x, y, width, height)
+        // first draw separator lines only (so they appear bellow the placed triggers)
+        g.color = Color.white
+        var currentY = y - yOffset
         sequence.lines.forEachIndexed { index, _ ->
-            //draw separator if not first line
-            val separatorY = currentY.roundToInt()
+            // draw separator (if not first line)
             if(index != 0) {
-                g.color = Color.white
-                g.drawLine(0, separatorY, width, separatorY)
-                currentY += 1 // add height of separator line
+                val separatorY = currentY.roundToInt()
+                if(separatorY < y + height && separatorY > y) {
+                    g.drawLine(x, separatorY, x + width, separatorY)
+                }
+                currentY += SEPARATOR_HEIGHT // add height of separator line
             }
-            currentY += heightPerSequenceLine // add height of sequence line
+            // add (average) height of sequence line
+            currentY += heightPerLine
         }
-        //draw triggers and rest of sequence line on top
-        currentY = y.toDouble()
+        // draw placed triggers and rest of sequence line above
+        currentY = y - yOffset // reset y
         sequence.lines.forEachIndexed { index, line ->
-            //calculate y coordinate of separator
-            val separatorY = currentY.roundToInt()
+            // add height of separator line (if this is not the first line)
             if(index != 0) {
-                currentY += 1 // add height of separator line
+                currentY += SEPARATOR_HEIGHT
             }
-            //draw sequence line
-            val fromY = if(index != 0) {
-                separatorY + 1
-            } else {
-                separatorY
+            val topY = currentY.roundToInt()
+            currentY += heightPerLine // add (average) height of sequence line
+            val bottomY = currentY.roundToInt() - 1
+            val lineHeight = bottomY - topY + 1
+            // draw sequence line (if in bounds)
+            if(topY < y + height && bottomY > y) {
+                drawSequenceLine(g, x, topY, width, lineHeight, fromTime, toTime, line)
             }
-            currentY += heightPerSequenceLine // add height of sequence line
-            val toY = currentY.roundToInt() - 1
-            val lineHeight = toY - fromY + 1
-            drawSequenceLine(g, 0, fromY, width, lineHeight, fromTime, toTime, line)
-            linesFromY[index] = fromY
-            linesHeight[index] = lineHeight
+            // save top y and height
+            lineTopYs[index] = topY
+            lineHeights[index] = lineHeight
         }
+        // restore clip
+        g.clip = restoreClip
     }
 
     private fun drawSequenceLine(
@@ -114,32 +142,25 @@ object TimelineSequenceRenderer {
         toTime: Double,
         line: TriggerSequenceLine
     ) {
-        //draw sequence triggers
+        // draw sequence triggers
         var currentTriggerIndex = line.getIndexOfTriggerAtOrIndexOfTriggerAfter(fromTime)
         while (true) {
-            //get trigger at index
+            // get trigger at index
             val trigger = line.getTriggerByIndex(currentTriggerIndex)
-            //make sure the trigger exists and is still in bounds
+            // make sure the trigger exists and is still in bounds
             if(trigger == null || trigger.startTime >= toTime) break
             currentTriggerIndex++
-            //calculate trigger x coordinates
+            // calculate trigger x coordinates
             val triggerX1 = TimelineBackgroundRenderer.timeToX(trigger.startTime)
             val triggerX2 = TimelineBackgroundRenderer.timeToX(trigger.endTime)
-            //draw that trigger
-            drawTrigger(
-                g,
-                triggerX1,
-                y,
-                triggerX2 - triggerX1 + 1,
-                height,
-                trigger
-            )
+            // draw that trigger
+            drawTrigger(g, triggerX1, y, triggerX2 - triggerX1 + 1, height, x, width, trigger)
         }
         //draw sequence name / label
         if(line.name.isNotEmpty()) {
             RenderUtils.drawStringOnRect(
                 g,
-                0,
+                x,
                 y,
                 line.name,
                 Color(0, 0, 0, 128),
@@ -158,14 +179,14 @@ object TimelineSequenceRenderer {
         y: Int,
         width: Int,
         height: Int,
+        lineX: Int,
+        lineWidth: Int,
         trigger: AbstractPlacedTrigger
     ) {
-        drawTrigger(
-            g,
-            x,
-            y,
-            width,
-            height,
+        drawTrigger(g,
+            x, y,
+            width, height,
+            lineX, lineWidth,
             trigger.triggerTemplate.configuration.color,
             trigger.name(),
             if (TriggerSelectionManager.isVisuallySelected(trigger)) {
@@ -174,6 +195,7 @@ object TimelineSequenceRenderer {
                 TriggerStateStyle.Normal
             },
             MoveTriggersManager.isTriggerHovered(trigger),
+            TriggerSelectionManager.isVisuallySelected(trigger),
             if (trigger is AbstractPlacedIntensityTrigger) {
                 trigger.keyframes()
             } else {
@@ -196,9 +218,12 @@ object TimelineSequenceRenderer {
         y: Int,
         width: Int,
         height: Int,
+        lineX: Int?,
+        lineWidth: Int?,
         triggerColor: GenericColor,
         name: String,
         style: TriggerStateStyle = TriggerStateStyle.Normal,
+        selected: Boolean = false,
         hovered: Boolean = false,
         keyframes: Keyframes? = null
     ) {
@@ -250,13 +275,30 @@ object TimelineSequenceRenderer {
         g.stroke = BasicStroke(borderWidth)
         g.drawRoundRect(x, y, width - 1, height - 1, arcDiameter, arcDiameter)
         g.stroke = restoreStroke
+        // set a clip around the trigger (so the name is not drawn outside the trigger)
+        // Note: this also has the side effect of the name being cut of when drawing a ghost, which does not fit
+        //       entirely on the line, but the rest of the trigger still being visible. This could be solved by not
+        //       applying the intersection for ghosts, but I actually quite like this behavior.
+        val restoreClip = g.clip
+        g.clip = Rectangle(x, y, width - 3, height).intersection(
+            Rectangle(
+                TimelineRenderer.timelineCoreX,
+                TimelineRenderer.timelineCoreY + TimelineRenderer.secondsGridHeight,
+                TimelineRenderer.timelineCoreWidth,
+                TimelineRenderer.timelineCoreHeight - TimelineRenderer.secondsGridHeight
+            )
+        )
         // draw trigger name
         g.color = textColor
-        g.setClip(x, y, width, height)
-        RenderUtils.drawStringVerticallyCentered(g, x + 3, y, height, name)
-        g.clip = null
-        // draw keyframes (only if trigger is hovered)
-        if(hovered && keyframes != null) {
+        var nameX = x + 3
+        if (lineX != null && nameX < lineX + 3) {
+            nameX = lineX + 3
+        }
+        RenderUtils.drawStringVerticallyCentered(g, nameX, y, height, name)
+        // restore previous clip, so keyframes may extend outside the trigger
+        g.clip = restoreClip
+        // draw keyframes (only if trigger is hovered or visually selected)
+        if((hovered || selected) && keyframes != null) {
             drawKeyframes(g, x, y, width, height, keyframes)
         }
     }
@@ -289,16 +331,14 @@ object TimelineSequenceRenderer {
     ) {
         keyframes.keyframesList.forEach {
             val keyframeRhombus = getKeyframeShape(x, y, width, height, it)
-            g.color = if(MoveTriggersManager.isKeyframeHovered(it)) {
-                Color.red
-            } else {
-                Color.yellow
-            }
+            val hovered = MoveTriggersManager.isKeyframeHovered(it)
+            val selected = TriggerSelectionManager.isVisuallySelected(it)
+            g.color = if(hovered || selected) { Color.red } else { Color.yellow }
             g.fillPolygon(keyframeRhombus)
             // draw border
-            g.color = Color.black
+            g.color = if (selected) { Color.white } else { Color.black }
             val restoreStroke = g.stroke
-            g.stroke = BasicStroke(1.5f)
+            g.stroke = BasicStroke(if (selected) { 2.5f } else { 1.5f })
             g.drawPolygon(keyframeRhombus)
             g.stroke = restoreStroke
         }
@@ -311,12 +351,12 @@ object TimelineSequenceRenderer {
         triggerHeight: Int,
         keyframe: Keyframes.Keyframe
     ): Polygon {
-        val halfHeight = (triggerHeight / 8.0).coerceIn(5.0, 7.0)
-        val kfX = (triggerX + keyframe.position * triggerWidth)
-        val kfY = (triggerY + (1 - keyframe.value) * triggerHeight)
+        val halfHeight = (triggerHeight / 8.0).roundToInt().coerceIn(5, 7)
+        val kfX = (triggerX + keyframe.position * triggerWidth).roundToInt()
+        val kfY = (triggerY + (1 - keyframe.value) * triggerHeight).roundToInt()
         return Polygon(
-            intArrayOf((kfX - halfHeight).roundToInt(), kfX.roundToInt(), (kfX + halfHeight).roundToInt(), kfX.roundToInt()),
-            intArrayOf(kfY.roundToInt(), (kfY - halfHeight).roundToInt(), kfY.roundToInt(), (kfY + halfHeight).roundToInt()),
+            intArrayOf(kfX - halfHeight, kfX, kfX + halfHeight, kfX),
+            intArrayOf(kfY, kfY - halfHeight, kfY, kfY + halfHeight),
             4
         )
     }

@@ -39,6 +39,7 @@ fun main() {
     // Init Stuff
     println("Hello World")
     System.setProperty("compose.swing.render.on.graphics", "true")
+    System.setProperty("sun.java2d.opengl", "true")
     configureSwingGlobalsForCompose(
         useAutoDpiOnLinux = false,
     )

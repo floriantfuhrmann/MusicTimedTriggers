@@ -5,73 +5,59 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.mana
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
 import java.awt.Color
-import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 
 object TimelineRenderer {
-    var currentSecondsGridHeight = 0
 
-    fun render(g: Graphics, width: Int, height: Int) {
-        //get Graphics2D and enable antialiasing
-        val g2 = (g as Graphics2D)
+    // Values needed globally
+    var secondsGridHeight = 0
+    // Area for the main timeline (contains sequence lines with placed triggers on spectrogram background and second grid)
+    var timelineCoreX = 0
+    var timelineCoreY = 0
+    var timelineCoreWidth = 0
+    var timelineCoreHeight = 0
+
+    fun render(g: Graphics2D, x: Int, y: Int, width: Int, height: Int) {
+        // enable antialiasing
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        //fill background black
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED)
+        // fill background black
         g.color = Color.black
-        g.fillRect(0, 0, width, height)
-        //don't draw content when not ready
-        if(ProjectManager.currentProject?.currentSong?.spectrogram == null || currentAudioPlayer.value == null) {
-            g.color = Color.white
-            g.drawString("Preparing Spectrogram and AudioPlayer ...", 5, 15)
+        g.fillRect(x, y, width, height)
+        // get spectrogram, audio player and sequence
+        val spectrogram = ProjectManager.currentProject?.currentSong?.spectrogram
+        val audioPlayer = currentAudioPlayer.value
+        val sequence = ProjectManager.currentProject?.currentSong?.sequence
+        // don't draw content when not ready
+        if(spectrogram == null || audioPlayer == null || sequence == null) {
+            g.color = Color.red
+            g.drawString("Spectrogram, AudioPlayer or Sequence missing ...", x + 5, y + 15)
             return
         }
-        //draw background
-        //calculate height for seconds grid
-        currentSecondsGridHeight = TimelineGridRenderer.calculateSecondsGridHeight(g)
-        //draw spectrogram background
-        TimelineBackgroundRenderer.render(
-            g,
-            ProjectManager.currentProject!!.currentSong!!.spectrogram!!,
-            currentAudioPlayer.value!!.secondPosition,
-            currentAudioPlayer.value!!.secondDuration,
-            0,
-            currentSecondsGridHeight,
-            width,
-            height - currentSecondsGridHeight
-        )
-        //draw second grid
-        TimelineGridRenderer.drawSecondGrid(
-            g,
-            currentSecondsGridHeight,
-            false,
-            width,
-            height
-        )
-        //draw triggers
-        val sequence = ProjectManager.currentProject?.currentSong?.sequence
-        if(sequence != null) {
-            TimelineSequenceRenderer.drawSequence(
-                g2,
-                0,
-                currentSecondsGridHeight,
-                width,
-                height - currentSecondsGridHeight,
-                sequence
-            )
-        } else {
-            g.color = Color.red
-            g.drawString("No Trigger Sequence", 20, 10)
-        }
-        ReceiveDraggedTemplatesManger.drawDragIndicator(g, width, height)
-        //draw selection
+        // update timeline area values
+        timelineCoreX = x
+        timelineCoreY = y
+        timelineCoreWidth = width
+        timelineCoreHeight = height
+        // Draw Background
+        // calculate height for seconds grid (needed as offset for spectrogram)
+        secondsGridHeight = TimelineGridRenderer.calculateSecondsGridHeight(g)
+        // draw spectrogram background
+        val middleTimePosition = audioPlayer.secondPosition
+        TimelineBackgroundRenderer.render(g, spectrogram, middleTimePosition, audioPlayer.secondDuration, x,
+            y + secondsGridHeight, width, height - secondsGridHeight)
+        // Draw Content
+        // draw second grid
+        TimelineGridRenderer.drawSecondGrid(g, x, y, width, height, secondsGridHeight, false)
+        // draw placed triggers
+        TimelineSequenceRenderer.drawSequence(g, x, y + secondsGridHeight, width, height - secondsGridHeight, sequence)
+        // draw dragged templates
+        ReceiveDraggedTemplatesManger.drawDragIndicator(g, x, y, width, height)
+        // draw selection
         TriggerSelectionManager.drawSelectionBox(g)
-        //draw play head
-        TimelineGridRenderer.drawPlayHead(
-            g,
-            currentAudioPlayer.value!!.secondPosition,
-            currentSecondsGridHeight,
-            width,
-            height
-        )
+        // draw play head
+        TimelineGridRenderer.drawPlayHead(g, x, y, width, height, middleTimePosition, secondsGridHeight)
     }
 }

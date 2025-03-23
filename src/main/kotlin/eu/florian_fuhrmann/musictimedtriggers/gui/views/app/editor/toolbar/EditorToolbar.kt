@@ -46,11 +46,11 @@ fun EditorToolbar(song: Song?) {
         if (song != null) {
             SimpleIconButton(
                 iconKey = MttIcons.zoomIn,
-                onClick = { TimelineBackgroundRenderer.zoomIn() }
+                onClick = { TimelineBackgroundRenderer.Zooming.zoomIn() }
             )
             SimpleIconButton(
                 iconKey = MttIcons.zoomOut,
-                onClick = { TimelineBackgroundRenderer.zoomOut() },
+                onClick = { TimelineBackgroundRenderer.Zooming.zoomOut() },
                 modifier = Modifier.padding(start = 2.dp)
             )
         }
