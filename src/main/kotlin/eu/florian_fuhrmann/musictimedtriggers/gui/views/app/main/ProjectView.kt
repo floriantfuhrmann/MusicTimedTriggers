@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.dp
@@ -19,13 +20,15 @@ import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import org.jetbrains.compose.splitpane.*
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.component.Text
 
 @OptIn(ExperimentalSplitPaneApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun OpenedProjectView(project: Project) {
     // Splitter States
-    val sidebarSplitterState = rememberSplitPaneState()
-    val verticalSplitterState = rememberSplitPaneState()
+    val sidebarSplitterState = rememberSplitPaneState(0.2f)
+    val verticalSplitterState = rememberSplitPaneState(0.2f)
+    val inspectorSplitterState = rememberSplitPaneState(1f)
     // Main Window Content
     // Container Box (mainly for tracking clicks anywhere on the main window so the timeline can lose focus)
     Box(
@@ -41,17 +44,17 @@ fun OpenedProjectView(project: Project) {
             Column(Modifier.weight(1f)) {
                 if(MainUiState.sidebarExpanded) {
                     HorizontalSplitPane(splitPaneState = sidebarSplitterState) {
-                        first(130.dp) {
+                        first(100.dp) {
                             SidebarContainer(project)
                         }
-                        second(170.dp) {
+                        second(500.dp) {
                             Column(Modifier.weight(1f)) {
-                                EditorWithBrowserContainer(project, verticalSplitterState)
+                                EditorWithBrowserAndInspectorContainer(project, inspectorSplitterState, verticalSplitterState)
                             }
                         }
                     }
                 } else {
-                    EditorWithBrowserContainer(project, verticalSplitterState)
+                    EditorWithBrowserAndInspectorContainer(project, inspectorSplitterState, verticalSplitterState)
                 }
             }
             // Inspector Bar
@@ -70,6 +73,27 @@ fun SidebarContainer(project: Project) {
             .background(JewelTheme.globalColors.panelBackground)
     ) {
         Sidebar(project)
+    }
+}
+
+@OptIn(ExperimentalSplitPaneApi::class)
+@Composable
+fun ColumnScope.EditorWithBrowserAndInspectorContainer(project: Project, inspectorSplitterState: SplitPaneState, verticalSplitterState: SplitPaneState) {
+    if(MainUiState.inspectorOption >= 0) {
+        HorizontalSplitPane(splitPaneState = inspectorSplitterState) {
+            first(200.dp) {
+                Column(Modifier.weight(1f)) {
+                    EditorWithBrowserContainer(project, verticalSplitterState)
+                }
+            }
+            second(200.dp) {
+                Box(Modifier.fillMaxSize().background(Color.Yellow).padding(5.dp)) {
+                    Text(text = "Todo: Inspector Contents", color = Color.Black)
+                }
+            }
+        }
+    } else {
+        EditorWithBrowserContainer(project, verticalSplitterState)
     }
 }
 

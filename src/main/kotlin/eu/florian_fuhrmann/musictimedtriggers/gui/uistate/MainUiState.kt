@@ -15,6 +15,9 @@ object MainUiState {
     // Browser expanded state (this could also be moved to project settings or some general project ui state)
     var browserExpanded: Boolean by mutableStateOf(true)
 
+    // todo: replace with real options and use enum if possible
+    var inspectorOption: Int by mutableStateOf(-1)
+
     // Currently selected theme (this should probably be moved to project or global settings sometime)
     var theme: IntUiThemes by mutableStateOf(IntUiThemes.Dark)
 

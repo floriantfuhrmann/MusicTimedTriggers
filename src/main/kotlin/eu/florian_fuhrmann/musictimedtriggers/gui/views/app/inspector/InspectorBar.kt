@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.SelectableIconActionButton
@@ -21,31 +22,30 @@ fun InspectorBar() {
         .background(JewelTheme.globalColors.panelBackground)
         .padding(5.dp)
     ) {
-        var selectedOption by remember { mutableStateOf(0) }
         SelectableIconActionButton(
             key = AllIconsKeys.Stub,
             contentDescription = null,
-            onClick = { selectedOption = if(selectedOption == 0) -1 else 0 },
+            onClick = { MainUiState.inspectorOption = if(MainUiState.inspectorOption == 0) -1 else 0 },
             extraHint = Size(20),
-            selected = selectedOption == 0,
+            selected = MainUiState.inspectorOption == 0,
             focusable = false,
             modifier = Modifier.trackActivation()
         )
         SelectableIconActionButton(
             key = AllIconsKeys.Stub,
             contentDescription = null,
-            onClick = { selectedOption = if(selectedOption == 1) -1 else 1 },
+            onClick = { MainUiState.inspectorOption = if(MainUiState.inspectorOption == 1) -1 else 1 },
             extraHint = Size(20),
-            selected = selectedOption == 1,
+            selected = MainUiState.inspectorOption == 1,
             focusable = false,
             modifier = Modifier.trackActivation()
         )
         SelectableIconActionButton(
             key = AllIconsKeys.Stub,
             contentDescription = null,
-            onClick = { selectedOption = if(selectedOption == 2) -1 else 2 },
+            onClick = { MainUiState.inspectorOption = if(MainUiState.inspectorOption == 2) -1 else 2 },
             extraHint = Size(20),
-            selected = selectedOption == 2,
+            selected = MainUiState.inspectorOption == 2,
             focusable = false,
             modifier = Modifier.trackActivation(),
         )
