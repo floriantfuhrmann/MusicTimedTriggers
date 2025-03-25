@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -12,7 +13,6 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editproject.EditProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.openproject.OpenProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.styles.dropdownLikeIconButtonStyle
-import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.IntUiThemes
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
@@ -28,7 +28,6 @@ import org.jetbrains.jewel.window.newFullscreenControls
 
 var titleBarDropdownOpened: MutableState<Boolean> = mutableStateOf(false)
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DecoratedWindowScope.TitleBarView() {
     TitleBar(
@@ -50,8 +49,8 @@ fun DecoratedWindowScope.TitleBarView() {
                         .aspectRatio(1f)
                         .trackActivation()
                 ) {
-                    Box(Modifier.padding(5.dp)) {
-                        Icon(AllIconsKeys.Nodes.DataColumn, null)
+                    Box(Modifier.padding(5.dp).rotate(180f)) {
+                        Icon(AllIconsKeys.Actions.PreviewDetails, null, hint = Size(20))
                     }
                 }
             }
