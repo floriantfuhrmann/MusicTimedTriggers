@@ -8,12 +8,16 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.AlertCreator
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.ReceiveDraggedTemplatesManger
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggerType
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.groups.TriggerTemplateGroup
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
 import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
 import eu.florian_fuhrmann.musictimedtriggers.windowState
@@ -463,6 +467,43 @@ class BrowserState(
         draggingOnTimeline.value = false
         //drag indicator no longer needs to be shown
         redrawTimeline()
+    }
+
+    // Actions
+
+    fun removeSelectedTemplates(skipConfirmation: Boolean = false) {
+        // ensure that at least one template is selected
+        if (selectedTemplates.isEmpty()) {
+            return
+        }
+        // get current project
+        val project = ProjectManager.currentProject ?: throw IllegalStateException("No project currently open")
+        // collect triggers to remove
+        val selectedTemplates = selectedTemplates.map { it.getTriggerTemplate() }
+        // search for usages of the selected templates
+        val usages = project.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
+        // create onConfirm function
+        val onConfirm: () -> Unit = {
+            // remove placed triggers in usages and collect set of affected lines
+            val affectedLines = mutableSetOf<TriggerSequenceLine>()
+            usages.forEach {
+                TriggerSelectionManager.deselectTrigger(it.placedTrigger, false)
+                it.line.removeTrigger(it.placedTrigger)
+                affectedLines.add(it.line)
+            }
+            // redraw timeline because some placed triggers currently visible might have been removed
+            redrawTimeline()
+            // save the affected lines
+            affectedLines.forEach { it.saveToFile() }
+            // remove the templates
+            project.triggersManager.removeTriggerTemplates(selectedTemplates) // also saves the affected groups
+        }
+        // show confirmation dialog if needed
+        if (skipConfirmation) {
+            onConfirm.invoke()
+        } else {
+            DialogManager.alert(AlertCreator.createUsagesAlert(true, selectedTemplates, usages, onConfirm))
+        }
     }
 
 }
