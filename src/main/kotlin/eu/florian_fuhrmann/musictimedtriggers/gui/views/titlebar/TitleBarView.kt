@@ -149,32 +149,13 @@ fun DecoratedWindowScope.TitleBarView() {
             }
         }
 
-        Text(modifier = Modifier.scale(1f).trackActivation(), text = title)
+        Text(modifier = Modifier.scale(1f), text = title)
 
-        Row(Modifier.align(Alignment.End).trackActivation()) {
-            Tooltip({
-                when (MainUiState.theme) {
-                    IntUiThemes.Light -> Text("Switch to dark theme")
-                    IntUiThemes.Dark, IntUiThemes.System -> Text("Switch to light theme")
-                }
-            }) {
-                IconButton({
-                    MainUiState.theme = when (MainUiState.theme) {
-                        IntUiThemes.Light -> IntUiThemes.Dark
-                        IntUiThemes.Dark, IntUiThemes.System -> IntUiThemes.Light
-                    }
-                }, Modifier.size(40.dp).padding(5.dp).trackActivation()) {
-                    Box(modifier = Modifier.padding(5.dp).trackActivation()) {
-                        Icon(
-                            key = when (MainUiState.theme.isDark()) {
-                                true -> MttIcons.daySunny
-                                else -> MttIcons.moon
-                            },
-                            contentDescription = null,
-                            tint = MainUiState.theme.iconColor()
-                        )
-                    }
-                }
+        Row(Modifier.align(Alignment.End)) {
+            IconButton(onClick = {
+                DialogManager.openDialog(EditProjectDialog(create = false, project = ProjectManager.currentProject))
+            }, Modifier.size(40.dp).padding(5.dp)) {
+                Icon(AllIconsKeys.General.Settings, null)
             }
         }
     }
