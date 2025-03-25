@@ -80,7 +80,8 @@ fun CollapsedBrowserBar() {
             .background(JewelTheme.globalColors.borders.normal)
             .padding(top = 1.dp)
             .background(JewelTheme.globalColors.panelBackground)
-            .padding(horizontal = 5.dp),
+            .padding(horizontal = 5.dp)
+            .height(IntrinsicSize.Min),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Spacer to align the buttons to the right

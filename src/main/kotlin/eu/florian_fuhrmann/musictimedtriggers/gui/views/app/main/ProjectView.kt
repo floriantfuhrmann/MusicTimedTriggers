@@ -13,6 +13,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.CollapsedBro
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.TriggerBrowser
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.SongEditor
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TimelineFocusManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.InspectorBar
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.sidebar.Sidebar
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import org.jetbrains.compose.splitpane.*
@@ -36,17 +37,25 @@ fun OpenedProjectView(project: Project) {
             }.trackActivation()
     )
     {
-        if(MainUiState.sidebarExpanded) {
-            HorizontalSplitPane(splitPaneState = sidebarSplitterState) {
-                first(130.dp) {
-                    SidebarContainer(project)
-                }
-                second(170.dp) {
+        Row {
+            Column(Modifier.weight(1f)) {
+                if(MainUiState.sidebarExpanded) {
+                    HorizontalSplitPane(splitPaneState = sidebarSplitterState) {
+                        first(130.dp) {
+                            SidebarContainer(project)
+                        }
+                        second(170.dp) {
+                            Column(Modifier.weight(1f)) {
+                                EditorWithBrowserContainer(project, verticalSplitterState)
+                            }
+                        }
+                    }
+                } else {
                     EditorWithBrowserContainer(project, verticalSplitterState)
                 }
             }
-        } else {
-            EditorWithBrowserContainer(project, verticalSplitterState)
+            // Inspector Bar
+            InspectorBar()
         }
     }
 }
@@ -66,7 +75,7 @@ fun SidebarContainer(project: Project) {
 
 @OptIn(ExperimentalSplitPaneApi::class)
 @Composable
-fun EditorWithBrowserContainer(project: Project, verticalSplitterState: SplitPaneState) {
+fun ColumnScope.EditorWithBrowserContainer(project: Project, verticalSplitterState: SplitPaneState) {
     if(MainUiState.browserExpanded) {
         VerticalSplitPane(
             splitPaneState = verticalSplitterState,
@@ -85,13 +94,9 @@ fun EditorWithBrowserContainer(project: Project, verticalSplitterState: SplitPan
             }
         }
     } else {
-        Column {
-            Row(Modifier.weight(1f).fillMaxWidth()) {
-                SongEditor(project)
-            }
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-                CollapsedBrowserBar()
-            }
+        Row(Modifier.weight(1f).fillMaxWidth()) {
+            SongEditor(project)
         }
+        CollapsedBrowserBar()
     }
 }
