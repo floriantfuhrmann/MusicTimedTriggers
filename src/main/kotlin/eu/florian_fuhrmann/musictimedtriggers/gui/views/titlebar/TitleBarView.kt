@@ -21,6 +21,7 @@ import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
+import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.window.DecoratedWindowScope
 import org.jetbrains.jewel.window.TitleBar
 import org.jetbrains.jewel.window.newFullscreenControls
@@ -155,7 +156,7 @@ fun DecoratedWindowScope.TitleBarView() {
             IconButton(onClick = {
                 DialogManager.openDialog(EditProjectDialog(create = false, project = ProjectManager.currentProject))
             }, Modifier.size(40.dp).padding(5.dp)) {
-                Icon(AllIconsKeys.General.Settings, null)
+                Icon(AllIconsKeys.General.Settings, null, hint = Size(20))
             }
         }
     }
