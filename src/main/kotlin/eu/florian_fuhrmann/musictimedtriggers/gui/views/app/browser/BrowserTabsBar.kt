@@ -1,5 +1,6 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -16,8 +17,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.edittemplategroup.EditTemplateGroupDialog
@@ -56,12 +60,20 @@ fun BrowserTabsBar() {
     Row(verticalAlignment = Alignment.CenterVertically) {
         // Opened Groups Tabs
         OpenGroupsTabs(this, openedGroups)
-        // More Options
-        MoreOptionsDropdown(closedGroups)
-        // Add Templates Dropdown
-        AddTemplateButton()
-        // Collapse Browser Button
-        ToggleBrowserButton()
+        Row(Modifier.padding(top = 5.dp, bottom = 5.dp, end = 5.dp).height(26.dp)) {
+            // More Options
+            MoreOptionsDropdown(closedGroups)
+            // Divider
+            Divider(org.jetbrains.jewel.ui.Orientation.Vertical, Modifier.fillMaxHeight().padding(horizontal = 4.dp))
+            // Remove Templates Button
+            RemoveTemplatesButton()
+            // Add Templates Dropdown
+            AddTemplateButton()
+            // Divider
+            Divider(org.jetbrains.jewel.ui.Orientation.Vertical, Modifier.fillMaxHeight().padding(horizontal = 4.dp))
+            // Collapse Browser Button
+            ToggleBrowserButton()
+        }
     }
 }
 
@@ -72,13 +84,13 @@ fun CollapsedBrowserBar() {
             .background(JewelTheme.globalColors.borders.normal)
             .padding(top = 1.dp)
             .background(JewelTheme.globalColors.panelBackground)
-            .padding(0.dp),
+            .padding(horizontal = 5.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Spacer to align the buttons to the right
         Spacer(Modifier.weight(1f))
         // Expand Browser Button
-        ExpandBrowserButton()
+        ToggleBrowserButton()
     }
 }
 
@@ -146,9 +158,16 @@ fun OpenGroupsTabs(scope: RowScope, openedGroups: List<BrowserGroup>) {
 
 @Composable
 fun MoreOptionsDropdown(closedGroups: List<BrowserGroup>) {
-    Column(modifier = Modifier.padding(start = 5.dp, end = 5.dp)) {
-        Dropdown(
-            menuContent = {
+    var expanded by remember { mutableStateOf(false) }
+    IconButton(onClick = { expanded = true }, focusable = false) {
+        Icon(AllIconsKeys.Actions.More, null)
+    }
+    if(expanded) {
+        PopupMenu(
+            onDismissRequest = {
+                expanded = false
+                true
+            }, content = {
                 selectableItem(
                     selected = false,
                     onClick = {
@@ -190,39 +209,30 @@ fun MoreOptionsDropdown(closedGroups: List<BrowserGroup>) {
                 ) {
                     Text("Open Group")
                 }
-            }
-        ) {
-            Text("More")
-        }
+            },
+            horizontalAlignment = Alignment.Start
+        )
     }
 }
 
 @Composable
 fun AddTemplateButton() {
-    Column(modifier = Modifier.padding(end = 5.dp)) {
-        var expanded by remember { mutableStateOf(false) }
-        OutlinedButton(
-            modifier = Modifier.size(JewelTheme.dropdownStyle.metrics.minSize.height),
-            onClick = {
-                expanded = !expanded
-            },
-            style = outlinedButtonStyleWithNoPadding
-        ) {
-            Box(modifier = Modifier.padding(5.dp)) {
-                Icon(AllIconsKeys.General.Add, null)
-            }
-        }
-        DropdownMenu(
-            expanded = expanded,
+    var expanded by remember { mutableStateOf(false) }
+    IconButton(
+        onClick = { expanded = !expanded },
+        focusable = false
+    ) {
+        Icon(AllIconsKeys.General.Add, null)
+        Icon(AllIconsKeys.General.Dropdown, null)
+    }
+    if(expanded) {
+        PopupContainer(
             onDismissRequest = {
                 expanded = false
             },
-            modifier = Modifier.background(JewelTheme.globalColors.panelBackground)
+            horizontalAlignment = Alignment.Start
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(start = 5.dp, end = 5.dp)
-            ) {
+            Column(Modifier.width(150.dp)) {
                 TriggerType.entries.forEach { triggerType ->
                     Row {
                         SelectableIconButton(
@@ -264,27 +274,23 @@ fun AddTemplateButton() {
 }
 
 @Composable
-fun ToggleBrowserButton() {
-    Column(modifier = Modifier.padding(end = 5.dp)) {
-        OutlinedButton(
-            modifier = Modifier.size(JewelTheme.dropdownStyle.metrics.minSize.height).trackActivation(),
-            onClick = { MainUiState.toggleBrowser() },
-            style = outlinedButtonStyleWithNoPadding
-        ) {
-            Box(modifier = Modifier.padding(5.dp).rotate(180f)) {
-                Icon(AllIconsKeys.FileTypes.UiForm, null)
-            }
-        }
+fun RemoveTemplatesButton() {
+    IconButton(
+        onClick = { println("Todo: Remove selected templates") },
+        focusable = false
+    ) {
+        Icon(AllIconsKeys.General.Remove, null)
     }
 }
 
 @Composable
-fun ExpandBrowserButton() {
+fun ToggleBrowserButton() {
     IconButton(
         onClick = { MainUiState.toggleBrowser() },
-        modifier = Modifier.fillMaxHeight().trackActivation()
+        modifier = Modifier.fillMaxHeight().trackActivation(),
+        focusable = false
     ) {
-        Icon(AllIconsKeys.FileTypes.UiForm, null)
+        Icon(AllIconsKeys.General.PreviewHorizontally, null)
     }
 }
 

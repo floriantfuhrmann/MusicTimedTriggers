@@ -28,6 +28,7 @@ import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceL
 import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.getContrasting
 import org.jetbrains.jewel.foundation.modifier.onHover
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
 import sh.calvin.reorderable.*
@@ -40,7 +41,7 @@ fun TriggerTemplatesList() {
     val reorderableLazyListState = rememberReorderableLazyListState(browserState.templatesLazyListState) { from, to ->
         ProjectManager.currentProject?.browserState?.getSelectedTriggerTemplateGroup()?.moveTemplate(from.index, to.index)
     }
-    browserState.currentCoroutineScope = rememberCoroutineScope() // need to allow auto-scrolling to triggers
+    browserState.currentCoroutineScope = rememberCoroutineScope() // need to allow auto-scrolling to templates
     // UI
     ContextMenuArea(
         items = {
@@ -87,6 +88,7 @@ fun TriggerTemplatesList() {
         LazyColumn(
             modifier =
                 Modifier
+                    .background(JewelTheme.globalColors.borders.normal)
                     .fillMaxSize()
                     .clickable(indication = null, interactionSource = null) {
                         // only triggers when clicked outside a list item
