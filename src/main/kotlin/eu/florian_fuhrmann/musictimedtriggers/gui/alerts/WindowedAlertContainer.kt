@@ -4,11 +4,16 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.onDrag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -18,6 +23,8 @@ import androidx.compose.ui.window.FrameWindowScope
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.jetbrains.JBR
+import org.jetbrains.jewel.ui.util.thenIf
+import java.awt.Point
 import java.awt.event.MouseEvent
 
 val uiScale = System.getProperty("sun.java2d.uiScale").toDoubleOrNull() ?: 1.0
@@ -65,9 +72,43 @@ fun WindowedAlertContainer(frameWindowScope: FrameWindowScope, content: @Composa
             Modifier
 //                .alpha(if(contentVisible) 1.0f else 0.0f)
                 .alpha(alpha)
-                .onPointerEvent(PointerEventType.Press, PointerEventPass.Main) {
-                    if (this.currentEvent.button == PointerButton.Primary && this.currentEvent.changes.any { changed -> !changed.isConsumed }) {
-                        JBR.getWindowMove().startMovingTogetherWithMouse(window, MouseEvent.BUTTON1)
+                .thenIf(JBR.isWindowMoveSupported()) {
+                    onPointerEvent(PointerEventType.Press, PointerEventPass.Main) {
+                        if (this.currentEvent.button == PointerButton.Primary && this.currentEvent.changes.any { changed -> !changed.isConsumed }) {
+                            JBR.getWindowMove().startMovingTogetherWithMouse(window, MouseEvent.BUTTON1)
+                        }
+                    }
+                }
+                .thenIf(!JBR.isWindowMoveSupported()) {
+                    var mouseDownPoint: Point? by remember { mutableStateOf(null) }
+                    onPointerEvent(PointerEventType.Press, PointerEventPass.Main) {
+                        it.nativeEvent.let { event ->
+                            if (event !is MouseEvent) return@onPointerEvent
+                            if (event.button != MouseEvent.BUTTON1) return@onPointerEvent
+                            mouseDownPoint = event.point
+                        }
+                    }
+                    .onPointerEvent(PointerEventType.Move, PointerEventPass.Main) {
+                        it.nativeEvent.let { event ->
+                            if (event !is MouseEvent) return@onPointerEvent
+                            mouseDownPoint.let { mouseDownPoint ->
+                                if (mouseDownPoint == null) return@onPointerEvent
+                                dialogState.position = WindowPosition.Absolute(
+                                    with(localDensity) {
+                                        (uiScale * (event.locationOnScreen.x - mouseDownPoint.x)).toInt().toDp()
+                                    },
+                                    with(localDensity) {
+                                        (uiScale * (event.locationOnScreen.y - mouseDownPoint.y)).toInt().toDp()
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    .onPointerEvent(PointerEventType.Release, PointerEventPass.Main) {
+                        mouseDownPoint = null
+                    }
+                    .onPointerEvent(PointerEventType.Exit, PointerEventPass.Main) {
+                        mouseDownPoint = null
                     }
                 }
                 .onGloballyPositioned { coordinates ->
