@@ -17,6 +17,7 @@ import org.jetbrains.jewel.ui.component.Text
  * A simple alert dialog with a title, text and optional dismiss and
  * confirm buttons. Uses Materials' AlertDialog as container.
  */
+@Deprecated("Use BasicAlert instead")
 class Alert(
     val title: String = "Alert",
     val text: String,

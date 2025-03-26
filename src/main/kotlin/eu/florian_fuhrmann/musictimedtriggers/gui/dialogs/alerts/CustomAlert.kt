@@ -22,6 +22,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 /**
  * CustomAlert allows passing custom Composable for the content. And uses a custom Dialog container.
  */
+@Deprecated("Use Dialogs instead")
 open class CustomAlert(
     val onDismissRequest: () -> Unit /* = { DialogManager.closeAlert() }*/,
     val content: @Composable (() -> Unit),

@@ -2,13 +2,15 @@ package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.main
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.window.FrameWindowScope
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.AlertsManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.overlay.Overlay
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 
 @Composable
 @Preview
-fun App() {
+fun App(frameWindowScope: FrameWindowScope) {
     // Overlay
     Overlay()
 
@@ -24,5 +26,7 @@ fun App() {
 
     // Dialog Container
     DialogManager.DialogContainer()
+    // Alerts Container
+    AlertsManager.AlertsContainer(frameWindowScope)
 }
 

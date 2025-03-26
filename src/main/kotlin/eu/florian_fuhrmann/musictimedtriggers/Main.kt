@@ -103,7 +103,7 @@ fun main() {
                                 .fillMaxSize(fraction = (1 / scaleFactor))
                                 .scale(scaleFactor),
                     ) {
-                        App()
+                        App(this@DecoratedWindow)
                     }
                 }
             }

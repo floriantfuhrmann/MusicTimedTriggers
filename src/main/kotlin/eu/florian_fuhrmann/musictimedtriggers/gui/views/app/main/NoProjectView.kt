@@ -16,10 +16,13 @@ import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editproject.EditProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.openproject.OpenProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
+import kotlinx.coroutines.delay
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Text
@@ -32,6 +35,29 @@ fun NoProjectView() {
     Column(
         modifier = Modifier.fillMaxSize().background(JewelTheme.globalColors.panelBackground).padding(20.dp)
     ) {
+        // Todo: Remove after testing!
+        LaunchedEffect(Unit) {
+            delay(3000)
+            BasicAlert(
+                type = BasicAlertType.Warning,
+                title = "Hello World",
+                buttons = {
+                    CancelButton({close()}, "Cancel")
+                    OKButton({close()}, "OK")
+                },
+            ) {
+                Text("Todo: Put some content text here")
+            }.show()
+            delay(2000)
+            BasicAlert(
+                title = "Second Alert",
+                buttons = {
+                    OKButton({close()}, "OK")
+                },
+            ) {
+                Text("Todo: Put also some content text here")
+            }.show()
+        }
         Row {
             Text("Please open or create a project to continue", fontSize = 1.em)
         }
