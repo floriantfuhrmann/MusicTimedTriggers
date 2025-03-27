@@ -9,16 +9,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.zIndex
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.AlertsManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.AbstractAlert
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.CustomAlert
 import java.awt.Dimension
 
 object DialogManager {
     private var openedDialog: Dialog? by mutableStateOf(null)
     val dialogOpened by derivedStateOf { openedDialog != null }
     private var alwaysOnTop: Boolean by mutableStateOf(true)
-    private var alerts: MutableList<AbstractAlert> = mutableStateListOf()
-    val anyAlerts = derivedStateOf { alerts.isNotEmpty() } //tracks whether any alerts are currently visible
 
     fun openDialog(dialog: Dialog) {
         alwaysOnTop = true
@@ -35,13 +31,6 @@ object DialogManager {
         alwaysOnTop = true
     }
 
-    fun alert(alert: AbstractAlert) {
-        alerts.add(alert)
-    }
-    fun closeAlert() {
-        alerts.removeFirst()
-    }
-
     @Composable
     fun DialogContainer() {
         // shadow the openedDialog variable to prevent it from changing while the dialog is being displayed
@@ -51,18 +40,12 @@ object DialogManager {
                 // DialogWindow is used to create a windowed dialog
                 DialogWindow(
                     onCloseRequest = { closeDialog() },
-                    alwaysOnTop = alwaysOnTop && alerts.isEmpty(),
+                    alwaysOnTop = alwaysOnTop,
                     title = openedDialog.title()
                 ) {
                     this.window.minimumSize = Dimension(350, 350)
                     // Dialog Content
                     openedDialog.Content()
-                    // (deprecated) Alerts
-                    if(alerts.isNotEmpty()) {
-                        key(alerts.first()) {
-                            alerts.first().Content(alerts.size)
-                        }
-                    }
                     // (new) Alerts
                     AlertsManager.AlertsContainer(this@DialogWindow)
                 }
@@ -73,18 +56,6 @@ object DialogManager {
             } else {
                 // non-windowed dialogs are displayed inline
                 openedDialog.Content()
-            }
-        }
-        if(openedDialog == null || !openedDialog.windowed) {
-            if(alerts.isNotEmpty()) {
-                key(alerts.first()) {
-                    alerts.first().Content(alerts.size)
-                }
-                LaunchedEffect(alerts.first()) {
-                    if (alerts.first() is CustomAlert) {
-                        (alerts.first() as CustomAlert).focusRequester?.requestFocus()
-                    }
-                }
             }
         }
     }

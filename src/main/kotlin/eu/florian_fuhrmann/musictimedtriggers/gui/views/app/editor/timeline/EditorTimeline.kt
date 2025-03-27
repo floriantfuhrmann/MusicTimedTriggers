@@ -80,7 +80,7 @@ fun EditorTimeline() {
     // panel should only be visible when the dropdown is not opened and no alerts are shown (workaround because SwingPanel is drawn above everything else)
     val panelVisible by remember {
         derivedStateOf {
-            !titleBarDropdownOpened.value && !DialogManager.anyAlerts.value
+            !titleBarDropdownOpened.value
         }
     }
     // set focus manager, so it can be used for manual focus handling
