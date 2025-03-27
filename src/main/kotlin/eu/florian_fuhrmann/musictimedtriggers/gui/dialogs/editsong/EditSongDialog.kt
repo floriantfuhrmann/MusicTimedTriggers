@@ -9,7 +9,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
-import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.components.CloseDialogButton
@@ -285,7 +284,7 @@ class EditSongDialog(val project: Project, val add: Boolean, val song: Song? = n
 fun openDeleteSongDialog(project: Project, song: Song?) {
     //show confirmation alert
     BasicAlert(
-        type = BasicAlertType.Warning,
+        type = BasicAlert.Type.Warning,
         title = "Confirm Deletion",
         buttons = {
             CancelButton()

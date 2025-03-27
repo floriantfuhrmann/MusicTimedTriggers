@@ -1,7 +1,6 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers
 
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
-import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
@@ -29,7 +28,7 @@ object EditTriggersManager {
         } else {
             // Confirm Deletion first
             BasicAlert(
-                type = BasicAlertType.Warning,
+                type = BasicAlert.Type.Warning,
                 title = "Delete ${TriggerSelectionManager.selectedTriggers.size} placed Triggers?",
                 buttons = {
                     CancelButton()

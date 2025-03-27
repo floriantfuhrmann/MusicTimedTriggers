@@ -17,7 +17,6 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
-import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.triggerusages.TriggerUsagesDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
@@ -294,7 +293,7 @@ private fun searchUsagesOfSelectedTemplates(browserState: BrowserState) {
     // open usages dialog
     if (usages.isEmpty()) {
         BasicAlert(
-            type = BasicAlertType.Info,
+            type = BasicAlert.Type.Info,
             title = "No Usages Found",
             buttons = { OKButton() }
         ) {

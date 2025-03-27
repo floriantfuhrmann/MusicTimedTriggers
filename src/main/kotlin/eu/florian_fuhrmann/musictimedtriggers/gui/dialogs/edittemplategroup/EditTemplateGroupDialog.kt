@@ -13,7 +13,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
-import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.components.CloseDialogButton
@@ -78,7 +77,7 @@ class EditTemplateGroupDialog(val create: Boolean, private val triggerTemplateGr
                         onClick = {
                             //show confirmation alert
                             BasicAlert(
-                                type = BasicAlertType.Warning,
+                                type = BasicAlert.Type.Warning,
                                 title = "Confirm Deletion",
                                 buttons = {
                                     CancelButton()

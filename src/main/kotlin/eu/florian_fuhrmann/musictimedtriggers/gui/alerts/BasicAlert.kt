@@ -23,7 +23,7 @@ import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 class BasicAlert(
-    private val type: BasicAlertType = BasicAlertType.Info,
+    private val type: Type = Type.Info,
     private val title: String,
     private val buttons: @Composable BasicAlertScope.() -> Unit = {},
     private val content: @Composable BasicAlertScope.() -> Unit
@@ -91,13 +91,13 @@ class BasicAlert(
     override fun close() {
         AlertsManager.closeAlert(this)
     }
-}
 
-enum class BasicAlertType(val iconKey: IconKey) {
-    Info(AllIconsKeys.General.InformationDialog),
-    Error(AllIconsKeys.General.ErrorDialog),
-    Warning(AllIconsKeys.General.WarningDialog),
-    Question(AllIconsKeys.General.QuestionDialog)
+    enum class Type(val iconKey: IconKey) {
+        Info(AllIconsKeys.General.InformationDialog),
+        Error(AllIconsKeys.General.ErrorDialog),
+        Warning(AllIconsKeys.General.WarningDialog),
+        Question(AllIconsKeys.General.QuestionDialog)
+    }
 }
 
 interface BasicAlertScope {

@@ -7,7 +7,6 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
-import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.unusedfiles.UnusedFilesDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
@@ -48,7 +47,7 @@ class Project(
         } else {
             //alert
             BasicAlert(
-                type = BasicAlertType.Info,
+                type = BasicAlert.Type.Info,
                 title = "No unused files found",
                 buttons = {
                     OKButton { close() }
@@ -115,7 +114,7 @@ class Project(
         song.sequence.removeSaveFiles()
         //alert
         BasicAlert(
-            type = BasicAlertType.Info,
+            type = BasicAlert.Type.Info,
             title = "Song deleted",
             buttons = {
                 CancelButton("No")

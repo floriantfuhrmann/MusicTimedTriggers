@@ -13,7 +13,6 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
-import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.triggerusages.TriggerUsagesDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.ReceiveDraggedTemplatesManger
@@ -512,7 +511,7 @@ class BrowserState(
         } else {
             // Confirmation dialog
             BasicAlert(
-                type = BasicAlertType.Warning,
+                type = BasicAlert.Type.Warning,
                 title = "Confirm Deletion",
                 buttons = {
                     CancelButton()

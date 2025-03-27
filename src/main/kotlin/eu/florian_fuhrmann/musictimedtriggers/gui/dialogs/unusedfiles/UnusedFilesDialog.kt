@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
-import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.components.CloseDialogButton
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.components.DialogFrame
@@ -55,7 +54,7 @@ class UnusedFilesDialog(private val unusedFiles: List<File>) : Dialog(windowed =
                                 onClick = {
                                     //open confirm alter
                                     BasicAlert(
-                                        type = BasicAlertType.Warning,
+                                        type = BasicAlert.Type.Warning,
                                         title = "Confirm Deletion",
                                         buttons = {
                                             CancelButton()

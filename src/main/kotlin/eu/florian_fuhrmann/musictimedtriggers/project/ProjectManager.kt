@@ -4,7 +4,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
-import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
@@ -44,7 +43,7 @@ object ProjectManager {
         //make sure the file is a valid project directory
         if (!isValidProjectDirectory(projectDirectory)) {
             BasicAlert(
-                type = BasicAlertType.Error,
+                type = BasicAlert.Type.Error,
                 title = "Invalid Project Directory",
                 buttons = { OKButton() }
             ) {
