@@ -18,62 +18,32 @@ import org.jetbrains.jewel.ui.util.thenIf
 import java.awt.Point
 import java.awt.Window
 import java.awt.event.MouseEvent
-
-val uiScale = System.getProperty("sun.java2d.uiScale").toDoubleOrNull() ?: 1.0
-
-private fun FrameWindowScope.getCenteredAbsoluteWindowPosition(density: Density, width: Dp, height: Dp) =
-    getCenteredAbsoluteWindowPosition(window, density, width, height)
-
-private fun DialogWindowScope.getCenteredAbsoluteWindowPosition(density: Density, width: Dp, height: Dp) =
-    getCenteredAbsoluteWindowPosition(window, density, width, height)
-
-private fun getCenteredAbsoluteWindowPosition(awtWindow: Window, density: Density, width: Dp, height: Dp): WindowPosition.Absolute {
-    return with(density) {
-        WindowPosition.Absolute(
-            x = uiScale * awtWindow.locationOnScreen.x.toDp() + uiScale * awtWindow.size.width.toDp() / 2 - width / 2,
-            y = uiScale * awtWindow.locationOnScreen.y.toDp() + uiScale * awtWindow.size.height.toDp() / 2 - height / 2
-        )
-    }
-}
+import kotlin.math.roundToInt
 
 @Composable
 fun WindowedAlertContainer(dialogWindowScope: DialogWindowScope, content: @Composable () -> Unit) {
-    WindowedAlertContainer({ density, width, height ->
-        with(dialogWindowScope) {
-            getCenteredAbsoluteWindowPosition(density, width, height)
-        }
-    }, content)
+    WindowedAlertContainer(with(dialogWindowScope) {window}, content)
 }
 
 @Composable
 fun WindowedAlertContainer(frameWindowScope: FrameWindowScope, content: @Composable () -> Unit) {
-    WindowedAlertContainer({ density, width, height ->
-        with(frameWindowScope) {
-            getCenteredAbsoluteWindowPosition(density, width, height)
-        }
-    }, content)
+    WindowedAlertContainer(with(frameWindowScope) {window}, content)
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun WindowedAlertContainer(getCenteredAbsoluteWindowPosition: (Density, Dp, Dp) -> WindowPosition, content: @Composable () -> Unit) {
+private fun WindowedAlertContainer(parentAwtWindow: Window, content: @Composable () -> Unit) {
     // remember local density for later
     val localDensity = LocalDensity.current
-    // init dialog state in top right corner with initial size
-    val initialAlertWidth = 370.dp
-    val initialAlertHeight = 500.dp
-    val dialogState = rememberDialogState(
-        position = WindowPosition.Absolute(0.dp, 0.dp),
-        width = initialAlertWidth,
-        height = initialAlertHeight
-    )
     // states for when the dialog is globally positioned and when the content should become visible
     var globallyPositioned by remember { mutableStateOf(false) }
     var contentVisible by remember { mutableStateOf(false) }
     var alpha by remember { mutableStateOf(0.0f) }
+    // the child awt window for positioning
+    var childAwtWindow: Window
     // create the dialog window
     DialogWindow(
-        state = dialogState,
+        state = DialogState(WindowPosition.Absolute(0.dp, 0.dp), 370.dp, 500.dp),
         onCloseRequest = {},
         visible = true,
         title = "Windowed Alert Container",
@@ -83,6 +53,7 @@ private fun WindowedAlertContainer(getCenteredAbsoluteWindowPosition: (Density, 
         focusable = true,
         alwaysOnTop = true
     ) {
+        childAwtWindow = this.window
         Box(
             Modifier
 //                .alpha(if(contentVisible) 1.0f else 0.0f)
@@ -108,14 +79,7 @@ private fun WindowedAlertContainer(getCenteredAbsoluteWindowPosition: (Density, 
                             if (event !is MouseEvent) return@onPointerEvent
                             mouseDownPoint.let { mouseDownPoint ->
                                 if (mouseDownPoint == null) return@onPointerEvent
-                                dialogState.position = WindowPosition.Absolute(
-                                    with(localDensity) {
-                                        (uiScale * (event.locationOnScreen.x - mouseDownPoint.x)).toInt().toDp()
-                                    },
-                                    with(localDensity) {
-                                        (uiScale * (event.locationOnScreen.y - mouseDownPoint.y)).toInt().toDp()
-                                    }
-                                )
+                                childAwtWindow.setLocation(event.locationOnScreen.x - mouseDownPoint.x, event.locationOnScreen.y - mouseDownPoint.y)
                             }
                         }
                     }
@@ -128,13 +92,8 @@ private fun WindowedAlertContainer(getCenteredAbsoluteWindowPosition: (Density, 
                 }
                 .onGloballyPositioned { coordinates ->
                     with(localDensity) {
-                        println("onGloballyPositioned: ${coordinates.size.width.toDp()} x ${coordinates.size.height.toDp()}")
-                        dialogState.size = DpSize(coordinates.size.width.toDp(), coordinates.size.height.toDp())
-                        dialogState.position = getCenteredAbsoluteWindowPosition(
-                            localDensity,
-                            dialogState.size.width,
-                            dialogState.size.height
-                        )
+                        childAwtWindow.setBounds(0, 0, coordinates.size.width.toDp().value.roundToInt(), coordinates.size.height.toDp().value.roundToInt())
+                        childAwtWindow.setLocationRelativeTo(parentAwtWindow)
                         globallyPositioned = true
                     }
                 }
@@ -151,14 +110,10 @@ private fun WindowedAlertContainer(getCenteredAbsoluteWindowPosition: (Density, 
             }
             LaunchedEffect(globallyPositioned) {
                 if (globallyPositioned) {
-//                    println("Starting short delay")
-//                    delay(5)
-                    println("Setting content visible")
                     contentVisible = true
                     alpha = 1.0f
                 }
             }
         }
-
     }
 }
