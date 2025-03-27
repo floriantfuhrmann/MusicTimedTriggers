@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.triggerusages.TriggerUsagesDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
@@ -290,5 +292,15 @@ private fun searchUsagesOfSelectedTemplates(browserState: BrowserState) {
     // search for usages of the selected triggers
     val usages = project.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
     // open usages dialog
-    DialogManager.openDialog(TriggerUsagesDialog(TriggerUsagesDialog.Type.ViewTemplateUsages, usages))
+    if (usages.isEmpty()) {
+        BasicAlert(
+            type = BasicAlertType.Info,
+            title = "No Usages Found",
+            buttons = { OKButton() }
+        ) {
+            Text("No usages of the selected trigger templates were found.")
+        }.show()
+    } else {
+        DialogManager.openDialog(TriggerUsagesDialog(TriggerUsagesDialog.Type.ViewTemplateUsages, usages))
+    }
 }
