@@ -1,15 +1,21 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.AlertCreator
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.triggerusages.TriggerUsagesDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.ReceiveDraggedTemplatesManger
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
@@ -23,6 +29,8 @@ import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
 import eu.florian_fuhrmann.musictimedtriggers.windowState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.jewel.ui.component.Link
+import org.jetbrains.jewel.ui.component.Text
 import java.io.File
 import java.util.*
 
@@ -502,7 +510,29 @@ class BrowserState(
         if (skipConfirmation) {
             onConfirm.invoke()
         } else {
-            DialogManager.alert(AlertCreator.createUsagesAlert(true, selectedTemplates, usages, onConfirm))
+            // Confirmation dialog
+            BasicAlert(
+                type = BasicAlertType.Warning,
+                title = "Confirm Deletion",
+                buttons = {
+                    CancelButton()
+                    OKButton(onClick = {
+                        //close alert and invoke onConfirm to delete templates
+                        close()
+                        onConfirm.invoke()
+                    }, label = "Delete")
+                }
+            ) {
+                Row {
+                    Text("Continuing with deletion will also remove ${usages.size} placed triggers across ${usages.distinctBy { it.song }.size.let { if(it == 1) "one song" else "$it songs" }}.")
+                }
+                Row(Modifier.padding(top = 6.dp)) {
+                    Link(text = "View Usages...", onClick = {
+                        close()
+                        DialogManager.openDialog(TriggerUsagesDialog(TriggerUsagesDialog.Type.DeleteTemplates, usages, onConfirm))
+                    })
+                }
+            }.show()
         }
     }
 

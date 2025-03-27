@@ -13,9 +13,11 @@ import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.util.thenIf
 
 @Composable
 fun DialogFrame(
+    scrollable: Boolean = true,
     leftButtons: @Composable () -> Unit = {},
     rightButtons: @Composable () -> Unit = {},
     dialogContent: @Composable () -> Unit
@@ -25,12 +27,13 @@ fun DialogFrame(
             .background(JewelTheme.globalColors.panelBackground)
             .fillMaxSize()
             .padding(5.dp)
-            .trackActivation()
     ) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
-                .verticalScroll(rememberScrollState())
+                .thenIf(scrollable) {
+                    verticalScroll(rememberScrollState())
+                }
                 .trackActivation(),
             verticalArrangement = Arrangement.Bottom
         ) {

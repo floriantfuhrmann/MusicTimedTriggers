@@ -17,7 +17,7 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.AlertCreator
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.triggerusages.TriggerUsagesDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserTemplate
@@ -289,6 +289,6 @@ private fun searchUsagesOfSelectedTemplates(browserState: BrowserState) {
     val selectedTemplates = browserState.selectedTemplates.map { it.getTriggerTemplate() }
     // search for usages of the selected triggers
     val usages = project.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
-    // open usages alert
-    DialogManager.alert(AlertCreator.createUsagesAlert(false, selectedTemplates, usages))
+    // open usages dialog
+    DialogManager.openDialog(TriggerUsagesDialog(TriggerUsagesDialog.Type.ViewTemplateUsages, usages))
 }
