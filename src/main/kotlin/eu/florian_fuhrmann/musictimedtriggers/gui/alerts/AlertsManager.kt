@@ -2,6 +2,7 @@ package eu.florian_fuhrmann.musictimedtriggers.gui.alerts
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.window.DialogWindowScope
 import androidx.compose.ui.window.FrameWindowScope
 
 object AlertsManager {
@@ -20,6 +21,15 @@ object AlertsManager {
     fun AlertsContainer(frameWindowScope: FrameWindowScope) {
         alerts.forEach { alert ->
             WindowedAlertContainer(frameWindowScope) {
+                alert.Content()
+            }
+        }
+    }
+
+    @Composable
+    fun AlertsContainer(dialogWindowScope: DialogWindowScope) {
+        alerts.forEach { alert ->
+            WindowedAlertContainer(dialogWindowScope) {
                 alert.Content()
             }
         }

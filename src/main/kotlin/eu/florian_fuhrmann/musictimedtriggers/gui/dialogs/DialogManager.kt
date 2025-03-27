@@ -8,12 +8,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.zIndex
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.AlertsManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.AbstractAlert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.CustomAlert
 import java.awt.Dimension
 
 object DialogManager {
     private var openedDialog: Dialog? by mutableStateOf(null)
+    val dialogOpened by derivedStateOf { openedDialog != null }
     private var alwaysOnTop: Boolean by mutableStateOf(true)
     private var alerts: MutableList<AbstractAlert> = mutableStateListOf()
     val anyAlerts = derivedStateOf { alerts.isNotEmpty() } //tracks whether any alerts are currently visible
@@ -53,12 +55,16 @@ object DialogManager {
                     title = openedDialog.title()
                 ) {
                     this.window.minimumSize = Dimension(350, 350)
+                    // Dialog Content
                     openedDialog.Content()
+                    // (deprecated) Alerts
                     if(alerts.isNotEmpty()) {
                         key(alerts.first()) {
                             alerts.first().Content(alerts.size)
                         }
                     }
+                    // (new) Alerts
+                    AlertsManager.AlertsContainer(this@DialogWindow)
                 }
                 // put a box behind the dialog to prevent the user from interacting with the main window
                 Box(modifier = Modifier.zIndex(2f).fillMaxSize().background(Color.Black.copy(alpha = 0.5f))) {
