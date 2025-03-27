@@ -1,5 +1,7 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers
 
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.renamesequenceline.RenameSequenceLineDialog
@@ -7,6 +9,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redr
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer.getSequenceLineAt
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedIntensityTrigger
+import org.jetbrains.jewel.ui.component.Text
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import javax.swing.JMenuItem
@@ -116,16 +119,19 @@ object RightClickMenuManager {
                 })
                 menu.add(JMenuItem("Delete").apply {
                     addActionListener {
-                        DialogManager.alert(
-                            Alert(
+                        BasicAlert(
+                            type = BasicAlertType.Warning,
                             title = "Delete ${line.name}?",
-                            text = "Are you sure you want to delete Sequence Line ${line.name} containing ${line.getTriggersCount()} placed Triggers?",
-                            onDismiss = {},
-                            dismissText = "Cancel",
-                            onConfirm = {
-                                sequence.removeLine(lineIndex)
+                            buttons = {
+                                CancelButton()
+                                OKButton(onClick = {
+                                    close()
+                                    sequence.removeLine(lineIndex)
+                                }, label = "Confirm")
                             }
-                        ))
+                        ) {
+                            Text("Are you sure you want to delete Sequence Line ${line.name} containing ${line.getTriggersCount()} placed Triggers?")
+                        }.show()
                     }
                 })
             }

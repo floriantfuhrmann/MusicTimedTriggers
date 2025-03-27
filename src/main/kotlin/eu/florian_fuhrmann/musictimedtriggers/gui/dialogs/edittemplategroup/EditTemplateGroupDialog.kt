@@ -12,6 +12,8 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
@@ -76,20 +78,21 @@ class EditTemplateGroupDialog(val create: Boolean, private val triggerTemplateGr
                     OutlinedButton(
                         onClick = {
                             //show confirmation alert
-                            DialogManager.alert(
-                                Alert(
-                                    title = "Confirm Delete",
-                                    text = "Are you sure you want to delete the Group ${triggerTemplateGroup.name}? This will also delete ${triggerTemplateGroup.templates.size} Templates.",
-                                    dismissText = "Cancel",
-                                    onDismiss = {},
-                                    onConfirm = {
-                                        //close dialog
-                                        DialogManager.closeDialog()
-                                        //delete group
+                            BasicAlert(
+                                type = BasicAlertType.Warning,
+                                title = "Confirm Deletion",
+                                buttons = {
+                                    CancelButton()
+                                    OKButton(onClick = {
+                                        // close
+                                        close()
+                                        // delete group
                                         ProjectManager.currentProject?.triggersManager?.deleteTriggerTemplateGroup(triggerTemplateGroup)
-                                    }
-                                )
-                            )
+                                    }, label = "Confirm")
+                                }
+                            ) {
+                                Text("Are you sure you want to delete the Group '${triggerTemplateGroup.name}'? This will also delete ${triggerTemplateGroup.templates.size} Templates.")
+                            }.show()
                         },
                         modifier = Modifier.padding(end = 5.dp).trackActivation()
                     ) {

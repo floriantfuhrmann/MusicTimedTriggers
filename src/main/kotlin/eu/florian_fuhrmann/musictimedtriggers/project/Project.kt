@@ -6,6 +6,8 @@ import androidx.compose.runtime.setValue
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.unusedfiles.UnusedFilesDialog
@@ -16,6 +18,7 @@ import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.AudioPlayer
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
 import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
+import org.jetbrains.jewel.ui.component.Text
 import java.io.File
 import java.nio.charset.StandardCharsets
 
@@ -46,11 +49,15 @@ class Project(
             DialogManager.openDialog(UnusedFilesDialog(unusedAudioFiles))
         } else {
             //alert
-            DialogManager.alert(
-                Alert(title = "No unused files found",
-                    text = "No unused Audio Files where found in ${getAudioDirectory().canonicalPath}",
-                    onDismiss = {})
-            )
+            BasicAlert(
+                type = BasicAlertType.Info,
+                title = "No unused files found",
+                buttons = {
+                    OKButton { close() }
+                }
+            ) {
+                Text("No unused Audio Files where found in ${getAudioDirectory().canonicalPath}")
+            }.show()
         }
     }
 
@@ -109,15 +116,19 @@ class Project(
         //delete the corresponding sequence
         song.sequence.removeSaveFiles()
         //alert
-        DialogManager.alert(
-            Alert(
+        BasicAlert(
+            type = BasicAlertType.Info,
             title = "Song deleted",
-            text = "Song ${song.name} has been deleted. Do you want to scan the Audio directory for unused files?",
-            dismissText = "No",
-            onDismiss = {},
-            confirmText = "Yes",
-            onConfirm = { scanForUnusedAudioFiles() }
-        ))
+            buttons = {
+                CancelButton("No")
+                OKButton(onClick = {
+                    close()
+                    scanForUnusedAudioFiles()
+                }, label = "Yes")
+            }
+        ) {
+            Text("Song ${song.name} has been deleted. Do you want to scan the Audio directory for unused files?")
+        }.show()
     }
 
     /**

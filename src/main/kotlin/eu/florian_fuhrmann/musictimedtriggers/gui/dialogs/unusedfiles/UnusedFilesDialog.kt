@@ -9,6 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
@@ -54,19 +56,23 @@ class UnusedFilesDialog(private val unusedFiles: List<File>) : Dialog(windowed =
                             OutlinedButton(
                                 onClick = {
                                     //open confirm alter
-                                    DialogManager.alert(
-                                        Alert(
-                                        title = "Confirm delete ${it.name}",
-                                        text = "Are you sure you want to delete the file ${it.canonicalPath}?",
-                                        dismissText = "Cancel",
-                                        onDismiss = {},
-                                        onConfirm = {
-                                            //delete file
-                                            it.delete()
-                                            //remove from list
-                                            unusedFilesState.remove(it)
+                                    BasicAlert(
+                                        type = BasicAlertType.Warning,
+                                        title = "Confirm Deletion",
+                                        buttons = {
+                                            CancelButton()
+                                            OKButton(onClick = {
+                                                //close alert
+                                                close()
+                                                //delete file
+                                                it.delete()
+                                                //remove from list
+                                                unusedFilesState.remove(it)
+                                            }, label = "Confirm")
                                         }
-                                    ))
+                                    ) {
+                                        Text("Are you sure you want to delete the file ${it.canonicalPath}?")
+                                    }.show()
                                 },
                                 modifier = Modifier.trackActivation()
                             ) {

@@ -21,7 +21,7 @@ import org.jetbrains.jewel.ui.icons.AllIconsKeys
 class BasicAlert(
     private val type: BasicAlertType = BasicAlertType.Info,
     private val title: String,
-    private val buttons: @Composable BasicAlertScope.() -> Unit,
+    private val buttons: @Composable BasicAlertScope.() -> Unit = {},
     private val content: @Composable BasicAlertScope.() -> Unit
 ) : BasicAlertScope {
 
@@ -62,11 +62,23 @@ class BasicAlert(
     }
 
     @Composable
+    override fun OKButton(onClick: () -> Unit) = OKButton(onClick, "OK")
+
+    @Composable
+    override fun OKButton() = OKButton({ close() }, "OK")
+
+    @Composable
     override fun CancelButton(onClick: () -> Unit, label: String) {
         OutlinedButton(onClick) {
             Text(label)
         }
     }
+
+    @Composable
+    override fun CancelButton(label: String) = CancelButton({ close() }, label)
+
+    @Composable
+    override fun CancelButton() = CancelButton({ close() }, "Cancel")
 
     override fun close() {
         AlertsManager.closeAlert(this)
@@ -81,13 +93,26 @@ enum class BasicAlertType(val iconKey: IconKey) {
 }
 
 interface BasicAlertScope {
-//    @Composable
-//    fun OKButton(onClick: () -> Unit = { closeAlert() }, label: String = "OK")
-//    @Composable
-//    fun CancelButton(onClick: () -> Unit = { closeAlert() }, label: String = "Cancel")
+
+    // default values are not supported in interfaces
+
     @Composable
     fun OKButton(onClick: () -> Unit, label: String)
+
+    @Composable
+    fun OKButton(onClick: () -> Unit)
+
+    @Composable
+    fun OKButton()
+
     @Composable
     fun CancelButton(onClick: () -> Unit, label: String)
+
+    @Composable
+    fun CancelButton(label: String)
+
+    @Composable
+    fun CancelButton()
+
     fun close()
 }

@@ -21,6 +21,7 @@ import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 
+@Deprecated("Use a Dialogs instead")
 object AlertCreator {
 
     private fun formatSeconds(seconds: Double): String {
@@ -29,6 +30,7 @@ object AlertCreator {
         return "${if(m<10){"0"}else{""}}$m:${if(s<10){"0"}else{""}}$s"
     }
 
+    @Deprecated("Use a Dialog instead")
     fun createUsagesAlert(
         deleteMode: Boolean, // whether usages are displayed for deletion or just for information
         templates: List<AbstractTriggerTemplate>,

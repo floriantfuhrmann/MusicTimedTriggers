@@ -8,6 +8,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertType
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
@@ -283,20 +285,21 @@ class EditSongDialog(val project: Project, val add: Boolean, val song: Song? = n
 
 fun openDeleteSongDialog(project: Project, song: Song?) {
     //show confirmation alert
-    DialogManager.alert(
-        Alert(
-            title = "Confirm Delete",
-            text = "Are you sure you want to delete Song ${song?.name}?",
-            dismissText = "Cancel",
-            onDismiss = {},
-            onConfirm = {
-                //close dialog
-                DialogManager.closeDialog()
-                //delete song
+    BasicAlert(
+        type = BasicAlertType.Warning,
+        title = "Confirm Deletion",
+        buttons = {
+            CancelButton()
+            OKButton(onClick = {
+                // close alert
+                close()
+                // delete song
                 if (song != null) {
                     project.deleteSong(song)
                 }
-            }
-        )
-    )
+            }, label = "Confirm")
+        }
+    ) {
+        Text("Are you sure you want to delete Song ${song?.name}?")
+    }.show()
 }
