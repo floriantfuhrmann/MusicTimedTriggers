@@ -58,6 +58,7 @@ class UnusedFilesDialog(private val unusedFiles: List<File>) : Dialog(windowed =
                                         title = "Confirm Deletion",
                                         buttons = {
                                             CancelButton()
+                                            CancelButtonFocused()
                                             OKButton(onClick = {
                                                 //close alert
                                                 close()

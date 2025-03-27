@@ -81,6 +81,7 @@ class EditTemplateGroupDialog(val create: Boolean, private val triggerTemplateGr
                                 title = "Confirm Deletion",
                                 buttons = {
                                     CancelButton()
+                                    CancelButtonFocused()
                                     OKButton(onClick = {
                                         // close
                                         close()

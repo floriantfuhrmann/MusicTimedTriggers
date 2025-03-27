@@ -122,6 +122,7 @@ object RightClickMenuManager {
                             title = "Delete ${line.name}?",
                             buttons = {
                                 CancelButton()
+                                CancelButtonFocused()
                                 OKButton(onClick = {
                                     close()
                                     sequence.removeLine(lineIndex)

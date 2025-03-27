@@ -288,6 +288,7 @@ fun openDeleteSongDialog(project: Project, song: Song?) {
         title = "Confirm Deletion",
         buttons = {
             CancelButton()
+            CancelButtonFocused()
             OKButton(onClick = {
                 // close alert
                 close()

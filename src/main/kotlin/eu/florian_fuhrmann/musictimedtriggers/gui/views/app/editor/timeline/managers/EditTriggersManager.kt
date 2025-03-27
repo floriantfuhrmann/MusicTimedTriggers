@@ -32,6 +32,7 @@ object EditTriggersManager {
                 title = "Delete ${TriggerSelectionManager.selectedTriggers.size} placed Triggers?",
                 buttons = {
                     CancelButton()
+                    CancelButtonFocused()
                     OKButton(onClick = {
                         //close alert
                         close()

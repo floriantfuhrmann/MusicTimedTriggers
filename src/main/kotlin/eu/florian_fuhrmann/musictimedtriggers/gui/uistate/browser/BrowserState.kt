@@ -515,6 +515,7 @@ class BrowserState(
                 title = "Confirm Deletion",
                 buttons = {
                     CancelButton()
+                    CancelButtonFocused()
                     OKButton(onClick = {
                         //close alert and invoke onConfirm to delete templates
                         close()

@@ -71,14 +71,19 @@ class BasicAlert(
     @Composable
     override fun OKButton() = OKButton({ close() }, "OK")
 
+    private var cancelButtonFocusRequester: FocusRequester? = null
     @Composable
     override fun CancelButton(onClick: () -> Unit, label: String) {
-        val focusRequester = remember { FocusRequester() }
-        OutlinedButton(onClick, Modifier.focusRequester(focusRequester)) {
+        cancelButtonFocusRequester = remember { FocusRequester() }
+        OutlinedButton(onClick, Modifier.focusRequester(cancelButtonFocusRequester!!)) {
             Text(label)
         }
+    }
+
+    @Composable
+    override fun CancelButtonFocused() {
         LaunchedEffect(Unit) {
-            focusRequester.requestFocus()
+            cancelButtonFocusRequester?.requestFocus()
         }
     }
 
@@ -121,6 +126,12 @@ interface BasicAlertScope {
 
     @Composable
     fun CancelButton()
+
+    /**
+     * Focuses the cancel button. This is not a component itself and should only be called in conjunction with [CancelButton] composable.
+     */
+    @Composable
+    fun CancelButtonFocused()
 
     fun close()
 }
