@@ -3,45 +3,60 @@ package eu.florian_fuhrmann.musictimedtriggers.gui.alerts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.onDrag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.*
-import androidx.compose.ui.window.DialogWindow
-import androidx.compose.ui.window.FrameWindowScope
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.rememberDialogState
+import androidx.compose.ui.window.*
 import com.jetbrains.JBR
 import org.jetbrains.jewel.ui.util.thenIf
 import java.awt.Point
+import java.awt.Window
 import java.awt.event.MouseEvent
 
 val uiScale = System.getProperty("sun.java2d.uiScale").toDoubleOrNull() ?: 1.0
 
-fun FrameWindowScope.getCenteredAbsoluteWindowPosition(density: Density, width: Dp, height: Dp): WindowPosition {
+private fun FrameWindowScope.getCenteredAbsoluteWindowPosition(density: Density, width: Dp, height: Dp) =
+    getCenteredAbsoluteWindowPosition(window, density, width, height)
+
+private fun DialogWindowScope.getCenteredAbsoluteWindowPosition(density: Density, width: Dp, height: Dp) =
+    getCenteredAbsoluteWindowPosition(window, density, width, height)
+
+private fun getCenteredAbsoluteWindowPosition(awtWindow: Window, density: Density, width: Dp, height: Dp): WindowPosition.Absolute {
     return with(density) {
         WindowPosition.Absolute(
-            x = uiScale * window.locationOnScreen.x.toDp() + uiScale * window.size.width.toDp() / 2 - width / 2,
-            y = uiScale * window.locationOnScreen.y.toDp() + uiScale * window.size.height.toDp() / 2 - height / 2
+            x = uiScale * awtWindow.locationOnScreen.x.toDp() + uiScale * awtWindow.size.width.toDp() / 2 - width / 2,
+            y = uiScale * awtWindow.locationOnScreen.y.toDp() + uiScale * awtWindow.size.height.toDp() / 2 - height / 2
         )
     }
 }
 
+@Composable
+fun WindowedAlertContainer(dialogWindowScope: DialogWindowScope, content: @Composable () -> Unit) {
+    WindowedAlertContainer({ density, width, height ->
+        with(dialogWindowScope) {
+            getCenteredAbsoluteWindowPosition(density, width, height)
+        }
+    }, content)
+}
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun WindowedAlertContainer(frameWindowScope: FrameWindowScope, content: @Composable () -> Unit) {
+    WindowedAlertContainer({ density, width, height ->
+        with(frameWindowScope) {
+            getCenteredAbsoluteWindowPosition(density, width, height)
+        }
+    }, content)
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+private fun WindowedAlertContainer(getCenteredAbsoluteWindowPosition: (Density, Dp, Dp) -> WindowPosition, content: @Composable () -> Unit) {
     // remember local density for later
     val localDensity = LocalDensity.current
     // init dialog state in top right corner with initial size
@@ -115,7 +130,7 @@ fun WindowedAlertContainer(frameWindowScope: FrameWindowScope, content: @Composa
                     with(localDensity) {
                         println("onGloballyPositioned: ${coordinates.size.width.toDp()} x ${coordinates.size.height.toDp()}")
                         dialogState.size = DpSize(coordinates.size.width.toDp(), coordinates.size.height.toDp())
-                        dialogState.position = frameWindowScope.getCenteredAbsoluteWindowPosition(
+                        dialogState.position = getCenteredAbsoluteWindowPosition(
                             localDensity,
                             dialogState.size.width,
                             dialogState.size.height
