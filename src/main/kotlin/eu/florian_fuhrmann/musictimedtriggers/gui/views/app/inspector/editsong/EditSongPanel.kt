@@ -3,12 +3,13 @@ package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editsong
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
@@ -20,7 +21,17 @@ import org.jetbrains.jewel.ui.icons.AllIconsKeys
  * Panel for editing/creating a song. Used by Inspector and Dialog.
  */
 @Composable
-fun EditSongPanel(song: Song) {
+fun EditSongPanel(song: Song?) {
+    // determine whether this is creation or editing context
+    val creating = song == null
+    // get state
+    val state = if (creating) {
+        // create a new independent state for creation
+        remember { EditSongPanelState() }
+    } else {
+        // use the shared state for editing
+        sharedEditSongInspectorState
+    }
     Column {
         // Song Name and Audio File Inputs
         Row(Modifier.height(IntrinsicSize.Min)) {
@@ -36,7 +47,7 @@ fun EditSongPanel(song: Song) {
             // Inputs
             Column {
                 Row {
-                    val nameState = rememberTextFieldState(song.name)
+                    val nameState = rememberTextFieldState(song?.name ?: "")
                     val focusManager = LocalFocusManager.current
                     TextField(
                         state = nameState,
@@ -52,7 +63,7 @@ fun EditSongPanel(song: Song) {
                 }
                 Row {
                     TextField(
-                        state = rememberTextFieldState(song.audioFile.name),
+                        state = rememberTextFieldState(song?.audioFile?.name ?: ""),
                         modifier = Modifier.padding(vertical = 6.dp).fillMaxWidth(),
                         readOnly = true,
                         enabled = false,
@@ -68,8 +79,38 @@ fun EditSongPanel(song: Song) {
                 }
             }
         }
-        Row {
-            Text("Todo: Everything else", Modifier.padding(top = 20.dp))
+        OpenableGroupHeader(
+            modifier = Modifier.padding(vertical = 6.dp),
+            open = state.audioEncodingOpened,
+            onOpenedChange = { state.audioEncodingOpened = it },
+            text = "Audio Encoding",
+        )
+        if(state.audioEncodingOpened) {
+            Row {
+                Column(Modifier.padding(start = 24.dp)) {
+                    Row {
+                        Text("Todo: Audio Encoding")
+                    }
+                }
+            }
+        }
+        OpenableGroupHeader(
+            modifier = Modifier.padding(vertical = 6.dp),
+            open = state.spectrogramParametersOpened,
+            onOpenedChange = { state.spectrogramParametersOpened = it },
+            text = "Spectrogram Parameters"
+        )
+        if(state.spectrogramParametersOpened) {
+            Row(Modifier.padding(start = 24.dp)) {
+                Text("Todo: Spectrogram Parameters")
+            }
         }
     }
+}
+
+private val sharedEditSongInspectorState = EditSongPanelState()
+
+private class EditSongPanelState {
+    var audioEncodingOpened: Boolean by mutableStateOf(false)
+    var spectrogramParametersOpened: Boolean by mutableStateOf(false)
 }
