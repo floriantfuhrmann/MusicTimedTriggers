@@ -31,4 +31,8 @@ object MttIcons {
     val chevronTop = PathIconKey("icons/chevron-top-icon.svg", MttIcons::class.java)
     val chevronDown = PathIconKey("icons/chevron-down-icon.svg", MttIcons::class.java)
 
+    // New Icons
+    // InspectorBar
+    val song = PathIconKey("icons/song.svg", MttIcons::class.java)
+
 }

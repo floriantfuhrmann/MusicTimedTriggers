@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.InspectorOption
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.CollapsedBrowserBar
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.TriggerBrowser
@@ -28,7 +29,7 @@ fun OpenedProjectView(project: Project) {
     // Splitter States
     val sidebarSplitterState = rememberSplitPaneState(0.2f)
     val verticalSplitterState = rememberSplitPaneState(0.2f)
-    val inspectorSplitterState = rememberSplitPaneState(1f)
+    val inspectorSplitterState = rememberSplitPaneState(0.8f)
     // Main Window Content
     // Container Box (mainly for tracking clicks anywhere on the main window so the timeline can lose focus)
     Box(
@@ -79,7 +80,7 @@ fun SidebarContainer(project: Project) {
 @OptIn(ExperimentalSplitPaneApi::class)
 @Composable
 fun ColumnScope.EditorWithBrowserAndInspectorContainer(project: Project, inspectorSplitterState: SplitPaneState, verticalSplitterState: SplitPaneState) {
-    if(MainUiState.inspectorOption >= 0) {
+    if(MainUiState.inspectorOption != InspectorOption.None) {
         HorizontalSplitPane(splitPaneState = inspectorSplitterState) {
             first(200.dp) {
                 Column(Modifier.weight(1f)) {

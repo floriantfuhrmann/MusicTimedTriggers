@@ -5,12 +5,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.InspectorOption
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
+import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.SelectableIconActionButton
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Size
+
+private fun selectOption(option: InspectorOption) {
+    MainUiState.inspectorOption = if(MainUiState.inspectorOption == option) InspectorOption.None else option
+}
 
 @Composable
 fun InspectorBar() {
@@ -23,31 +29,31 @@ fun InspectorBar() {
         .padding(5.dp)
     ) {
         SelectableIconActionButton(
-            key = AllIconsKeys.Stub,
+            key = MttIcons.song,
             contentDescription = null,
-            onClick = { MainUiState.inspectorOption = if(MainUiState.inspectorOption == 0) -1 else 0 },
+            onClick = { selectOption(InspectorOption.Song) },
             extraHint = Size(20),
-            selected = MainUiState.inspectorOption == 0,
+            selected = MainUiState.inspectorOption == InspectorOption.Song,
             focusable = false,
             modifier = Modifier.trackActivation()
         )
         SelectableIconActionButton(
             key = AllIconsKeys.Stub,
             contentDescription = null,
-            onClick = { MainUiState.inspectorOption = if(MainUiState.inspectorOption == 1) -1 else 1 },
+            onClick = { selectOption(InspectorOption.PlacedTrigger) },
             extraHint = Size(20),
-            selected = MainUiState.inspectorOption == 1,
+            selected = MainUiState.inspectorOption == InspectorOption.PlacedTrigger,
             focusable = false,
-            modifier = Modifier.trackActivation()
+            modifier = Modifier.padding(top = 5.dp).trackActivation()
         )
         SelectableIconActionButton(
             key = AllIconsKeys.Stub,
             contentDescription = null,
-            onClick = { MainUiState.inspectorOption = if(MainUiState.inspectorOption == 2) -1 else 2 },
+            onClick = { selectOption(InspectorOption.TriggerTemplate) },
             extraHint = Size(20),
-            selected = MainUiState.inspectorOption == 2,
+            selected = MainUiState.inspectorOption == InspectorOption.TriggerTemplate,
             focusable = false,
-            modifier = Modifier.trackActivation(),
+            modifier = Modifier.padding(top = 5.dp).trackActivation()
         )
     }
 }
