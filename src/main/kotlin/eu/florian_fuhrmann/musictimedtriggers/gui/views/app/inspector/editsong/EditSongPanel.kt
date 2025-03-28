@@ -104,12 +104,17 @@ fun EditSongPanel(song: Song?) {
             Row {
                 Column(Modifier.padding(start = 24.dp)) {
                     listOf(
-                        "Encoding" to (audioFormat?.encoding ?: "<Unknown>").toString(),
-                        "Sample Rate" to audioFormat?.sampleRate.let { if(it != null) "${it/1000.0} kHz" else "<Unknown>" },
-                        "Sample Size" to audioFormat?.sampleSizeInBits.let { if(it != null) "$it Bit" else "<Unknown>" },
-                        "Channels" to (audioFormat?.channels ?: "<Unknown>").toString(),
-                        "Frame Size" to audioFormat?.frameSize.let { if(it != null) "$it Byte" else "<Unknown>" },
-                        "Frame Rate" to audioFormat?.frameRate.let { if(it != null) "${it/1000.0} kHz" else "<Unknown>" },
+                        "Encoding" to (audioFormat?.encoding ?: "Unknown").toString(),
+                        "Sample Rate" to audioFormat?.sampleRate.let { if(it != null) "${it/1000.0} kHz" else "Unknown" },
+                        "Sample Size" to audioFormat?.sampleSizeInBits.let { if(it != null) "$it Bit" else "Unknown" },
+                        "Channels" to (audioFormat?.channels ?: "Unknown").toString(),
+                        "Frame Size" to audioFormat?.frameSize.let { if(it != null) "$it Byte" else "Unknown" },
+                        "Frame Rate" to audioFormat?.frameRate.let { if(it != null) "${it/1000.0} kHz" else "Unknown" },
+                        "Endianness" to when(audioFormat?.isBigEndian) {
+                            true -> "Big Endian"
+                            false -> "Little Endian"
+                            else -> "Unknown"
+                        },
                     ).forEach {
                         Row {
                             Text(buildAnnotatedString {
