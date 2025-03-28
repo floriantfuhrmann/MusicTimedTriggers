@@ -7,15 +7,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
+import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getAudioFormat
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
+import org.jetbrains.jewel.ui.theme.colorPalette
+import javax.sound.sampled.AudioFormat
 
 /**
  * Panel for editing/creating a song. Used by Inspector and Dialog.
@@ -86,10 +94,31 @@ fun EditSongPanel(song: Song?) {
             text = "Audio Encoding",
         )
         if(state.audioEncodingOpened) {
+            //get audio format
+            val audioFormat: AudioFormat? = if (song != null) {
+                getAudioFormat(song.audioFile)
+            } else {
+                // todo: get audio format of selected file during creation
+                null
+            }
             Row {
                 Column(Modifier.padding(start = 24.dp)) {
-                    Row {
-                        Text("Todo: Audio Encoding")
+                    listOf(
+                        "Encoding" to (audioFormat?.encoding ?: "<Unknown>").toString(),
+                        "Sample Rate" to audioFormat?.sampleRate.let { if(it != null) "${it/1000.0} kHz" else "<Unknown>" },
+                        "Sample Size" to audioFormat?.sampleSizeInBits.let { if(it != null) "$it Bit" else "<Unknown>" },
+                        "Channels" to (audioFormat?.channels ?: "<Unknown>").toString(),
+                        "Frame Size" to audioFormat?.frameSize.let { if(it != null) "$it Byte" else "<Unknown>" },
+                        "Frame Rate" to audioFormat?.frameRate.let { if(it != null) "${it/1000.0} kHz" else "<Unknown>" },
+                    ).forEach {
+                        Row {
+                            Text(buildAnnotatedString {
+                                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = JewelTheme.colorPalette.gray(7))) {
+                                    append("${it.first}: ")
+                                }
+                                append(it.second)
+                            })
+                        }
                     }
                 }
             }
