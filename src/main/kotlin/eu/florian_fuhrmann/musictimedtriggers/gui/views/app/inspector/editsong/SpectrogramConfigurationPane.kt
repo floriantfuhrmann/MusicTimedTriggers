@@ -1,10 +1,14 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editsong
 
+import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.DoubleNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.IntNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.NumberField
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.SpectrogramParameters
@@ -12,6 +16,7 @@ import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.calculateW
 import eu.florian_fuhrmann.musictimedtriggers.utils.number.isPowerOf2
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Text
@@ -22,6 +27,18 @@ fun SpectrogramConfigurationPane(spectrogramParameters: SpectrogramParameters, r
     Column {
         // Window Size
         WindowSizeConfigurationRows(spectrogramParameters, referenceSampleRate)
+        Spacer(Modifier.fillMaxWidth().height(8.dp))
+        // Window Function
+        WindowFunctionConfigurationRows(spectrogramParameters)
+        Spacer(Modifier.fillMaxWidth().height(8.dp))
+        // Overlap Factor
+        OverlapFactorConfigurationRows(spectrogramParameters)
+        Spacer(Modifier.fillMaxWidth().height(8.dp))
+        // Max Amp Range
+        MaxAmpRangeConfigurationRows(spectrogramParameters)
+        Spacer(Modifier.fillMaxWidth().height(8.dp))
+        // Y-Axis
+        YAxisConfigurationRows(spectrogramParameters)
     }
 }
 
@@ -124,20 +141,183 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
             spectrogramParameters.calculateWindowSizeFromDuration = it
             println("spectrogramParameters.calculateWindowSizeFromDuration = ${spectrogramParameters.calculateWindowSizeFromDuration}")
         }
-        snapshotFlow { targetDurationState }.collectLatest { state ->
-            if(!state.isValid) return@collectLatest
-            state.value?.let {
-                spectrogramParameters.windowDurationInSeconds = it / 1000.0
-                println("spectrogramParameters.windowDurationInSeconds = ${spectrogramParameters.windowDurationInSeconds}")
-            }
+    }
+    LaunchedEffect(targetDurationState) {
+        snapshotFlow { targetDurationState.value }.collect { targetDuration ->
+            if(!targetDurationState.isValid || targetDuration == null) return@collect
+            spectrogramParameters.windowDurationInSeconds = targetDuration / 1000.0
+            println("spectrogramParameters.windowDurationInSeconds = ${spectrogramParameters.windowDurationInSeconds}")
         }
-        snapshotFlow { fixedSamplesCountState }.collectLatest { state ->
-            if(!state.isValid) return@collectLatest
-            state.value?.let {
-                if(!it.isPowerOf2()) return@let
-                spectrogramParameters.windowSize = it
-                println("spectrogramParameters.windowSize = ${spectrogramParameters.windowSize}")
-            }
+    }
+    LaunchedEffect(fixedSamplesCountState) {
+        snapshotFlow { fixedSamplesCountState.value }.collect { samplesCount ->
+            if(!fixedSamplesCountState.isValid || samplesCount == null) return@collect
+            if(!samplesCount.isPowerOf2()) return@collect
+            spectrogramParameters.windowSize = samplesCount
+            println("spectrogramParameters.windowSize = ${spectrogramParameters.windowSize}")
+        }
+    }
+}
+
+@Composable
+fun WindowFunctionConfigurationRows(spectrogramParameters: SpectrogramParameters) {
+    // Header
+    Row {
+        Text("Window Function:")
+    }
+    // Hamming Window Function Selected State
+    var hammingSelected by remember { mutableStateOf(spectrogramParameters.useHammingWindow) }
+
+    // Hamming Window Option
+    RadioButtonRow(
+        text = "Hamming",
+        selected = hammingSelected,
+        onClick = { hammingSelected = true }
+    )
+    // Rectangle Option
+    RadioButtonRow(
+        text = "Rectangle",
+        selected = !hammingSelected,
+        onClick = { hammingSelected = false }
+    )
+
+    // Export State back to spectrogramParameters
+    LaunchedEffect(Unit) {
+        snapshotFlow { hammingSelected }.collect {
+            spectrogramParameters.useHammingWindow = it
+            println("spectrogramParameters.useHammingWindow = ${spectrogramParameters.useHammingWindow}")
+        }
+    }
+}
+
+@Composable
+fun OverlapFactorConfigurationRows(spectrogramParameters: SpectrogramParameters) {
+    // Overlap Factor State
+    val overlapFactorState = remember {
+        IntNumberFieldState(
+            initialValue = spectrogramParameters.overlapFactor,
+            validRange = 1..256
+        )
+    }
+    // Overlap Factor Input with Label
+    Row(Modifier.height(IntrinsicSize.Min)) {
+        Column(Modifier.fillMaxHeight().padding(end = 2.dp), Arrangement.Center) {
+            Text("Overlap Factor:", maxLines = 1)
+        }
+        Column {
+            NumberField(
+                state = overlapFactorState,
+                modifier = Modifier.width(60.dp)
+            )
+        }
+    }
+    // Export State back to spectrogramParameters
+    LaunchedEffect(overlapFactorState) {
+        snapshotFlow { overlapFactorState.value }.collect { overlapFactor ->
+            if(!overlapFactorState.isValid || overlapFactor == null) return@collect
+            spectrogramParameters.overlapFactor = overlapFactor
+            println("spectrogramParameters.overlapFactor = ${spectrogramParameters.overlapFactor}")
+        }
+    }
+}
+
+// Maybe remove this option in the future?
+@Composable
+fun MaxAmpRangeConfigurationRows(spectrogramParameters: SpectrogramParameters) {
+    // Max Amp Range State
+    val maxAmpRangeState = remember {
+        IntNumberFieldState(
+            initialValue = spectrogramParameters.maxRange,
+            validRange = 1..1000
+        )
+    }
+    // Max Amp Range Input with Label
+    Row(Modifier.height(IntrinsicSize.Min)) {
+        Column(Modifier.fillMaxHeight().padding(end = 2.dp), Arrangement.Center) {
+            Text("Max Amp Range:", maxLines = 1)
+        }
+        Column {
+            NumberField(
+                state = maxAmpRangeState,
+                modifier = Modifier.width(60.dp)
+            )
+        }
+    }
+    // Export State back to spectrogramParameters
+    LaunchedEffect(maxAmpRangeState) {
+        snapshotFlow { maxAmpRangeState.value }.collect { maxAmpRange ->
+            if(!maxAmpRangeState.isValid || maxAmpRange == null) return@collect
+            spectrogramParameters.maxRange = maxAmpRange
+            println("spectrogramParameters.maxRange = ${spectrogramParameters.maxRange}")
+        }
+    }
+}
+
+@Composable
+fun YAxisConfigurationRows(spectrogramParameters: SpectrogramParameters) {
+    // Header
+    Row {
+        Text("Y-Axis:")
+    }
+    // Logarithmic Axis Selected State
+    var log10YAxisSelected by remember { mutableStateOf(spectrogramParameters.log10YAxis) }
+    // Log10 Y-Axis Scale State
+    val log10YAxisScaleState = remember {
+        DoubleNumberFieldState(
+            initialValue = spectrogramParameters.log10YAxisLengthFactor,
+            validRange = 0.1..10.0
+        )
+    }
+    // Linear and Logarithmic Axis Options
+    RadioButtonRow(
+        text = "Linear",
+        selected = !log10YAxisSelected,
+        onClick = { log10YAxisSelected = false }
+    )
+    RadioButtonRow(
+        text = "Logarithmic",
+        selected = log10YAxisSelected,
+        onClick = { log10YAxisSelected = true }
+    )
+    // Y-Axis Scale Factor Input with Label
+    Row(Modifier.padding(start = 24.dp).height(IntrinsicSize.Min)) {
+        Column(Modifier.fillMaxHeight().padding(end = 2.dp), Arrangement.Center) {
+            Text("Scale:", maxLines = 1)
+        }
+        Column {
+            NumberField(
+                state = log10YAxisScaleState,
+                modifier = Modifier.width(60.dp),
+                enabled = log10YAxisSelected
+            )
+        }
+    }
+    // Export State back to spectrogramParameters
+    LaunchedEffect(Unit) {
+        snapshotFlow { log10YAxisSelected }.collect {
+            spectrogramParameters.log10YAxis = it
+            println("spectrogramParameters.log10YAxis = ${spectrogramParameters.log10YAxis}")
+        }
+    }
+    LaunchedEffect(log10YAxisScaleState) {
+        snapshotFlow { log10YAxisScaleState.value }.collect { scale ->
+            if(!log10YAxisScaleState.isValid || scale == null) return@collect
+            spectrogramParameters.log10YAxisLengthFactor = scale
+            println("spectrogramParameters.log10YAxisLengthFactor = ${spectrogramParameters.log10YAxisLengthFactor}")
+        }
+    }
+}
+
+@Composable
+@Preview
+fun SpectrogramConfigurationPanePreview() {
+    // Preview
+    IntUiTheme(isDark = true) {
+        Box(Modifier.background(Color.Black).padding(10.dp).background(JewelTheme.globalColors.panelBackground)) {
+            SpectrogramConfigurationPane(
+                spectrogramParameters = SpectrogramParameters(),
+                referenceSampleRate = 44100f
+            )
         }
     }
 }
