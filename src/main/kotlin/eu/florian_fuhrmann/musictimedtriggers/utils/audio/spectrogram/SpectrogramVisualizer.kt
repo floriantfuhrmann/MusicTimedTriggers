@@ -2,7 +2,6 @@ package eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.*
 import eu.florian_fuhrmann.musictimedtriggers.utils.fft.Fft
@@ -13,18 +12,19 @@ import java.io.File
 import javax.sound.sampled.AudioSystem
 import kotlin.math.*
 
+/**
+ * Calculates the dimensions of the spectrogram for the given audio file and parameters.
+ * This does not factor in y-axis length factor or log10 y-axis!
+ * This function should probably be deprecated in the future.
+ */
 fun calculateSpectrogramDimensions(audioFile: File, spectrogramParameters: SpectrogramParameters): SpectrogramDimensions {
-//    //return fallback dimensions if the file is not in correct encoding
-//    if(!isPcmEncoding(audioFile)) {
-//        return SpectrogramDimensions(-1, -1)
-//    }
     //calculate dimensions by doing calculations stolen from #calculateSpectrogramData()
     val audioInputStream = AudioSystem.getAudioInputStream(audioFile)
     val audioFormat = audioInputStream.format
     val framesCount = audioInputStream.frameLength
     audioInputStream.close()
     val windowSize = when (spectrogramParameters.calculateWindowSizeFromDuration) {
-        true -> highestPowerOf2NotGreaterThan((audioFormat.sampleRate * spectrogramParameters.windowDurationInSeconds).toInt())
+        true -> calculateWindowSizeFromTargetDuration(spectrogramParameters.windowDurationInSeconds, audioFormat.sampleRate)
         else -> spectrogramParameters.windowSize
     }
     val windowStep = windowSize / spectrogramParameters.overlapFactor
@@ -74,7 +74,8 @@ fun calculateSpectrogramData(audioFile: File, spectrogramParameters: Spectrogram
     // Part 2: Use FFT to create spectrogram data (Most info from: https://stackoverflow.com/questions/39295589/creating-spectrogram-from-wav-using-fft-in-java)
     //calculate window size
     val windowSize = when (spectrogramParameters.calculateWindowSizeFromDuration) {
-        true -> highestPowerOf2NotGreaterThan((audioFormat.sampleRate * spectrogramParameters.windowDurationInSeconds).toInt())
+        //true -> highestPowerOf2NotGreaterThan((audioFormat.sampleRate * spectrogramParameters.windowDurationInSeconds).toInt())
+        true -> calculateWindowSizeFromTargetDuration(spectrogramParameters.windowDurationInSeconds, audioFormat.sampleRate)
         else -> spectrogramParameters.windowSize
     }
     println("[Spectrogram Generation] Using windowSize=$windowSize samples (${windowSize / audioFormat.sampleRate} seconds)")
@@ -242,6 +243,21 @@ private fun bytesToInt(bytes: ByteArray, isBigEndian: Boolean): Int {
     }
 }
 
+fun calculateWindowSizeFromTargetDuration(targetDuration: Double, sampleRate: Float): Int {
+    val prevPowerOf2 = highestPowerOf2NotGreaterThan((sampleRate * targetDuration).toInt())
+    val nextPowerOf2 = prevPowerOf2 * 2
+    val prevDuration = prevPowerOf2 / sampleRate.toDouble()
+    val nextDuration = nextPowerOf2 / sampleRate.toDouble()
+    // pick duration that is closest to the target duration
+    val prevDiff = abs(prevDuration - targetDuration)
+    val nextDiff = abs(nextDuration - targetDuration)
+    return if (prevDiff < nextDiff) {
+        prevPowerOf2
+    } else {
+        nextPowerOf2
+    }
+}
+
 /**
  * Finds the highest power of 2 that is still not greater than the target
  */
@@ -261,6 +277,7 @@ private fun calculateHammingWindow(length: Int): DoubleArray {
     }
 }
 
+// Todo: Refactor to use more readable sha256 hash function when does not need to be configurable anymore
 data class SpectrogramParameters(
     // True when the window size should be calculated from sample rate and time duration (windowLengthInSeconds) instead
     // of using a static value
@@ -284,7 +301,7 @@ data class SpectrogramParameters(
     @PlusMinusButtons
     var overlapFactor: Int = 16,
     // Whether to apply the Hamming Window Function on the samples in a window
-    @Configurable("Hamming Window", "Weither to apply the Hamming Window Function on the samples in a Window")
+    @Configurable("Hamming Window", "Whether to apply the Hamming Window Function on the samples in a Window")
     var useHammingWindow: Boolean = true,
     // Maximum range for amp values from the highest value (the min value will be set to max-maxRange if range would be
     // too big otherwise)
@@ -293,7 +310,7 @@ data class SpectrogramParameters(
     @PlusMinusButtons
     var maxRange: Int = 99999,
     // Whether to use a log10 y-axis instead of a linear one (true means a log10 y-axis will be used)
-    @Configurable("log10 Y-Axis", "Weither to use a log10 y-axis instead of a linear one")
+    @Configurable("log10 Y-Axis", "Whether to use a log10 y-axis instead of a linear one")
     var log10YAxis: Boolean = true,
     // Factor which is multiplied with the linear y-axis length to get the log10 y-axis length (1 -> same length,
     // 2 -> doubled length, ...)
@@ -303,8 +320,8 @@ data class SpectrogramParameters(
     @VisibleWhen(Log10YAxisEnabledChecker::class, inverted = false)
     var log10YAxisLengthFactor: Double = 1.0
 ) : Configuration() {
-    fun sha512Hash(): String {
-        //just generate a sha512 hash of all values concatenated
+    fun sha256Hash(): String {
+        //just generate a sha256 hash of all values concatenated
         return sha256(
             "$calculateWindowSizeFromDuration " //always factored into the hash
                     +
