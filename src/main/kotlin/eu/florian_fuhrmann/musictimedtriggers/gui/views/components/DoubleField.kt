@@ -15,11 +15,12 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 
 @Composable
+@Deprecated("Uses deprecated TextField API")
 fun DoubleField(
     initialValue: Double,
     minValue: Double = -Double.MAX_VALUE,
     maxValue: Double = Double.MAX_VALUE,
-    buttons: Boolean = true, // weither to show plus and minus buttons
+    buttons: Boolean = true, // whether to show plus and minus buttons
     buttonStep: Double = 1.0,
     plus: (Double) -> Double = { it + buttonStep},
     minus: (Double) -> Double = { it - buttonStep },
