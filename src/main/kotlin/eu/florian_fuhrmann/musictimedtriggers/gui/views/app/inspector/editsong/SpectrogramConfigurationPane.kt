@@ -14,10 +14,10 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.NumberField
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.SpectrogramParameters
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.calculateWindowSizeFromTargetDuration
 import eu.florian_fuhrmann.musictimedtriggers.utils.number.isPowerOf2
-import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.Outline
+import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Text
 import kotlin.math.roundToInt
@@ -39,6 +39,17 @@ fun SpectrogramConfigurationPane(spectrogramParameters: SpectrogramParameters, r
         Spacer(Modifier.fillMaxWidth().height(8.dp))
         // Y-Axis
         YAxisConfigurationRows(spectrogramParameters)
+        Spacer(Modifier.fillMaxWidth().height(8.dp))
+        // Apply Button
+        Row {
+            Spacer(Modifier.weight(1f))
+            DefaultButton(onClick = {
+                println("Todo: Apply Spectrogram Parameters")
+            }) {
+                Text("Save and Generate")
+            }
+        }
+        Spacer(Modifier.fillMaxWidth().height(8.dp))
     }
 }
 

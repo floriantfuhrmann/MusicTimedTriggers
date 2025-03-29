@@ -24,7 +24,7 @@ fun EditSongInspector(song: Song?) {
         }
         // Content
         Row {
-            Box(Modifier.fillMaxSize().padding(horizontal = 10.dp)) {
+            Box(Modifier.fillMaxSize()) {
                 if(song != null) {
                     // Edit Song Panel
                     EditSongPanel(song)
@@ -32,7 +32,7 @@ fun EditSongInspector(song: Song?) {
                     // No song selected text
                     Text(
                         text = "Select a song to edit.",
-                        modifier = Modifier.align(Alignment.TopCenter),
+                        modifier = Modifier.padding(horizontal = 10.dp).align(Alignment.TopCenter),
                         color = JewelTheme.globalColors.text.disabled
                     )
                 }
