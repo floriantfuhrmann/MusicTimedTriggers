@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getAudioFormat
+import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.SpectrogramParameters
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
@@ -93,14 +94,14 @@ fun EditSongPanel(song: Song?) {
             onOpenedChange = { state.audioEncodingOpened = it },
             text = "Audio Encoding",
         )
+        //get audio format
+        val audioFormat: AudioFormat? = if (song != null) {
+            getAudioFormat(song.audioFile)
+        } else {
+            // todo: get audio format of selected file during creation
+            null
+        }
         if(state.audioEncodingOpened) {
-            //get audio format
-            val audioFormat: AudioFormat? = if (song != null) {
-                getAudioFormat(song.audioFile)
-            } else {
-                // todo: get audio format of selected file during creation
-                null
-            }
             Row {
                 Column(Modifier.padding(start = 24.dp)) {
                     listOf(
@@ -136,7 +137,7 @@ fun EditSongPanel(song: Song?) {
         )
         if(state.spectrogramParametersOpened) {
             Row(Modifier.padding(start = 24.dp)) {
-                Text("Todo: Spectrogram Parameters")
+                SpectrogramConfigurationPane(song?.spectrogramParams?.copy() ?: SpectrogramParameters(), audioFormat?.sampleRate)
             }
         }
     }
