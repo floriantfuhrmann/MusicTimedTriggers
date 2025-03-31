@@ -22,7 +22,6 @@ import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.PopupContainer
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.theme.popupContainerStyle
 import kotlin.math.roundToInt
 
 class SpectrogramConfigurationState(
@@ -184,7 +183,6 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
     LaunchedEffect(Unit) {
         snapshotFlow { fromDurationSelected }.collect {
             spectrogramParameters.calculateWindowSizeFromDuration = it
-            println("spectrogramParameters.calculateWindowSizeFromDuration = ${spectrogramParameters.calculateWindowSizeFromDuration}")
             refreshAnyChangesState()
         }
     }
@@ -192,7 +190,6 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
         snapshotFlow { targetDurationState.value }.collect { targetDuration ->
             if(!targetDurationState.isValid || targetDuration == null) return@collect
             spectrogramParameters.windowDurationInSeconds = targetDuration / 1000.0
-            println("spectrogramParameters.windowDurationInSeconds = ${spectrogramParameters.windowDurationInSeconds}")
             refreshAnyChangesState()
         }
     }
@@ -201,7 +198,6 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
             if(!fixedSamplesCountState.isValid || samplesCount == null) return@collect
             if(!samplesCount.isPowerOf2()) return@collect
             spectrogramParameters.windowSize = samplesCount
-            println("spectrogramParameters.windowSize = ${spectrogramParameters.windowSize}")
             refreshAnyChangesState()
         }
     }
@@ -233,7 +229,6 @@ fun WindowFunctionConfigurationRows(spectrogramParameters: SpectrogramParameters
     LaunchedEffect(Unit) {
         snapshotFlow { hammingSelected }.collect {
             spectrogramParameters.useHammingWindow = it
-            println("spectrogramParameters.useHammingWindow = ${spectrogramParameters.useHammingWindow}")
             refreshAnyChangesState()
         }
     }
@@ -265,7 +260,6 @@ fun OverlapFactorConfigurationRows(spectrogramParameters: SpectrogramParameters,
         snapshotFlow { overlapFactorState.value }.collect { overlapFactor ->
             if(!overlapFactorState.isValid || overlapFactor == null) return@collect
             spectrogramParameters.overlapFactor = overlapFactor
-            println("spectrogramParameters.overlapFactor = ${spectrogramParameters.overlapFactor}")
             refreshAnyChangesState()
         }
     }
@@ -298,7 +292,6 @@ fun MaxAmpRangeConfigurationRows(spectrogramParameters: SpectrogramParameters, r
         snapshotFlow { maxAmpRangeState.value }.collect { maxAmpRange ->
             if(!maxAmpRangeState.isValid || maxAmpRange == null) return@collect
             spectrogramParameters.maxRange = maxAmpRange
-            println("spectrogramParameters.maxRange = ${spectrogramParameters.maxRange}")
             refreshAnyChangesState()
         }
     }
@@ -347,7 +340,6 @@ fun YAxisConfigurationRows(spectrogramParameters: SpectrogramParameters, refresh
     LaunchedEffect(Unit) {
         snapshotFlow { log10YAxisSelected }.collect {
             spectrogramParameters.log10YAxis = it
-            println("spectrogramParameters.log10YAxis = ${spectrogramParameters.log10YAxis}")
             refreshAnyChangesState()
         }
     }
@@ -355,7 +347,6 @@ fun YAxisConfigurationRows(spectrogramParameters: SpectrogramParameters, refresh
         snapshotFlow { log10YAxisScaleState.value }.collect { scale ->
             if(!log10YAxisScaleState.isValid || scale == null) return@collect
             spectrogramParameters.log10YAxisLengthFactor = scale
-            println("spectrogramParameters.log10YAxisLengthFactor = ${spectrogramParameters.log10YAxisLengthFactor}")
             refreshAnyChangesState()
         }
     }
