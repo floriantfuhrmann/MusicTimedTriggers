@@ -17,44 +17,62 @@ import eu.florian_fuhrmann.musictimedtriggers.utils.number.isPowerOf2
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.Outline
-import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Text
 import kotlin.math.roundToInt
 
+class SpectrogramConfigurationState(
+    /**
+     * Original spectrogram parameters, used to determine if any changes were made.
+     */
+    private val originalSpectrogramParameters: SpectrogramParameters
+) {
+    /**
+     * Spectrogram parameters as modified by the user.
+     */
+    val spectrogramParameters = originalSpectrogramParameters.copy()
+
+    /**
+     * State to determine if any changes were made to the spectrogram parameters.
+     * This is used to enable/disable the "Apply" button in the UI.
+     * Needs to be manually updated by calling [refreshAnyChangesState] after any changes.
+     */
+    var anyChanges by mutableStateOf(false)
+
+    /**
+     * Updates the state of anyChanges based on the current spectrogram parameters.
+     */
+    fun refreshAnyChangesState() {
+        anyChanges = spectrogramParameters.sha256Hash() != originalSpectrogramParameters.sha256Hash()
+    }
+}
+
 @Composable
-fun SpectrogramConfigurationPane(spectrogramParameters: SpectrogramParameters, referenceSampleRate: Float?) {
+fun SpectrogramConfigurationPane(
+    state: SpectrogramConfigurationState,
+    referenceSampleRate: Float?
+) {
     Column {
         // Window Size
-        WindowSizeConfigurationRows(spectrogramParameters, referenceSampleRate)
+        WindowSizeConfigurationRows(state.spectrogramParameters, referenceSampleRate) { state.refreshAnyChangesState() }
         Spacer(Modifier.fillMaxWidth().height(8.dp))
         // Window Function
-        WindowFunctionConfigurationRows(spectrogramParameters)
+        WindowFunctionConfigurationRows(state.spectrogramParameters) { state.refreshAnyChangesState() }
         Spacer(Modifier.fillMaxWidth().height(8.dp))
         // Overlap Factor
-        OverlapFactorConfigurationRows(spectrogramParameters)
+        OverlapFactorConfigurationRows(state.spectrogramParameters) { state.refreshAnyChangesState() }
         Spacer(Modifier.fillMaxWidth().height(8.dp))
         // Max Amp Range
-        MaxAmpRangeConfigurationRows(spectrogramParameters)
+        MaxAmpRangeConfigurationRows(state.spectrogramParameters) { state.refreshAnyChangesState() }
         Spacer(Modifier.fillMaxWidth().height(8.dp))
         // Y-Axis
-        YAxisConfigurationRows(spectrogramParameters)
-        Spacer(Modifier.fillMaxWidth().height(8.dp))
-        // Apply Button
-        Row {
-            Spacer(Modifier.weight(1f))
-            DefaultButton(onClick = {
-                println("Todo: Apply Spectrogram Parameters")
-            }) {
-                Text("Save and Generate")
-            }
-        }
+        YAxisConfigurationRows(state.spectrogramParameters) { state.refreshAnyChangesState() }
         Spacer(Modifier.fillMaxWidth().height(8.dp))
     }
 }
 
 @Composable
-fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, referenceSampleRate: Float?) {
+fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, referenceSampleRate: Float?, refreshAnyChangesState: () -> Unit) {
     // Header
     Row {
         Text("Window Size:")
@@ -151,6 +169,7 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
         snapshotFlow { fromDurationSelected }.collect {
             spectrogramParameters.calculateWindowSizeFromDuration = it
             println("spectrogramParameters.calculateWindowSizeFromDuration = ${spectrogramParameters.calculateWindowSizeFromDuration}")
+            refreshAnyChangesState()
         }
     }
     LaunchedEffect(targetDurationState) {
@@ -158,6 +177,7 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
             if(!targetDurationState.isValid || targetDuration == null) return@collect
             spectrogramParameters.windowDurationInSeconds = targetDuration / 1000.0
             println("spectrogramParameters.windowDurationInSeconds = ${spectrogramParameters.windowDurationInSeconds}")
+            refreshAnyChangesState()
         }
     }
     LaunchedEffect(fixedSamplesCountState) {
@@ -166,12 +186,13 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
             if(!samplesCount.isPowerOf2()) return@collect
             spectrogramParameters.windowSize = samplesCount
             println("spectrogramParameters.windowSize = ${spectrogramParameters.windowSize}")
+            refreshAnyChangesState()
         }
     }
 }
 
 @Composable
-fun WindowFunctionConfigurationRows(spectrogramParameters: SpectrogramParameters) {
+fun WindowFunctionConfigurationRows(spectrogramParameters: SpectrogramParameters, refreshAnyChangesState: () -> Unit) {
     // Header
     Row {
         Text("Window Function:")
@@ -197,12 +218,13 @@ fun WindowFunctionConfigurationRows(spectrogramParameters: SpectrogramParameters
         snapshotFlow { hammingSelected }.collect {
             spectrogramParameters.useHammingWindow = it
             println("spectrogramParameters.useHammingWindow = ${spectrogramParameters.useHammingWindow}")
+            refreshAnyChangesState()
         }
     }
 }
 
 @Composable
-fun OverlapFactorConfigurationRows(spectrogramParameters: SpectrogramParameters) {
+fun OverlapFactorConfigurationRows(spectrogramParameters: SpectrogramParameters, refreshAnyChangesState: () -> Unit) {
     // Overlap Factor State
     val overlapFactorState = remember {
         IntNumberFieldState(
@@ -228,13 +250,14 @@ fun OverlapFactorConfigurationRows(spectrogramParameters: SpectrogramParameters)
             if(!overlapFactorState.isValid || overlapFactor == null) return@collect
             spectrogramParameters.overlapFactor = overlapFactor
             println("spectrogramParameters.overlapFactor = ${spectrogramParameters.overlapFactor}")
+            refreshAnyChangesState()
         }
     }
 }
 
 // Maybe remove this option in the future?
 @Composable
-fun MaxAmpRangeConfigurationRows(spectrogramParameters: SpectrogramParameters) {
+fun MaxAmpRangeConfigurationRows(spectrogramParameters: SpectrogramParameters, refreshAnyChangesState: () -> Unit) {
     // Max Amp Range State
     val maxAmpRangeState = remember {
         IntNumberFieldState(
@@ -260,12 +283,13 @@ fun MaxAmpRangeConfigurationRows(spectrogramParameters: SpectrogramParameters) {
             if(!maxAmpRangeState.isValid || maxAmpRange == null) return@collect
             spectrogramParameters.maxRange = maxAmpRange
             println("spectrogramParameters.maxRange = ${spectrogramParameters.maxRange}")
+            refreshAnyChangesState()
         }
     }
 }
 
 @Composable
-fun YAxisConfigurationRows(spectrogramParameters: SpectrogramParameters) {
+fun YAxisConfigurationRows(spectrogramParameters: SpectrogramParameters, refreshAnyChangesState: () -> Unit) {
     // Header
     Row {
         Text("Y-Axis:")
@@ -308,6 +332,7 @@ fun YAxisConfigurationRows(spectrogramParameters: SpectrogramParameters) {
         snapshotFlow { log10YAxisSelected }.collect {
             spectrogramParameters.log10YAxis = it
             println("spectrogramParameters.log10YAxis = ${spectrogramParameters.log10YAxis}")
+            refreshAnyChangesState()
         }
     }
     LaunchedEffect(log10YAxisScaleState) {
@@ -315,6 +340,7 @@ fun YAxisConfigurationRows(spectrogramParameters: SpectrogramParameters) {
             if(!log10YAxisScaleState.isValid || scale == null) return@collect
             spectrogramParameters.log10YAxisLengthFactor = scale
             println("spectrogramParameters.log10YAxisLengthFactor = ${spectrogramParameters.log10YAxisLengthFactor}")
+            refreshAnyChangesState()
         }
     }
 }
@@ -326,7 +352,7 @@ fun SpectrogramConfigurationPanePreview() {
     IntUiTheme(isDark = true) {
         Box(Modifier.background(Color.Black).padding(10.dp).background(JewelTheme.globalColors.panelBackground)) {
             SpectrogramConfigurationPane(
-                spectrogramParameters = SpectrogramParameters(),
+                SpectrogramConfigurationState(SpectrogramParameters()),
                 referenceSampleRate = 44100f
             )
         }

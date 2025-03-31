@@ -52,6 +52,26 @@ class Song (
         project.updateSong(this)
     }
 
+    fun updateSpectrogramParameters(newSpectrogramParams: SpectrogramParameters) {
+        //update value
+        spectrogramParams = newSpectrogramParams
+        //create new spectrogram
+        val newSpectrogram = Spectrogram.createSpectrogram(project, audioFile, spectrogramParams)
+        require(newSpectrogram != null) { "Spectrogram creation failed!" }
+        //remember old spectrogram
+        val oldSpectrogram = spectrogram
+        //update spectrogram reference
+        spectrogram = newSpectrogram
+        //generate images (if song is opened)
+        if(isOpened()) {
+            newSpectrogram.loadOrGenerateImages()
+        }
+        //unload images of old spectrogram (to also cancel possibly still active generation)
+        oldSpectrogram?.unloadImages()
+        //notify project (so project can be saved)
+        project.updateSong(this)
+    }
+
     /**
      * Called when this song will no longer be the currentSong (so when this song is being closed)
      * (called before currentSong reference has been set)
