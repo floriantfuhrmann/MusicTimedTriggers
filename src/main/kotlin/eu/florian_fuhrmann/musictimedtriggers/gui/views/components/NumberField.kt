@@ -1,19 +1,25 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Outline
-import org.jetbrains.jewel.ui.component.Icon
-import org.jetbrains.jewel.ui.component.IconButton
-import org.jetbrains.jewel.ui.component.TextField
+import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 @Composable
@@ -27,6 +33,18 @@ fun NumberField(
     placeholder: @Composable (() -> Unit)? = null,
     undecorated: Boolean = false
 ) {
+    if(state.isInValidRange == false) {
+        // show error message
+        PopupContainer(
+            onDismissRequest = {},
+            horizontalAlignment = Alignment.Start,
+            popupProperties = PopupProperties(focusable = false)
+        ) {
+            Box(modifier = Modifier.background(JewelTheme.globalColors.outlines.error).padding(5.dp)) {
+                Text("must be in range ${state.validRange.start} - ${state.validRange.endInclusive}", color = JewelTheme.globalColors.text.error)
+            }
+        }
+    }
     TextField(
         state = state.textFieldState,
         modifier = modifier,
@@ -98,6 +116,8 @@ sealed class NumberFieldState<T>(initialValue: Number) where T : Number, T : Com
     abstract val value: T?
     val isValid: Boolean
         get() = value.let { it != null && it in validRange }
+    val isInValidRange: Boolean?
+        get() = value?.let { it in validRange }
 }
 
 class IntNumberFieldState(

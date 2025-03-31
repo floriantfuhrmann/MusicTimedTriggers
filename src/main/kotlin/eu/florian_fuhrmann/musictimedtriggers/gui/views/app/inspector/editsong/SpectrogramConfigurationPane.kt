@@ -4,10 +4,12 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.compose.ui.window.PopupProperties
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.DoubleNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.IntNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.NumberField
@@ -17,8 +19,10 @@ import eu.florian_fuhrmann.musictimedtriggers.utils.number.isPowerOf2
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.ui.Outline
+import org.jetbrains.jewel.ui.component.PopupContainer
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.theme.popupContainerStyle
 import kotlin.math.roundToInt
 
 class SpectrogramConfigurationState(
@@ -141,6 +145,18 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
     // Fixed Size Input with Label
     Row(Modifier.padding(start = 24.dp).height(IntrinsicSize.Min)) {
         Column {
+            if(fixedSamplesCountState.isValid && !fixedSamplesCountValid) {
+                // show power of 2 error (because we know it's not a range error since the number field state is valid)
+                PopupContainer(
+                    onDismissRequest = {},
+                    horizontalAlignment = Alignment.Start,
+                    popupProperties = PopupProperties(focusable = false)
+                ) {
+                    Box(modifier = Modifier.background(JewelTheme.globalColors.outlines.error).padding(5.dp)) {
+                        Text("must be power of 2", color = JewelTheme.globalColors.text.error)
+                    }
+                }
+            }
             NumberField(
                 state = fixedSamplesCountState,
                 modifier = Modifier.width(60.dp),
