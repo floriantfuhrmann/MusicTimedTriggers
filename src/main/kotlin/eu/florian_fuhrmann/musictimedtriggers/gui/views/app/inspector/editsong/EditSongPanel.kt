@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -19,6 +20,8 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroup
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getAudioFormat
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.SpectrogramParameters
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
@@ -78,17 +81,34 @@ fun EditSongPanel(song: Song?, scrollState: ScrollState = rememberScrollState())
                             Row {
                                 val nameState = rememberTextFieldState(song?.name ?: "")
                                 val focusManager = LocalFocusManager.current
+                                val updateSongNameIfNeeded = { newName: String ->
+                                    if(song?.name != newName) {
+                                        // update song name
+                                        song?.updateName(newName)
+                                    }
+                                }
                                 TextField(
                                     state = nameState,
-                                    modifier = Modifier.padding(vertical = 6.dp).fillMaxWidth(),
+                                    modifier = Modifier.padding(vertical = 6.dp).fillMaxWidth().onFocusChanged {
+                                        // update song name if focus is lost
+                                        if(!it.isFocused) {
+                                            updateSongNameIfNeeded(nameState.text.toString())
+                                        }
+                                    },
                                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                     onKeyboardAction = {
-                                        // todo: rename song
-                                        println("Todo: Rename to ${nameState.text}")
                                         // clear focus
                                         focusManager.clearFocus()
                                     }
                                 )
+                                LaunchedEffect(nameState) {
+                                    snapshotFlow { nameState.text }.filter { it.isNotBlank() }.collectLatest {
+                                        // short delay
+                                        kotlinx.coroutines.delay(300)
+                                        // update song name (if needed)
+                                        updateSongNameIfNeeded(it.toString())
+                                    }
+                                }
                             }
                             Row {
                                 TextField(

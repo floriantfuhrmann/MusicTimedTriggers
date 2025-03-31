@@ -52,6 +52,13 @@ class Song (
         project.updateSong(this)
     }
 
+    fun updateName(newName: String) {
+        //update value
+        name = newName
+        //save songlist
+        project.updateSong(this, false)
+    }
+
     fun updateSpectrogramParameters(newSpectrogramParams: SpectrogramParameters) {
         //update value
         spectrogramParams = newSpectrogramParams

@@ -133,9 +133,11 @@ class Project(
      * songlist (like name, audio file, spectrogram parameters) and saves the
      * songlist to file.
      */
-    fun updateSong(song: Song) {
+    fun updateSong(song: Song, redraw: Boolean = true) {
         //refresh ui
-        redrawTimeline()
+        if(redraw) {
+            redrawTimeline()
+        }
         //save project
         saveSonglistToFile()
     }
