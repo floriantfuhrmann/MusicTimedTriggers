@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
@@ -16,7 +17,7 @@ import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.Text
 
 @Composable
-fun EditSongInspector(song: Song?) {
+fun EditSongInspector(project: Project, song: Song?) {
     Column(Modifier
         .background(JewelTheme.globalColors.borders.normal)
         .padding(start = 1.dp)
@@ -39,7 +40,7 @@ fun EditSongInspector(song: Song?) {
             Box(Modifier.fillMaxSize()) {
                 if(song != null) {
                     // Edit Song Panel
-                    EditSongPanel(song, scrollState)
+                    EditSongPanel(project, song, scrollState)
                 } else {
                     // No song selected text
                     Text(

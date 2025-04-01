@@ -10,29 +10,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.replaceaudio.ReplaceAudioDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
+import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getAudioFormat
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.SpectrogramParameters
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
-import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
-import org.jetbrains.jewel.ui.theme.colorPalette
 import javax.sound.sampled.AudioFormat
 
 /**
  * Panel for editing/creating a song. Used by Inspector and Dialog.
  */
 @Composable
-fun EditSongPanel(song: Song?, scrollState: ScrollState = rememberScrollState()) {
+fun EditSongPanel(project: Project, song: Song?, scrollState: ScrollState = rememberScrollState()) {
     // determine whether this is creation or editing context
     val creating = song == null
     // get state
@@ -118,8 +115,9 @@ fun EditSongPanel(song: Song?, scrollState: ScrollState = rememberScrollState())
                                     enabled = false,
                                     trailingIcon = {
                                         IconButton(onClick = {
-                                            // todo: open replace audio dialog
-                                            println("Todo: Swap")
+                                            // open replace audio dialog
+                                            require(song != null) { "Song must not be null for swap button" }
+                                            DialogManager.openDialog(ReplaceAudioDialog(project, song))
                                         }) {
                                             Icon(AllIconsKeys.Actions.SwapPanels, null)
                                         }
@@ -142,32 +140,7 @@ fun EditSongPanel(song: Song?, scrollState: ScrollState = rememberScrollState())
                         null
                     }
                     if(editSongPanelState.audioEncodingOpened) {
-                        Row {
-                            Column(Modifier.padding(start = 24.dp)) {
-                                listOf(
-                                    "Encoding" to (audioFormat?.encoding ?: "Unknown").toString(),
-                                    "Sample Rate" to audioFormat?.sampleRate.let { if(it != null) "${it/1000.0} kHz" else "Unknown" },
-                                    "Sample Size" to audioFormat?.sampleSizeInBits.let { if(it != null) "$it Bit" else "Unknown" },
-                                    "Channels" to (audioFormat?.channels ?: "Unknown").toString(),
-                                    "Frame Size" to audioFormat?.frameSize.let { if(it != null) "$it Byte" else "Unknown" },
-                                    "Frame Rate" to audioFormat?.frameRate.let { if(it != null) "${it/1000.0} kHz" else "Unknown" },
-                                    "Endianness" to when(audioFormat?.isBigEndian) {
-                                        true -> "Big Endian"
-                                        false -> "Little Endian"
-                                        else -> "Unknown"
-                                    },
-                                ).forEach {
-                                    Row {
-                                        Text(buildAnnotatedString {
-                                            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = JewelTheme.colorPalette.gray(7))) {
-                                                append("${it.first}: ")
-                                            }
-                                            append(it.second)
-                                        })
-                                    }
-                                }
-                            }
-                        }
+                        AudioEncodingInformationRow(audioFormat, Modifier.padding(start = 24.dp))
                     }
                     OpenableGroupHeader(
                         modifier = Modifier.padding(vertical = 6.dp),

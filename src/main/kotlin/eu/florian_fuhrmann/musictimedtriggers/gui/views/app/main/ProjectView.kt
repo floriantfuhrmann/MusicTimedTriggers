@@ -90,7 +90,7 @@ fun ColumnScope.EditorWithBrowserAndInspectorContainer(project: Project, inspect
             }
             second(200.dp) {
                 when(MainUiState.inspectorOption) {
-                    InspectorOption.Song -> EditSongInspector(project.currentSong)
+                    InspectorOption.Song -> EditSongInspector(project, project.currentSong)
                     else -> {
                         Box(Modifier.fillMaxSize().background(Color.Yellow).padding(5.dp)) {
                             Text(text = "Todo: Inspector Contents", color = Color.Black)
