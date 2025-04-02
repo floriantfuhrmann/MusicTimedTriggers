@@ -1,10 +1,12 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.*
@@ -21,6 +23,7 @@ import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
+import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Outline
@@ -60,7 +63,9 @@ fun FilePathField(
     // Text Field
     TextField(
         state = state.textFieldState,
-        modifier = modifier,
+        modifier = modifier.onHover {
+            popupHidden = false
+        },
         enabled = enabled,
         readOnly = readOnly,
         outline = if(state.isValid) outline else Outline.Error,

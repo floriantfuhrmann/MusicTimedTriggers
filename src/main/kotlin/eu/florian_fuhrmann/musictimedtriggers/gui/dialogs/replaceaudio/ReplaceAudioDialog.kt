@@ -9,14 +9,13 @@ import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editsong.AudioEncodingInformationRow
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.FilePathField
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.FilePathFieldState
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.*
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getAudioFormat
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.Link
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.Text
 import javax.sound.sampled.AudioFormat
@@ -46,8 +45,18 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
                 }
             }
             // Convert Banner
-            Row {
-                Text("Todo: Optional Convert Banner (Error Banner)")
+            if((audioFormat == null || audioFormat.encoding != AudioFormat.Encoding.PCM_SIGNED) && filePathFieldState.isValid) {
+                Row {
+                    InterimInlineBanner(
+                        InterimInlineBannerType.Error,
+                        Modifier.fillMaxWidth(),
+                        "Audio file has to be in PCM Signed format.",
+                    ) {
+                        Link("Convert using ffmpeg", {
+                            println("TODO: Open ffmpeg converter")
+                        })
+                    }
+                }
             }
             // Audio Encoding Information
             if(audioFormat != null) {
