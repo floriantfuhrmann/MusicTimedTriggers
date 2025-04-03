@@ -36,7 +36,14 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
                 mustExist = true,
                 directoryMode = false
             ) }
-            val audioFormat: AudioFormat? = filePathFieldState.file.let { if(it.exists()) getAudioFormat(it) else null }
+            val audioFormat: AudioFormat? =
+                if (filePathFieldState.isValid) {
+                    filePathFieldState.file.let { if (it.exists()) getAudioFormat(it) else null }
+                } else {
+                    null
+                }
+            val encodingIsValid = audioFormat != null && audioFormat.encoding == AudioFormat.Encoding.PCM_SIGNED
+            val fileLocationIsValid = project.isFileInsideAudioDirectory(filePathFieldState.file, false)
             // File Path Input
             Row(Modifier.height(IntrinsicSize.Min).padding(bottom = 12.dp)) {
                 Column(verticalArrangement = Arrangement.Center) {
@@ -49,7 +56,7 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
                 }
             }
             // Move/Copy Banner
-            if(filePathFieldState.isValid && !project.isFileInsideAudioDirectory(filePathFieldState.file)) {
+            if(encodingIsValid && !fileLocationIsValid) {
                 Row {
                     InterimInlineBanner(
                         InterimInlineBannerType.Error,
@@ -69,14 +76,14 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
                 }
             }
             // Convert Banner
-            if((audioFormat == null || audioFormat.encoding != AudioFormat.Encoding.PCM_SIGNED) && filePathFieldState.isValid) {
+            if(!encodingIsValid && filePathFieldState.isValid) {
                 Row {
                     InterimInlineBanner(
                         InterimInlineBannerType.Error,
                         Modifier.fillMaxWidth(),
                         "Audio file has to be in PCM Signed format.",
                     ) {
-                        Link("Convert using ffmpeg", {
+                        Link("Convert (requires ffmpeg)", {
                             // todo
                             println("TODO: Open ffmpeg converter")
                         })
@@ -84,7 +91,7 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
                 }
             }
             // Audio Encoding Information
-            if(audioFormat != null) {
+            if(encodingIsValid && fileLocationIsValid) {
                 var opened by remember { mutableStateOf(false) }
                 OpenableGroupHeader(
                     open = opened,
@@ -100,7 +107,7 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
             val usagesAfterEnd = getDurationOrNull(filePathFieldState.file)?.let { duration ->
                 song.searchUsagesAfterTime(duration)
             }
-            if(!usagesAfterEnd.isNullOrEmpty()) {
+            if(!usagesAfterEnd.isNullOrEmpty() && fileLocationIsValid) {
                 Row(Modifier.padding(vertical = 10.dp)) {
                     InterimInlineBanner(
                         InterimInlineBannerType.Error,
@@ -126,8 +133,7 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
                 }
                 DefaultButton(
                     modifier = Modifier.padding(start = 12.dp),
-                    enabled = usagesAfterEnd != null && usagesAfterEnd.isEmpty() && filePathFieldState.isValid
-                            && audioFormat != null && audioFormat.encoding == AudioFormat.Encoding.PCM_SIGNED,
+                    enabled = usagesAfterEnd != null && usagesAfterEnd.isEmpty() && filePathFieldState.isValid && encodingIsValid && fileLocationIsValid,
                     onClick = {
                         // todo
                         println("TODO: Replace audio (since this button is available it should be possible)")
