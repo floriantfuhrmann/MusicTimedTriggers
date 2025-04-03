@@ -77,7 +77,7 @@ class EditSongDialog(val project: Project, val add: Boolean, val song: Song? = n
             if (!add) {
                 OutlinedButton(
                     onClick = {
-                        openDeleteSongDialog(project, song)
+                        //openDeleteSongDialog(project, song)
                     },
                     modifier = Modifier
                         .padding(end = 5.dp)
@@ -280,26 +280,4 @@ class EditSongDialog(val project: Project, val add: Boolean, val song: Song? = n
             else -> "Edit Song"
         }
     }
-}
-
-fun openDeleteSongDialog(project: Project, song: Song?) {
-    //show confirmation alert
-    BasicAlert(
-        type = BasicAlert.Type.Warning,
-        title = "Confirm Deletion",
-        buttons = {
-            CancelButton()
-            CancelButtonFocused()
-            OKButton(onClick = {
-                // close alert
-                close()
-                // delete song
-                if (song != null) {
-                    project.deleteSong(song)
-                }
-            }, label = "Confirm")
-        }
-    ) {
-        Text("Are you sure you want to delete Song ${song?.name}?")
-    }.show()
 }
