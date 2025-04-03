@@ -91,7 +91,7 @@ class EditSongDialog(val project: Project, val add: Boolean, val song: Song? = n
             //Done Button
             DefaultButton(
                 onClick = {
-                    DialogManager.closeDialog()
+                    DialogManager.closeAllDialogs()
                     if (add) {
                         //add song
                         Song.createSong(project, songName, selectedAudioFile)

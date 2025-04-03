@@ -17,44 +17,73 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.AlertsManager
 import java.awt.Dimension
 
 object DialogManager {
-    private var openedDialog: Dialog? by mutableStateOf(null)
-    val dialogOpened by derivedStateOf { openedDialog != null }
+    private var openedDialogs: MutableList<Dialog> = mutableStateListOf()
+    val anyDialogOpened by derivedStateOf { openedDialogs.isNotEmpty() }
     private var alwaysOnTop: Boolean by mutableStateOf(true)
 
-    fun openDialog(dialog: Dialog) {
+    /**
+     * Opens a dialog and closes all other dialogs if [closeOthers] is true.
+     * @param dialog The dialog to open.
+     * @param closeOthers Whether to close all other dialogs or not.
+     */
+    fun openDialog(dialog: Dialog, closeOthers: Boolean = true) {
         alwaysOnTop = true
-        openedDialog = dialog
+        if (closeOthers) {
+            closeAllDialogs()
+        }
+        openedDialogs.add(dialog)
     }
-    fun closeDialog() {
-        openedDialog?.onClose?.let { it() }
-        openedDialog = null
+
+    /**
+     * Closes a dialog if it is opened.
+     * @param dialog The dialog to close.
+     * @return true if the dialog was closed, false if it was not opened.
+     */
+    fun closeDialog(dialog: Dialog): Boolean {
+        if (openedDialogs.contains(dialog)) {
+            openedDialogs.remove(dialog)
+            dialog.onClose?.let { it() }
+            return true
+        } else {
+            return false
+        }
     }
+
+    /**
+     * Closes all opened dialogs.
+     */
+    fun closeAllDialogs() {
+        openedDialogs.forEach {
+            it.onClose?.let { it() }
+        }
+        openedDialogs.clear()
+    }
+
     fun allowNotOnTop() {
         alwaysOnTop = false
     }
+
     fun requireOnTop() {
         alwaysOnTop = true
     }
 
     @Composable
     fun DialogContainer(frameWindowScope: FrameWindowScope) {
-        // shadow the openedDialog variable to prevent it from changing while the dialog is being displayed
-        val openedDialog = openedDialog
-        if(openedDialog != null) {
-            if(openedDialog.windowed) {
+        openedDialogs.forEach { dialog ->
+            if(dialog.windowed) {
                 // DialogWindow is used to create a windowed dialog
                 DialogWindow(
                     state = rememberDialogState(
                         getCenteredAbsolutePosition(frameWindowScope, 500.dp, 350.dp),
                         500.dp, 350.dp
                     ),
-                    onCloseRequest = { closeDialog() },
+                    onCloseRequest = { closeAllDialogs() },
                     alwaysOnTop = alwaysOnTop,
-                    title = openedDialog.title()
+                    title = dialog.title()
                 ) {
                     this.window.minimumSize = Dimension(350, 350)
                     // Dialog Content
-                    openedDialog.Content()
+                    dialog.Content()
                     // (new) Alerts
                     AlertsManager.AlertsContainer(this@DialogWindow)
                 }
@@ -64,7 +93,7 @@ object DialogManager {
                 }
             } else {
                 // non-windowed dialogs are displayed inline
-                openedDialog.Content()
+                dialog.Content()
             }
         }
     }

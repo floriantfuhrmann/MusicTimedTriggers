@@ -27,7 +27,7 @@ fun App(frameWindowScope: FrameWindowScope) {
     // Dialog Container
     DialogManager.DialogContainer(frameWindowScope)
     // Alerts Container
-    if(!DialogManager.dialogOpened) {
+    if(!DialogManager.anyDialogOpened) {
         AlertsManager.AlertsContainer(frameWindowScope)
     }
 }

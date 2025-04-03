@@ -121,14 +121,14 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
                             DialogManager.openDialog(TriggerUsagesDialog(TriggerUsagesDialog.Type.ShortenSequenceByReplacing, usagesAfterEnd, onConfirm = {
                                 // todo
                                 println("TODO: Remove affected triggers and replace audio")
-                            }))
+                            }), closeOthers = false)
                         })
                     }
                 }
             }
             Row(Modifier.padding(top = 15.dp)) {
                 Spacer(Modifier.weight(1f))
-                OutlinedButton(onClick = { DialogManager.closeDialog() }) {
+                OutlinedButton(onClick = { DialogManager.closeAllDialogs() }) {
                     Text("Cancel")
                 }
                 DefaultButton(

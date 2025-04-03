@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -80,10 +81,14 @@ fun DialogFrame(
 }
 
 @Composable
-fun CloseDialogButton(text: String = "Close", modifier: Modifier = Modifier) {
+fun CloseDialogButton(text: String = "Close", modifier: Modifier = Modifier, dialog: Dialog? = null) {
     OutlinedButton(
         onClick = {
-            DialogManager.closeDialog()
+            if(dialog != null) {
+                DialogManager.closeDialog(dialog)
+            } else {
+                DialogManager.closeAllDialogs()
+            }
         },
         modifier = modifier.trackActivation()
     ) {

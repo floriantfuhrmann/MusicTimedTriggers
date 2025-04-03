@@ -47,7 +47,7 @@ class EditProjectDialog(val create: Boolean, val project: Project? = null) : Dia
                 //Apply/Create Button
                 DefaultButton(
                     onClick = {
-                        DialogManager.closeDialog()
+                        DialogManager.closeAllDialogs()
                         if(create) {
                             //create project
                             ProjectManager.createProject(projectDirectory, GenericColor.fromHsvColor(selectedColor))

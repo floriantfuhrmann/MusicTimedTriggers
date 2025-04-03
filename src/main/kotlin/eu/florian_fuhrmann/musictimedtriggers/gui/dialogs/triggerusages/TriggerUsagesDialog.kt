@@ -84,7 +84,7 @@ class TriggerUsagesDialog(
                                         TextLinkStyles(style = SpanStyle(color = JewelTheme.linkStyle.colors.content)),
                                         linkInteractionListener = {
                                             // close dialog and open song at time
-                                            DialogManager.closeDialog()
+                                            DialogManager.closeAllDialogs()
                                             ProjectManager.currentProject?.openSongAtTime(usage.song, usage.placedTrigger.startTime)
                                         }
                                     )
@@ -103,17 +103,21 @@ class TriggerUsagesDialog(
                     // Spacer
                     Spacer(Modifier.weight(1f))
                     // Close button
-                    CloseDialogButton(when(type) {
-                        Type.ViewTemplateUsages -> "Close"
-                        Type.DeleteTemplates, Type.ShortenSequenceByReplacing -> "Cancel"
-                    }, Modifier.focusRequester(cancelFocusRequester))
+                    CloseDialogButton(
+                        text = when (type) {
+                            Type.ViewTemplateUsages -> "Close"
+                            Type.DeleteTemplates, Type.ShortenSequenceByReplacing -> "Cancel"
+                        },
+                        modifier = Modifier.focusRequester(cancelFocusRequester),
+                        dialog = this@TriggerUsagesDialog
+                    )
                     // Delete button
                     if (type == Type.DeleteTemplates || type == Type.ShortenSequenceByReplacing) {
                         DefaultButton(
                             modifier = Modifier.padding(start = 12.dp),
                             onClick = {
                                 // close dialog and invoke onConfirm
-                                DialogManager.closeDialog()
+                                DialogManager.closeAllDialogs()
                                 onConfirm?.invoke()
                             }
                         ) {

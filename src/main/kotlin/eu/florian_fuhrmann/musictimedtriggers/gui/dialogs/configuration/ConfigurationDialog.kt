@@ -42,7 +42,7 @@ class ConfigurationDialog(
             //Done Button
             DefaultButton(
                 onClick = {
-                    DialogManager.closeDialog()
+                    DialogManager.closeAllDialogs()
                     onDone(configuration)
                 },
                 modifier = Modifier.trackActivation()

@@ -54,7 +54,7 @@ class EditTemplateGroupDialog(val create: Boolean, private val triggerTemplateGr
         val onDone = {
             if(validName) {
                 //close dialog
-                DialogManager.closeDialog()
+                DialogManager.closeAllDialogs()
                 if (create) {
                     //create new group
                     ProjectManager.currentProject?.triggersManager?.createNewTriggerTemplateGroup(nameTextFieldValue.text)
