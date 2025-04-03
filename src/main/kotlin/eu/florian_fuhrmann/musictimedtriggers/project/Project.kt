@@ -32,6 +32,12 @@ class Project(
     fun getCacheDirectory(): File = File(projectDirectory, "Cache")
     fun isFileInsideProjectDirectory(file: File) =
         file.canonicalPath.startsWith(projectDirectory.canonicalPath + File.separator)
+    fun isFileInsideAudioDirectory(file: File, allowSubDirectories: Boolean = true) =
+        if(allowSubDirectories) {
+            file.canonicalPath.startsWith(getAudioDirectory().canonicalPath + File.separator)
+        } else {
+            File(getAudioDirectory(), file.name).canonicalPath == file.canonicalPath
+        }
 
     fun scanForUnusedAudioFiles() {
         //find unused files

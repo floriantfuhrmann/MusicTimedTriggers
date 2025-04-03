@@ -28,6 +28,7 @@ class TriggerUsagesDialog(
     title = when (type) {
         Type.ViewTemplateUsages -> "Trigger Template Usages"
         Type.DeleteTemplates -> "Delete Trigger Templates"
+        Type.ShortenSequenceByReplacing -> "Shorten Sequence by Replacing Audio"
     }
 ) {
     @Composable
@@ -41,11 +42,21 @@ class TriggerUsagesDialog(
                 if(type == Type.DeleteTemplates) {
                     Row(Modifier.padding(bottom = 10.dp)) {
                         Text(buildAnnotatedString {
-                            append("Continuing with deletion will also remove ")
+                            append("Continuing with deleting will also remove ")
                             withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
                                 append(if (usages.size == 1) "one" else "${usages.size}")
                             }
-                            append(" placed triggers:")
+                            append(" placed trigger${if(usages.size == 1) "" else "s"}:")
+                        })
+                    }
+                } else if(type == Type.ShortenSequenceByReplacing) {
+                    Row(Modifier.padding(bottom = 10.dp)) {
+                        Text(buildAnnotatedString {
+                            append("Continuing with shortening the sequence by replacing the audio will also remove ")
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append(if (usages.size == 1) "one" else "${usages.size}")
+                            }
+                            append(" protruding placed trigger${if(usages.size == 1) "" else "s"}:")
                         })
                     }
                 }
@@ -94,10 +105,10 @@ class TriggerUsagesDialog(
                     // Close button
                     CloseDialogButton(when(type) {
                         Type.ViewTemplateUsages -> "Close"
-                        Type.DeleteTemplates -> "Cancel"
+                        Type.DeleteTemplates, Type.ShortenSequenceByReplacing -> "Cancel"
                     }, Modifier.focusRequester(cancelFocusRequester))
                     // Delete button
-                    if (type == Type.DeleteTemplates) {
+                    if (type == Type.DeleteTemplates || type == Type.ShortenSequenceByReplacing) {
                         DefaultButton(
                             modifier = Modifier.padding(start = 12.dp),
                             onClick = {
@@ -106,7 +117,11 @@ class TriggerUsagesDialog(
                                 onConfirm?.invoke()
                             }
                         ) {
-                            Text("Delete")
+                            Text(when(type) {
+                                Type.DeleteTemplates -> "Delete"
+                                Type.ShortenSequenceByReplacing -> "Delete and Replace"
+                                Type.ViewTemplateUsages -> throw IllegalStateException()
+                            })
                         }
                     }
                 }
@@ -128,7 +143,7 @@ class TriggerUsagesDialog(
 
     enum class Type {
         ViewTemplateUsages,
-        DeleteTemplates
-        // in future something like ShortenSequenceDuration could be added
+        DeleteTemplates,
+        ShortenSequenceByReplacing
     }
 }

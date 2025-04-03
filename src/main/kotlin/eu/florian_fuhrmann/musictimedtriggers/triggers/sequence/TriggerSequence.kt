@@ -97,6 +97,15 @@ class TriggerSequence(
         return null
     }
 
+    /**
+     * Get all triggers in the given period.
+     * @param period The period to search for triggers in.
+     * @return A list of all triggers in the given period.
+     */
+    fun getPlacedTriggersInPeriod(period: ClosedFloatingPointRange<Double>) = lines.flatMap { line ->
+        line.getTriggersInPeriod(period.start, period.endInclusive, false)
+    }
+
     // Saving and Loading
 
     /**

@@ -9,6 +9,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redr
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TickingManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getDurationOrNull
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
@@ -79,6 +80,8 @@ class Song (
         project.updateSong(this)
     }
 
+    // Opening and Closing
+
     /**
      * Called when this song will no longer be the currentSong (so when this song is being closed)
      * (called before currentSong reference has been set)
@@ -121,6 +124,8 @@ class Song (
         return ProjectManager.currentProject?.currentSong == this
     }
 
+    // Playback
+
     /**
      * Starts audio playback and starts ticking triggers
      */
@@ -144,6 +149,18 @@ class Song (
     fun isPlaying(): Boolean {
         return currentAudioPlayer.value?.playing?.value ?: false
     }
+
+    // Utility
+
+    fun searchUsagesAfterTime(time: Double): List<TriggersManager.TriggerUsage> {
+        return sequence.lines.flatMap { line ->
+            line.getTriggersInPeriod(time, Double.POSITIVE_INFINITY, false).map {
+                TriggersManager.TriggerUsage(it, line, this)
+            }
+        }
+    }
+
+    // Serialization
 
     /**
      * Creates json for entry in songlist containing properties like name, path
