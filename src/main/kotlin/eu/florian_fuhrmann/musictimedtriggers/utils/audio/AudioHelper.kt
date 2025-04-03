@@ -28,6 +28,14 @@ fun getAudioFormat(audioFile: File): AudioFormat? {
     }
 }
 
+fun getAudioFormatOrNull(audioFile: File?): AudioFormat? {
+    return if(audioFile == null || !audioFile.exists() || !audioFile.isFile) {
+        null
+    } else {
+        getAudioFormat(audioFile)
+    }
+}
+
 fun isPcmEncoding(audioFile: File): Boolean {
     val audioFormat = getAudioFormat(audioFile)
     return audioFormat != null && audioFormat.encoding == AudioFormat.Encoding.PCM_SIGNED

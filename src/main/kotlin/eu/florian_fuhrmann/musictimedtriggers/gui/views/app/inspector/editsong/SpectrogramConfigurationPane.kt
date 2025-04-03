@@ -28,7 +28,7 @@ class SpectrogramConfigurationState(
     /**
      * Original spectrogram parameters, used to determine if any changes were made.
      */
-    private val originalSpectrogramParameters: SpectrogramParameters
+    private var originalSpectrogramParameters: SpectrogramParameters
 ) {
     /**
      * Spectrogram parameters as modified by the user.
@@ -47,6 +47,14 @@ class SpectrogramConfigurationState(
      */
     fun refreshAnyChangesState() {
         anyChanges = spectrogramParameters.sha256Hash() != originalSpectrogramParameters.sha256Hash()
+    }
+
+    /**
+     * Sets the original spectrogram parameters to the current state. Should be called when changes have been applied.
+     */
+    fun handleChangesApplied() {
+        originalSpectrogramParameters = spectrogramParameters.copy()
+        anyChanges = false
     }
 }
 

@@ -17,7 +17,7 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editsong.EditSongDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.addsong.AddSongDialog
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
@@ -58,10 +58,8 @@ fun SongList(project: Project) {
                             ProjectManager.currentProject?.openSong(it)
                         },
                         onDoubleClick = {
-                            // open song edit dialog
-                            DialogManager.openDialog(
-                                EditSongDialog(project = ProjectManager.currentProject!!, add = false, song = it),
-                            )
+                            // also open clicked song
+                            ProjectManager.currentProject?.openSong(it)
                         },
                     )
                 }
@@ -88,7 +86,7 @@ fun SongList(project: Project) {
                 Spacer(modifier = Modifier.weight(1f))
                 Column {
                     Link("Add Song", {
-                        DialogManager.openDialog(EditSongDialog(project = project, add = true))
+                        DialogManager.openDialog(AddSongDialog(project = project))
                     })
                 }
                 Spacer(modifier = Modifier.weight(1f))

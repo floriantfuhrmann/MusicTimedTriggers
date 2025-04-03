@@ -8,11 +8,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
@@ -32,7 +31,8 @@ fun NumberField(
     placeholder: @Composable (() -> Unit)? = null,
     undecorated: Boolean = false
 ) {
-    if(state.isInValidRange == false) {
+    var textFieldFocused by remember { mutableStateOf(false) }
+    if(state.isInValidRange == false && textFieldFocused) {
         // show error message
         PopupContainer(
             onDismissRequest = {},
@@ -46,7 +46,9 @@ fun NumberField(
     }
     TextField(
         state = state.textFieldState,
-        modifier = modifier,
+        modifier = modifier.onFocusChanged {
+            textFieldFocused = it.isFocused
+        },
         enabled = enabled,
         readOnly = readOnly,
         outline = if(state.isValid) outline else Outline.Error,

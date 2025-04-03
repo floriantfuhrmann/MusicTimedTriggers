@@ -220,7 +220,7 @@ class Song (
     }
 
     companion object {
-        fun createSong(project: Project, name: String, audioFile: File) {
+        fun createSong(project: Project, name: String, audioFile: File, spectrogramParams: SpectrogramParameters = SpectrogramParameters(), openAfterCreation: Boolean = false) {
             //create the songs trigger sequence
             val sequence = TriggerSequence.createSequence(project, getDurationOrNull(audioFile) ?: 0.0)
             //create song instance
@@ -228,13 +228,17 @@ class Song (
                 project,
                 name,
                 audioFile,
-                SpectrogramParameters(),
+                spectrogramParams,
                 sequence
             )
             //save newly created sequence to file
             sequence.saveAll(createDirectory = true)
             //add to project
             project.addNewSongToSonglist(song)
+            //open song if requested
+            if(openAfterCreation) {
+                project.openSong(song)
+            }
         }
 
         /**

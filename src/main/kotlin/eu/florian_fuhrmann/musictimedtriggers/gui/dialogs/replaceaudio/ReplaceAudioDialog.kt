@@ -8,20 +8,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.addsong.AudioBannersOrEncodingInformationRows
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.triggerusages.TriggerUsagesDialog
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editsong.AudioEncodingInformationRow
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.*
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
-import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getAudioFormat
+import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getAudioFormatOrNull
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getDurationOrNull
-import eu.florian_fuhrmann.musictimedtriggers.utils.file.findAvailableTargetFile
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Link
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.Text
-import java.nio.file.Files
 import javax.sound.sampled.AudioFormat
 
 class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace Audio") {
@@ -36,14 +34,9 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
                 mustExist = true,
                 directoryMode = false
             ) }
-            val audioFormat: AudioFormat? =
-                if (filePathFieldState.isValid) {
-                    filePathFieldState.file.let { if (it.exists()) getAudioFormat(it) else null }
-                } else {
-                    null
-                }
-            val encodingIsValid = audioFormat != null && audioFormat.encoding == AudioFormat.Encoding.PCM_SIGNED
-            val fileLocationIsValid = project.isFileInsideAudioDirectory(filePathFieldState.file, false)
+            val encodingAndLocationValid = filePathFieldState.isValid &&
+                    getAudioFormatOrNull(filePathFieldState.file)?.encoding == AudioFormat.Encoding.PCM_SIGNED
+                    && project.isFileInsideAudioDirectory(filePathFieldState.file, false)
             // File Path Input
             Row(Modifier.height(IntrinsicSize.Min).padding(bottom = 12.dp)) {
                 Column(verticalArrangement = Arrangement.Center) {
@@ -55,58 +48,14 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
                     FilePathField(filePathFieldState, modifier = Modifier.fillMaxWidth())
                 }
             }
-            // Move/Copy Banner
-            if(encodingIsValid && !fileLocationIsValid) {
-                Row {
-                    InterimInlineBanner(
-                        InterimInlineBannerType.Error,
-                        Modifier.fillMaxWidth(),
-                        "File must be inside projects Audio directory.",
-                    ) {
-                        val targetFile = findAvailableTargetFile(project.getAudioDirectory(), filePathFieldState.file.name)
-                        Link("Copy file", {
-                            Files.copy(filePathFieldState.file.toPath(), targetFile.toPath())
-                            filePathFieldState.file = targetFile
-                        })
-                        Link("Move file", {
-                            Files.move(filePathFieldState.file.toPath(), targetFile.toPath())
-                            filePathFieldState.file = targetFile
-                        })
-                    }
-                }
-            }
-            // Convert Banner
-            if(!encodingIsValid && filePathFieldState.isValid) {
-                Row {
-                    InterimInlineBanner(
-                        InterimInlineBannerType.Error,
-                        Modifier.fillMaxWidth(),
-                        "Audio file has to be in PCM Signed format.",
-                    ) {
-                        Link("Convert (requires ffmpeg)", {
-                            // todo
-                            println("TODO: Open ffmpeg converter")
-                        })
-                    }
-                }
-            }
-            // Audio Encoding Information
-            if(encodingIsValid && fileLocationIsValid) {
-                var opened by remember { mutableStateOf(false) }
-                OpenableGroupHeader(
-                    open = opened,
-                    onOpenedChange = { opened = it },
-                    text = "Audio Encoding"
-                )
-                if(opened) {
-                    AudioEncodingInformationRow(audioFormat, Modifier.padding(start = 24.dp, top = 6.dp))
-                }
-            }
+            // Banners or Encoding Information
+            AudioBannersOrEncodingInformationRows(project, filePathFieldState)
+            // Spacer
             Spacer(Modifier.weight(1f))
             // Placed Triggers after new audio end
             val duration = getDurationOrNull(filePathFieldState.file)
             val usagesAfterEnd = if(duration != null) song.searchUsagesAfterTime(duration) else null
-            if(!usagesAfterEnd.isNullOrEmpty() && fileLocationIsValid) {
+            if(!usagesAfterEnd.isNullOrEmpty() && encodingAndLocationValid) {
                 Row(Modifier.padding(vertical = 10.dp)) {
                     InterimInlineBanner(
                         InterimInlineBannerType.Error,
@@ -140,7 +89,7 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
                 }
                 DefaultButton(
                     modifier = Modifier.padding(start = 12.dp),
-                    enabled = usagesAfterEnd != null && usagesAfterEnd.isEmpty() && filePathFieldState.isValid && encodingIsValid && fileLocationIsValid,
+                    enabled = usagesAfterEnd != null && usagesAfterEnd.isEmpty() && encodingAndLocationValid,
                     onClick = {
                         // close all dialogs
                         DialogManager.closeAllDialogs()

@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeDialog
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
@@ -43,15 +44,12 @@ fun FilePathField(
 ) {
     // State for file picker
     var showFilePicker by remember { mutableStateOf(false) }
-    var popupHidden by remember { mutableStateOf(false) }
-    LaunchedEffect(state.textFieldState.text) {
-        popupHidden = false
-    }
+    var textFieldFocused by remember { mutableStateOf(false) }
     // Error Popup
-    if(!state.isValid && !popupHidden) {
+    if(!state.isValid && textFieldFocused) {
         // show error message
         PopupContainer(
-            onDismissRequest = { popupHidden = true },
+            onDismissRequest = {},
             horizontalAlignment = Alignment.Start,
             popupProperties = PopupProperties(focusable = false)
         ) {
@@ -63,8 +61,8 @@ fun FilePathField(
     // Text Field
     TextField(
         state = state.textFieldState,
-        modifier = modifier.onHover {
-            popupHidden = false
+        modifier = modifier.onFocusChanged {
+            textFieldFocused = it.isFocused
         },
         enabled = enabled,
         readOnly = readOnly,
@@ -105,6 +103,7 @@ fun FilePathField(
                 //update value
                 if(platformFile != null) {
                     state.file = File(platformFile.path)
+                    println("Set state ${state.file}")
                 }
             }
         }

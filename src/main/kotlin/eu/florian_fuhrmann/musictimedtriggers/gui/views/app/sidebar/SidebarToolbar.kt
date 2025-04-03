@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editsong.EditSongDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.addsong.AddSongDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editsong.openDeleteSongDialog
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -34,7 +34,7 @@ fun SidebarToolbar() {
         Text("Songs", fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.weight(1f))
         IconButton(
-            onClick = { DialogManager.openDialog(EditSongDialog(project = project, add = true)) },
+            onClick = { DialogManager.openDialog(AddSongDialog(project = project)) },
             focusable = false
         ) {
             Icon(AllIconsKeys.General.Add, null)

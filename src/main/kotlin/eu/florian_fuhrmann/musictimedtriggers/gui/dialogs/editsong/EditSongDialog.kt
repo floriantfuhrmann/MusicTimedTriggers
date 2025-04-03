@@ -32,6 +32,7 @@ import java.io.File
 import java.nio.file.Files
 import javax.sound.sampled.AudioFormat
 
+@Deprecated("Replaced by separate AddSongDialog and Inspector")
 class EditSongDialog(val project: Project, val add: Boolean, val song: Song? = null) : Dialog() {
 
     @Composable

@@ -4,6 +4,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -11,28 +12,48 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.addsong.AudioBannersOrEncodingInformationRows
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.replaceaudio.ReplaceAudioDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.FilePathField
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.FilePathFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
-import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getAudioFormat
+import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getAudioFormatOrNull
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.SpectrogramParameters
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
-import javax.sound.sampled.AudioFormat
 
-/**
- * Panel for editing/creating a song. Used by Inspector and Dialog.
- */
+fun createAudioFilePathFieldState(project: Project, song: Song? = null) =
+    FilePathFieldState(
+        baseFile = project.projectDirectory,
+        initialValue = song?.audioFile ?: project.getAudioDirectory(),
+        allowedExtensions = listOf("wav", "aiff", "mp3", "ogg", "m4a", "mp4", "flac", "webm", "opus"),
+        mustExist = true,
+        directoryMode = false
+    )
+
+/** Panel for editing/creating a song. Used by Inspector and Dialog. */
 @Composable
-fun EditSongPanel(project: Project, song: Song?, scrollState: ScrollState = rememberScrollState()) {
+fun EditSongPanel(
+    project: Project,
+    song: Song?,
+    scrollState: ScrollState = rememberScrollState(),
+    extraTopPadding: Dp = 0.dp,
+    nameFieldState: TextFieldState = rememberTextFieldState(song?.name ?: ""),
+    audioFilePathFieldState: FilePathFieldState = remember { createAudioFilePathFieldState(project, song) },
+    spectrogramConfigurationState: SpectrogramConfigurationState = remember {
+        SpectrogramConfigurationState(song?.spectrogramParams ?: SpectrogramParameters())
+    }
+) {
     // determine whether this is creation or editing context
     val creating = song == null
-    // get state
+    // get panel state
     val editSongPanelState = if (creating) {
         // create a new independent state for creation
         remember { EditSongPanelState() }
@@ -40,11 +61,9 @@ fun EditSongPanel(project: Project, song: Song?, scrollState: ScrollState = reme
         // use the shared state for editing
         sharedEditSongInspectorState
     }
-    // init state for spectrogram parameters
-    var spectrogramConfigurationState by remember { mutableStateOf(SpectrogramConfigurationState(song?.spectrogramParams ?: SpectrogramParameters())) }
     Column {
         // Spectrogram Parameters Changes Banner
-        if (spectrogramConfigurationState.anyChanges) {
+        if (!creating && spectrogramConfigurationState.anyChanges) {
             Row {
                 WarningBanner("Spectrogram Changes", actions = {
                     Link("Apply", onClick = {
@@ -53,7 +72,7 @@ fun EditSongPanel(project: Project, song: Song?, scrollState: ScrollState = reme
                         // apply new params to song
                         song?.updateSpectrogramParameters(newParams)
                         // update state since the changes are now applied
-                        spectrogramConfigurationState = SpectrogramConfigurationState(newParams)
+                        spectrogramConfigurationState.handleChangesApplied()
                     })
                 })
             }
@@ -61,7 +80,7 @@ fun EditSongPanel(project: Project, song: Song?, scrollState: ScrollState = reme
         // Inspector Contents
         Row {
             VerticallyScrollableContainer(scrollState = scrollState) {
-                Column(Modifier.padding(horizontal = 10.dp)) {
+                Column(Modifier.padding(horizontal = 10.dp).padding(top = extraTopPadding)) {
                     // Song Name and Audio File Inputs
                     Row(Modifier.height(IntrinsicSize.Min)) {
                         // Input Labels
@@ -76,7 +95,6 @@ fun EditSongPanel(project: Project, song: Song?, scrollState: ScrollState = reme
                         // Inputs
                         Column {
                             Row {
-                                val nameState = rememberTextFieldState(song?.name ?: "")
                                 val focusManager = LocalFocusManager.current
                                 val updateSongNameIfNeeded = { newName: String ->
                                     if(song?.name != newName) {
@@ -85,21 +103,22 @@ fun EditSongPanel(project: Project, song: Song?, scrollState: ScrollState = reme
                                     }
                                 }
                                 TextField(
-                                    state = nameState,
+                                    state = nameFieldState,
                                     modifier = Modifier.padding(vertical = 6.dp).fillMaxWidth().onFocusChanged {
                                         // update song name if focus is lost
                                         if(!it.isFocused) {
-                                            updateSongNameIfNeeded(nameState.text.toString())
+                                            updateSongNameIfNeeded(nameFieldState.text.toString())
                                         }
                                     },
                                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                     onKeyboardAction = {
                                         // clear focus
                                         focusManager.clearFocus()
-                                    }
+                                    },
+                                    placeholder = { Text("Song Name") },
                                 )
-                                LaunchedEffect(nameState) {
-                                    snapshotFlow { nameState.text }.filter { it.isNotBlank() }.collectLatest {
+                                LaunchedEffect(nameFieldState) {
+                                    snapshotFlow { nameFieldState.text }.filter { it.isNotBlank() }.collectLatest {
                                         // short delay
                                         kotlinx.coroutines.delay(300)
                                         // update song name (if needed)
@@ -108,43 +127,45 @@ fun EditSongPanel(project: Project, song: Song?, scrollState: ScrollState = reme
                                 }
                             }
                             Row {
-                                val audioFileName by derivedStateOf { song?.audioFile?.name ?: "" }
-                                key(audioFileName) {
-                                    TextField(
-                                        state = rememberTextFieldState(audioFileName),
-                                        modifier = Modifier.padding(vertical = 6.dp).fillMaxWidth(),
-                                        readOnly = true,
-                                        enabled = false,
-                                        trailingIcon = {
-                                            IconButton(onClick = {
-                                                // open replace audio dialog
-                                                require(song != null) { "Song must not be null for swap button" }
-                                                DialogManager.openDialog(ReplaceAudioDialog(project, song))
-                                            }) {
-                                                Icon(AllIconsKeys.Actions.SwapPanels, null)
+                                if(creating) {
+                                    // File Input for Audio
+                                    Box(Modifier.padding(vertical = 6.dp)) {
+                                        FilePathField(audioFilePathFieldState, modifier = Modifier.fillMaxWidth())
+                                        LaunchedEffect(audioFilePathFieldState) {
+                                            snapshotFlow { audioFilePathFieldState.file }.collect {
+                                                println("Flow collected: $it")
                                             }
                                         }
-                                    )
+                                    }
+                                } else {
+                                    // Placeholder audio input with swap button
+                                    val audioFileName by derivedStateOf { song?.audioFile?.name ?: "" }
+                                    key(audioFileName) {
+                                        TextField(
+                                            state = rememberTextFieldState(audioFileName),
+                                            modifier = Modifier.padding(vertical = 6.dp).fillMaxWidth(),
+                                            readOnly = true,
+                                            enabled = false,
+                                            trailingIcon = {
+                                                IconButton(onClick = {
+                                                    // open replace audio dialog
+                                                    require(song != null) { "Song must not be null for swap button" }
+                                                    DialogManager.openDialog(ReplaceAudioDialog(project, song))
+                                                }) {
+                                                    Icon(AllIconsKeys.Actions.SwapPanels, null)
+                                                }
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
-                    OpenableGroupHeader(
-                        modifier = Modifier.padding(vertical = 6.dp),
-                        open = editSongPanelState.audioEncodingOpened,
-                        onOpenedChange = { editSongPanelState.audioEncodingOpened = it },
-                        text = "Audio Encoding",
-                    )
-                    //get audio format
-                    val audioFormat: AudioFormat? = if (song != null) {
-                        getAudioFormat(song.audioFile)
-                    } else {
-                        // todo: get audio format of selected file during creation
-                        null
-                    }
-                    if(editSongPanelState.audioEncodingOpened) {
-                        AudioEncodingInformationRow(audioFormat, Modifier.padding(start = 24.dp))
-                    }
+                    // Banners or Encoding Information
+                    Spacer(Modifier.height(6.dp))
+                    AudioBannersOrEncodingInformationRows(project, audioFilePathFieldState)
+                    // Spectrogram Parameters
+                    Spacer(Modifier.height(6.dp))
                     OpenableGroupHeader(
                         modifier = Modifier.padding(vertical = 6.dp),
                         open = editSongPanelState.spectrogramParametersOpened,
@@ -154,7 +175,7 @@ fun EditSongPanel(project: Project, song: Song?, scrollState: ScrollState = reme
                     if(editSongPanelState.spectrogramParametersOpened) {
                         Row(Modifier.padding(start = 24.dp)) {
                             key(spectrogramConfigurationState) {
-                                SpectrogramConfigurationPane(spectrogramConfigurationState, audioFormat?.sampleRate)
+                                SpectrogramConfigurationPane(spectrogramConfigurationState, getAudioFormatOrNull(audioFilePathFieldState.file)?.sampleRate)
                             }
                         }
                     }
