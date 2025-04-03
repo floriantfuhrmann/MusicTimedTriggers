@@ -5,7 +5,6 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
-import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
 import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
 import java.io.File
@@ -234,9 +233,27 @@ class TriggerSequenceLine(
     }
 
     fun removeTrigger(trigger: AbstractPlacedTrigger) {
+        // this could potentially be slightly more efficient by using a binary search to find index, but would still be
+        // in O(n) since remove needs to shift elements
         triggers.remove(trigger)
         if(activeTrigger == trigger) {
             activeTrigger = null
+        }
+    }
+
+    /**
+     * Removes all triggers starting at or after [timePosition]
+     *
+     * @return true if any trigger was removed, false otherwise
+     */
+    fun removeTriggersStartingAtOrAfter(timePosition: Double): Boolean {
+        val firstRemoveIndex = getIndexOfTriggerAtOrIndexOfTriggerAfter(timePosition)
+        val subList = triggers.subList(firstRemoveIndex, triggers.size)
+        if(subList.isEmpty()) {
+            return false
+        } else {
+            subList.clear()
+            return true
         }
     }
 

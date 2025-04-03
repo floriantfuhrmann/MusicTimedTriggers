@@ -108,21 +108,24 @@ fun EditSongPanel(project: Project, song: Song?, scrollState: ScrollState = reme
                                 }
                             }
                             Row {
-                                TextField(
-                                    state = rememberTextFieldState(song?.audioFile?.name ?: ""),
-                                    modifier = Modifier.padding(vertical = 6.dp).fillMaxWidth(),
-                                    readOnly = true,
-                                    enabled = false,
-                                    trailingIcon = {
-                                        IconButton(onClick = {
-                                            // open replace audio dialog
-                                            require(song != null) { "Song must not be null for swap button" }
-                                            DialogManager.openDialog(ReplaceAudioDialog(project, song))
-                                        }) {
-                                            Icon(AllIconsKeys.Actions.SwapPanels, null)
+                                val audioFileName by derivedStateOf { song?.audioFile?.name ?: "" }
+                                key(audioFileName) {
+                                    TextField(
+                                        state = rememberTextFieldState(audioFileName),
+                                        modifier = Modifier.padding(vertical = 6.dp).fillMaxWidth(),
+                                        readOnly = true,
+                                        enabled = false,
+                                        trailingIcon = {
+                                            IconButton(onClick = {
+                                                // open replace audio dialog
+                                                require(song != null) { "Song must not be null for swap button" }
+                                                DialogManager.openDialog(ReplaceAudioDialog(project, song))
+                                            }) {
+                                                Icon(AllIconsKeys.Actions.SwapPanels, null)
+                                            }
                                         }
-                                    }
-                                )
+                                    )
+                                }
                             }
                         }
                     }

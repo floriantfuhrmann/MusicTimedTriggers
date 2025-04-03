@@ -104,9 +104,8 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
             }
             Spacer(Modifier.weight(1f))
             // Placed Triggers after new audio end
-            val usagesAfterEnd = getDurationOrNull(filePathFieldState.file)?.let { duration ->
-                song.searchUsagesAfterTime(duration)
-            }
+            val duration = getDurationOrNull(filePathFieldState.file)
+            val usagesAfterEnd = if(duration != null) song.searchUsagesAfterTime(duration) else null
             if(!usagesAfterEnd.isNullOrEmpty() && fileLocationIsValid) {
                 Row(Modifier.padding(vertical = 10.dp)) {
                     InterimInlineBanner(
@@ -119,8 +118,16 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
                     ) {
                         Link("Manage triggers\u2026", {
                             DialogManager.openDialog(TriggerUsagesDialog(TriggerUsagesDialog.Type.ShortenSequenceByReplacing, usagesAfterEnd, onConfirm = {
-                                // todo
-                                println("TODO: Remove affected triggers and replace audio")
+                                // dialogs will be closed automatically
+                                // remove all protruding triggers
+                                require(duration != null)
+                                song.sequence.lines.forEach {
+                                    if(it.removeTriggersStartingAtOrAfter(duration)) {
+                                        it.saveToFile()
+                                    }
+                                }
+                                // replace the audio file
+                                song.replaceAudioFile(filePathFieldState.file)
                             }), closeOthers = false)
                         })
                     }
@@ -135,8 +142,10 @@ class ReplaceAudioDialog(val project: Project, val song: Song) : Dialog("Replace
                     modifier = Modifier.padding(start = 12.dp),
                     enabled = usagesAfterEnd != null && usagesAfterEnd.isEmpty() && filePathFieldState.isValid && encodingIsValid && fileLocationIsValid,
                     onClick = {
-                        // todo
-                        println("TODO: Replace audio (since this button is available it should be possible)")
+                        // close all dialogs
+                        DialogManager.closeAllDialogs()
+                        // and replace the audio file
+                        song.replaceAudioFile(filePathFieldState.file)
                     }) {
                     Text("Replace")
                 }

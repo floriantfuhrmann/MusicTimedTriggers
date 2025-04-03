@@ -22,14 +22,16 @@ import java.util.UUID
 class Song (
     private val project: Project,
     name: String,
-    var audioFile: File,
+    audioFile: File,
     var spectrogramParams: SpectrogramParameters,
     val sequence: TriggerSequence
 ) {
 
     var name: String by mutableStateOf(name)
+    var audioFile: File by mutableStateOf(audioFile)
     var spectrogram: Spectrogram? = Spectrogram.createSpectrogram(project, audioFile, spectrogramParams)
 
+    @Deprecated("Use independent update functions instead")
     fun edit(newName: String, newAudioFile: File, newSpectrogramParams: SpectrogramParameters) {
         //update values
         name = newName
@@ -78,6 +80,36 @@ class Song (
         oldSpectrogram?.unloadImages()
         //notify project (so project can be saved)
         project.updateSong(this)
+    }
+
+    fun replaceAudioFile(newAudioFile: File) {
+        //update value
+        audioFile = newAudioFile
+        //create new spectrogram
+        val newSpectrogram = Spectrogram.createSpectrogram(project, audioFile, spectrogramParams)
+        require(newSpectrogram != null) { "Spectrogram creation failed!" }
+        //remember old spectrogram
+        val oldSpectrogram = spectrogram
+        //update spectrogram reference
+        spectrogram = newSpectrogram
+        //generate images (if song is opened)
+        if(isOpened()) {
+            newSpectrogram.loadOrGenerateImages()
+        }
+        //unload images of old spectrogram (to also cancel possibly still active generation)
+        oldSpectrogram?.unloadImages()
+        //reopen the audio player
+        if(isOpened()) {
+            val previousSecondPosition = currentAudioPlayer.value?.secondPosition ?: 0.0
+            openAudioPlayer(newAudioFile)
+            if(previousSecondPosition <= (currentAudioPlayer.value?.secondDuration ?: 0.0)) {
+                currentAudioPlayer.value?.secondPosition = previousSecondPosition
+            } else {
+                currentAudioPlayer.value?.secondPosition = currentAudioPlayer.value?.secondDuration ?: 0.0
+            }
+        }
+        //notify project (so project can be saved)
+        project.updateSong(this, true)
     }
 
     // Opening and Closing
