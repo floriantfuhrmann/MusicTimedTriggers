@@ -82,6 +82,7 @@ fun SpectrogramConfigurationPane(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, referenceSampleRate: Float?, refreshAnyChangesState: () -> Unit) {
     // Header
@@ -91,12 +92,6 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
     // Selected Option State
     var fromDurationSelected by remember { mutableStateOf(spectrogramParameters.calculateWindowSizeFromDuration) }
 
-    // Target Duration Option
-    RadioButtonRow(
-        text = "Target Duration",
-        selected = fromDurationSelected,
-        onClick = { fromDurationSelected = true }
-    )
     // Target Duration State
     val targetDurationState = remember {
         IntNumberFieldState(
@@ -104,43 +99,51 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
             validRange = 5..500
         )
     }
-    // Target Duration Input with Label
-    Row(Modifier.padding(start = 24.dp).height(IntrinsicSize.Min)) {
-        Column {
-            NumberField(
-                state = targetDurationState,
-                modifier = Modifier.width(60.dp),
-                enabled = fromDurationSelected
+    FlowRow(verticalArrangement = Arrangement.Center) {
+        Column(Modifier.width(IntrinsicSize.Max).fillMaxRowHeight(), verticalArrangement = Arrangement.Center) {
+            // Target Duration Option
+            RadioButtonRow(
+                text = "Target Duration",
+                selected = fromDurationSelected,
+                onClick = { fromDurationSelected = true }
             )
         }
-        Column(Modifier.padding(start = 2.dp).fillMaxHeight(), Arrangement.Center) {
-            Text("milliseconds", maxLines = 1)
-        }
-    }
-    // Duration and sample count calculated from target duration
-    if(referenceSampleRate != null && targetDurationState.value != null && targetDurationState.isValid) {
-        Row(Modifier.padding(start = 24.dp)) {
-            val windowSize = targetDurationState.value.let {
-                if (it != null)
-                    calculateWindowSizeFromTargetDuration(it / 1000.0, referenceSampleRate)
-                else null
+        Column(Modifier.width(IntrinsicSize.Min).fillMaxRowHeight(), verticalArrangement = Arrangement.Center) {
+            // Target Duration Input with Label
+            Row(Modifier.padding(start = 24.dp).height(IntrinsicSize.Min)) {
+                Column {
+                    NumberField(
+                        state = targetDurationState,
+                        modifier = Modifier.width(60.dp),
+                        enabled = fromDurationSelected
+                    )
+                }
+                Column(Modifier.padding(start = 2.dp).fillMaxHeight(), Arrangement.Center) {
+                    Text("milliseconds", maxLines = 1)
+                }
             }
-            val actualDurationInMilliseconds = windowSize?.let { (it / referenceSampleRate * 1000).roundToInt() }
-            Text(
-                "Actual: ${actualDurationInMilliseconds}ms (${windowSize} samples)",
-                fontSize = 0.8.em,
-                color = JewelTheme.globalColors.text.disabled
-            )
+        }
+        Column(Modifier.width(IntrinsicSize.Max).fillMaxRowHeight(), verticalArrangement = Arrangement.Center) {
+            // Duration and sample count calculated from target duration
+            if(referenceSampleRate != null && targetDurationState.value != null && targetDurationState.isValid) {
+                Row(Modifier.padding(start = 24.dp).height(IntrinsicSize.Max)) {
+                    val windowSize = targetDurationState.value.let {
+                        if (it != null)
+                            calculateWindowSizeFromTargetDuration(it / 1000.0, referenceSampleRate)
+                        else null
+                    }
+                    val actualDurationInMilliseconds = windowSize?.let { (it / referenceSampleRate * 1000).roundToInt() }
+                    Text(
+                        "Actual: ${actualDurationInMilliseconds}ms (${windowSize} samples)".replace(' ', '\u00A0'),
+                        fontSize = 0.8.em,
+                        color = JewelTheme.globalColors.text.disabled
+                    )
+                }
+            }
         }
     }
 
     // Fixed Size Option
-    // Radio Button
-    RadioButtonRow(
-        text = "Fixed",
-        selected = !spectrogramParameters.calculateWindowSizeFromDuration,
-        onClick = { fromDurationSelected = false }
-    )
     // Fixed Size States
     val fixedSamplesCountState = remember {
         IntNumberFieldState(
@@ -149,41 +152,55 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
         )
     }
     val fixedSamplesCountValid by derivedStateOf { fixedSamplesCountState.isValid && fixedSamplesCountState.value?.isPowerOf2() ?: false }
-    // Fixed Size Input with Label
-    Row(Modifier.padding(start = 24.dp).height(IntrinsicSize.Min)) {
-        Column {
-            if(fixedSamplesCountState.isValid && !fixedSamplesCountValid) {
-                // show power of 2 error (because we know it's not a range error since the number field state is valid)
-                PopupContainer(
-                    onDismissRequest = {},
-                    horizontalAlignment = Alignment.Start,
-                    popupProperties = PopupProperties(focusable = false)
-                ) {
-                    Box(modifier = Modifier.background(JewelTheme.globalColors.outlines.error).padding(5.dp)) {
-                        Text("must be power of 2", color = JewelTheme.globalColors.text.error)
+    FlowRow {
+        Column(Modifier.width(IntrinsicSize.Max).fillMaxRowHeight(), verticalArrangement = Arrangement.Center) {
+            // Radio Button
+            RadioButtonRow(
+                text = "Fixed",
+                selected = !spectrogramParameters.calculateWindowSizeFromDuration,
+                onClick = { fromDurationSelected = false }
+            )
+        }
+        Column(Modifier.width(IntrinsicSize.Max).fillMaxRowHeight(), verticalArrangement = Arrangement.Center) {
+            // Fixed Size Input with Label
+            Row(Modifier.padding(start = 24.dp).height(IntrinsicSize.Min)) {
+                Column {
+                    if(fixedSamplesCountState.isValid && !fixedSamplesCountValid) {
+                        // show power of 2 error (because we know it's not a range error since the number field state is valid)
+                        PopupContainer(
+                            onDismissRequest = {},
+                            horizontalAlignment = Alignment.Start,
+                            popupProperties = PopupProperties(focusable = false)
+                        ) {
+                            Box(modifier = Modifier.background(JewelTheme.globalColors.outlines.error).padding(5.dp)) {
+                                Text("must be power of 2", color = JewelTheme.globalColors.text.error)
+                            }
+                        }
                     }
+                    NumberField(
+                        state = fixedSamplesCountState,
+                        modifier = Modifier.width(60.dp),
+                        enabled = !fromDurationSelected,
+                        outline = if(fixedSamplesCountValid) Outline.None else Outline.Error
+                    )
+                }
+                Column(Modifier.padding(start = 2.dp).fillMaxHeight(), Arrangement.Center) {
+                    Text("samples", maxLines = 1)
                 }
             }
-            NumberField(
-                state = fixedSamplesCountState,
-                modifier = Modifier.width(60.dp),
-                enabled = !fromDurationSelected,
-                outline = if(fixedSamplesCountValid) Outline.None else Outline.Error
-            )
         }
-        Column(Modifier.padding(start = 2.dp).fillMaxHeight(), Arrangement.Center) {
-            Text("samples", maxLines = 1)
-        }
-    }
-    // Duration calculated from fixed size
-    if(referenceSampleRate != null && fixedSamplesCountState.value != null && fixedSamplesCountState.isValid && fixedSamplesCountValid) {
-        Row(Modifier.padding(start = 24.dp)) {
-            val actualDurationInMilliseconds = fixedSamplesCountState.value?.let { (it / referenceSampleRate * 1000).roundToInt() }
-            Text(
-                "Duration: ${actualDurationInMilliseconds}ms",
-                fontSize = 0.8.em,
-                color = JewelTheme.globalColors.text.disabled
-            )
+        Column(Modifier.width(IntrinsicSize.Max).fillMaxRowHeight(), verticalArrangement = Arrangement.Center) {
+            // Duration calculated from fixed size
+            if(referenceSampleRate != null && fixedSamplesCountState.value != null && fixedSamplesCountState.isValid && fixedSamplesCountValid) {
+                Row(Modifier.padding(start = 24.dp)) {
+                    val actualDurationInMilliseconds = fixedSamplesCountState.value?.let { (it / referenceSampleRate * 1000).roundToInt() }
+                    Text(
+                        "Duration: ${actualDurationInMilliseconds}ms",
+                        fontSize = 0.8.em,
+                        color = JewelTheme.globalColors.text.disabled
+                    )
+                }
+            }
         }
     }
 
@@ -253,7 +270,7 @@ fun OverlapFactorConfigurationRows(spectrogramParameters: SpectrogramParameters,
     }
     // Overlap Factor Input with Label
     Row(Modifier.height(IntrinsicSize.Min)) {
-        Column(Modifier.fillMaxHeight().padding(end = 2.dp), Arrangement.Center) {
+        Column(Modifier.fillMaxHeight().padding(end = 6.dp), Arrangement.Center) {
             Text("Overlap Factor:", maxLines = 1)
         }
         Column {
@@ -285,7 +302,7 @@ fun MaxAmpRangeConfigurationRows(spectrogramParameters: SpectrogramParameters, r
     }
     // Max Amp Range Input with Label
     Row(Modifier.height(IntrinsicSize.Min)) {
-        Column(Modifier.fillMaxHeight().padding(end = 2.dp), Arrangement.Center) {
+        Column(Modifier.fillMaxHeight().padding(end = 6.dp), Arrangement.Center) {
             Text("Max Amp Range:", maxLines = 1)
         }
         Column {
@@ -305,6 +322,7 @@ fun MaxAmpRangeConfigurationRows(spectrogramParameters: SpectrogramParameters, r
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun YAxisConfigurationRows(spectrogramParameters: SpectrogramParameters, refreshAnyChangesState: () -> Unit) {
     // Header
@@ -326,22 +344,28 @@ fun YAxisConfigurationRows(spectrogramParameters: SpectrogramParameters, refresh
         selected = !log10YAxisSelected,
         onClick = { log10YAxisSelected = false }
     )
-    RadioButtonRow(
-        text = "Logarithmic",
-        selected = log10YAxisSelected,
-        onClick = { log10YAxisSelected = true }
-    )
-    // Y-Axis Scale Factor Input with Label
-    Row(Modifier.padding(start = 24.dp).height(IntrinsicSize.Min)) {
-        Column(Modifier.fillMaxHeight().padding(end = 2.dp), Arrangement.Center) {
-            Text("Scale:", maxLines = 1)
-        }
-        Column {
-            NumberField(
-                state = log10YAxisScaleState,
-                modifier = Modifier.width(60.dp),
-                enabled = log10YAxisSelected
+    FlowRow {
+        Column(Modifier.fillMaxRowHeight(), verticalArrangement = Arrangement.Center) {
+            RadioButtonRow(
+                text = "Logarithmic",
+                selected = log10YAxisSelected,
+                onClick = { log10YAxisSelected = true }
             )
+        }
+        Column(Modifier.fillMaxRowHeight(), verticalArrangement = Arrangement.Center) {
+            // Y-Axis Scale Factor Input with Label
+            Row(Modifier.padding(start = 24.dp).height(IntrinsicSize.Min)) {
+                Column(Modifier.fillMaxHeight().padding(end = 6.dp), Arrangement.Center) {
+                    Text("Scale:", maxLines = 1)
+                }
+                Column {
+                    NumberField(
+                        state = log10YAxisScaleState,
+                        modifier = Modifier.width(60.dp),
+                        enabled = log10YAxisSelected
+                    )
+                }
+            }
         }
     }
     // Export State back to spectrogramParameters
