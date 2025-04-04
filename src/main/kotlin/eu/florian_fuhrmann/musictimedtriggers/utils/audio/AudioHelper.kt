@@ -5,6 +5,7 @@ import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.UnsupportedAudioFileException
 
+@Deprecated("Use ConvertAudioDialog instead.")
 val AVAILABLE_CODECS: List<Codec> = listOf(
     Codec("pcm_s8", "PCM signed 8-bit", false),
     Codec("pcm_s16be", "PCM signed 16-bit big-endian", true),
@@ -16,6 +17,7 @@ val AVAILABLE_CODECS: List<Codec> = listOf(
     Codec("pcm_s64be", "PCM signed 64-bit big-endian", true),
     Codec("pcm_s64le", "PCM signed 64-bit little-endian", false)
 )
+@Deprecated("Use ConvertAudioDialog instead.")
 val AVAILABLE_SAMPLE_RATES: List<Int> = listOf(11025, 22050, 44100)
 
 fun getAudioFormat(audioFile: File): AudioFormat? {

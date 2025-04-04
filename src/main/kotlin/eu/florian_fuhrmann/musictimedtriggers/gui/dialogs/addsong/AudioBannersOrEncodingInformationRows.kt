@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.convertaudio.ConvertAudioDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editsong.AudioEncodingInformationRow
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.FilePathFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.InterimInlineBanner
@@ -57,9 +59,11 @@ fun AudioBannersOrEncodingInformationRows(project: Project, filePathFieldState: 
                 Modifier.fillMaxWidth(),
                 "Audio file has to be in PCM Signed format.",
             ) {
-                Link("Convert (requires ffmpeg)", {
-                    // todo
-                    println("TODO: Open ffmpeg converter")
+                Link("Convert\u2026 (requires ffmpeg)", {
+                    // open convert audio dialog
+                    DialogManager.openDialog(ConvertAudioDialog(), false)
+                    // todo: pass file to convert and project
+                    // todo: pass callback to replace selected file
                 })
             }
         }

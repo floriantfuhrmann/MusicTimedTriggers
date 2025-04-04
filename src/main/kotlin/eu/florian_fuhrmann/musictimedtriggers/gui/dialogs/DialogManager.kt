@@ -77,19 +77,23 @@ object DialogManager {
                         getCenteredAbsolutePosition(frameWindowScope, 500.dp, 350.dp),
                         500.dp, 350.dp
                     ),
-                    onCloseRequest = { closeAllDialogs() },
+                    onCloseRequest = { closeDialog(dialog) },
                     alwaysOnTop = alwaysOnTop,
                     title = dialog.title()
                 ) {
                     this.window.minimumSize = Dimension(350, 350)
                     // Dialog Content
                     dialog.Content()
-                    // (new) Alerts
-                    AlertsManager.AlertsContainer(this@DialogWindow)
+                    // Alerts Container (only for last dialog)
+                    if(dialog == openedDialogs.last()) {
+                        AlertsManager.AlertsContainer(this@DialogWindow)
+                    }
                 }
                 // put a box behind the dialog to prevent the user from interacting with the main window
-                Box(modifier = Modifier.zIndex(2f).fillMaxSize().background(Color.Black.copy(alpha = 0.5f))) {
-                    // empty box
+                if(dialog == openedDialogs.last()) {
+                    Box(modifier = Modifier.zIndex(2f).fillMaxSize().background(Color.Black.copy(alpha = 0.5f))) {
+                        // empty box
+                    }
                 }
             } else {
                 // non-windowed dialogs are displayed inline

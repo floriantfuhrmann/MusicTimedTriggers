@@ -29,6 +29,7 @@ import java.io.File
 import java.io.IOException
 import kotlin.concurrent.thread
 
+@Deprecated("Use ConvertAudioDialog instead.")
 @Composable
 fun ConvertAudioFileOptions(
     project: Project,
