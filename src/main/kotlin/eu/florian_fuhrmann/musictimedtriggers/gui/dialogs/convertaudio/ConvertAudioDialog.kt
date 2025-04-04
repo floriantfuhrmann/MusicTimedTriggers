@@ -7,16 +7,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlertScope
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.components.CloseDialogButton
+import eu.florian_fuhrmann.musictimedtriggers.project.Project
+import eu.florian_fuhrmann.musictimedtriggers.utils.file.findAvailableTargetFile
+import eu.florian_fuhrmann.musictimedtriggers.utils.file.getStringWithoutSpecialChars
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
-import java.io.IOException
+import java.io.File
 
 const val LITTLE_ENDIAN_FILE_EXTENSION = "wav"
 const val BIG_ENDIAN_FILE_EXTENSION = "aiff"
@@ -25,7 +29,9 @@ val SAMPLE_RATES = listOf(11025, 22050, 44100) // in Hz
 val SAMPLE_SIZE_ITEMS = SAMPLE_SIZES.map { "$it bit" }
 val SAMPLE_RATE_ITEMS = SAMPLE_RATES.map { "${it/1000.0} kHz" }
 
-class ConvertAudioDialog : Dialog("Convert Audio") {
+class ConvertAudioDialog(val project: Project, val file: File, val onConverted: (File) -> Unit) : Dialog("Convert Audio") {
+
+    var converting by mutableStateOf(false)
 
     @OptIn(ExperimentalLayoutApi::class)
     @Composable
@@ -93,12 +99,86 @@ class ConvertAudioDialog : Dialog("Convert Audio") {
                 Spacer(Modifier.weight(1f))
                 CloseDialogButton(text = "Close", dialog = this@ConvertAudioDialog)
                 Spacer(Modifier.width(12.dp))
-                DefaultButton(onClick = {
-                    println("Todo: Convert audio file") // todo
+                DefaultButton(
+                    enabled = !converting,
+                    onClick = {
+                    convert(
+                        SAMPLE_SIZES[selectedSampleSizeIndex],
+                        SAMPLE_RATES[selectedSampleRateIndex],
+                        bigEndian,
+                    )
                 }) {
                     Text("Convert")
                 }
             }
+        }
+    }
+
+    private fun convert(sampleSizeInBit: Int, sampleRateInHz: Int, bigEndian: Boolean) {
+        // abort if already converting
+        if(converting) {
+            return
+        }
+        // mark busy
+        converting = true
+        // construct codec name
+        var codec = "pcm_s$sampleSizeInBit"
+        if(sampleSizeInBit != 8) codec += if(bigEndian) "be" else "le"
+        // construct file extension
+        val fileExtension = if(bigEndian || sampleSizeInBit == 8) BIG_ENDIAN_FILE_EXTENSION else LITTLE_ENDIAN_FILE_EXTENSION
+        // construct output file name
+        val outputFileName = "${getStringWithoutSpecialChars(file.nameWithoutExtension)}_converted_${codec}_${sampleRateInHz}Hz.$fileExtension"
+        // get target file
+        val targetFile = findAvailableTargetFile(project.getAudioDirectory(), outputFileName)
+        // construct command
+        val command = listOf(
+            "ffmpeg",
+            "-i", file.canonicalPath,
+            "-acodec", codec,
+            "-ar", sampleRateInHz.toString(),
+            targetFile.canonicalPath
+        )
+        // execute command
+        val commandResult = execCommandOrShowErrorAlert(command)
+        // mark no longer busy
+        converting = false
+        // only continue if command result is not null
+        if(commandResult == null) return
+        // check whether command was successful
+        if(commandResult.exitCode == 0) {
+            // check if output file exists
+            if(targetFile.exists()) {
+                // close dialog
+                DialogManager.closeDialog(this@ConvertAudioDialog)
+                // call onConverted callback
+                onConverted(targetFile)
+            } else {
+                // show error message
+                BasicAlert(
+                    type = BasicAlert.Type.Error,
+                    title = "Output file does not exist",
+                    buttons = { OKButton() }
+                ) {
+                    Column {
+                        Row {
+                            Text("The command was executed successfully, but the output file does not exist.")
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Row {
+                            ShowFullCommandOutputLink(command, commandResult)
+                        }
+                    }
+                }.show()
+            }
+        } else {
+            // show error message
+            BasicAlert(
+                type = BasicAlert.Type.Error,
+                title = "Error (Exit Code: ${commandResult.exitCode})",
+                buttons = { OKButton() }
+            ) {
+                ShowFullCommandOutputLink(command, commandResult)
+            }.show()
         }
     }
 
@@ -123,12 +203,11 @@ fun SelectionRow(items: List<String>, onSelectedIndexChange: (Int) -> Unit) {
     }
 }
 
-@OptIn(DelicateCoroutinesApi::class)
 private fun checkFFmpegVersion() {
     val command = listOf("ffmpeg", "-version")
-    val commandResult = execCommand(command)
+    val commandResult = execCommandOrShowErrorAlert(command) ?: return
     var ffmpegVersion: String? = null
-    if(commandResult != null && commandResult.exitCode == 0 && commandResult.output.isNotEmpty()) {
+    if(commandResult.exitCode == 0 && commandResult.output.isNotEmpty()) {
         val matchResult = Regex("ffmpeg version ([^ ]+)").find(commandResult.output)
         if(matchResult != null) {
             val (version) = matchResult.destructured
@@ -142,38 +221,59 @@ private fun checkFFmpegVersion() {
             OKButton()
         }
     ) {
-        if (commandResult != null) {
-            Link("Show Full Command Output", {
-                // close alert
-                close()
-                // open dialog with a delay of 10ms to allow the alert to fully close
-                GlobalScope.launch {
-                    delay(10)
-                    // open dialog with command output (but keep open other dialogs)
-                    DialogManager.openDialog(CommandResultDialog(command, commandResult), false)
-                }
-            })
-        } else {
-            Text("Error executing command")
-        }
+        ShowFullCommandOutputLink(command, commandResult)
     }.show()
+}
+
+@OptIn(DelicateCoroutinesApi::class)
+@Composable
+fun BasicAlertScope.ShowFullCommandOutputLink(command: List<String>, commandResult: CommandResult) {
+    Link("Show Full Command Output", {
+        // close alert
+        close()
+        // open dialog with a delay of 10ms to allow the alert to fully close
+        GlobalScope.launch {
+            delay(10)
+            // open dialog with command output (but keep open other dialogs)
+            DialogManager.openDialog(CommandResultDialog(command, commandResult), false)
+        }
+    })
 }
 
 data class CommandResult(
     val output: String,
     val exitCode: Int
 )
-private fun execCommand(command: List<String>): CommandResult? {
-    try {
-        val proc = ProcessBuilder(command)
-            .redirectOutput(ProcessBuilder.Redirect.PIPE)
-            .redirectError(ProcessBuilder.Redirect.PIPE)
-            .start()
+private fun execCommand(command: List<String>): CommandResult {
+    val proc = ProcessBuilder(command)
+        .redirectOutput(ProcessBuilder.Redirect.PIPE)
+        .redirectErrorStream(true)
+        .start()
 
-        val exitCode = proc.waitFor()
-        return CommandResult(proc.inputStream.bufferedReader().readText(), exitCode)
-    } catch(e: IOException) {
-        e.printStackTrace()
-        return null
+    val exitCode = proc.waitFor()
+    return CommandResult(proc.inputStream.bufferedReader().readText(), exitCode)
+}
+private fun execCommandOrShowErrorAlert(command: List<String>): CommandResult? {
+    return try {
+        execCommand(command)
+    } catch (e: Exception) {
+        // show error message
+        BasicAlert(
+            type = BasicAlert.Type.Error,
+            title = "Error executing command",
+            buttons = { OKButton() }
+        ) {
+            Column {
+                Row {
+                    Text(command.joinToString(" "), color = JewelTheme.globalColors.text.disabled)
+                }
+                Spacer(Modifier.height(8.dp))
+                Row {
+                    Text("${e.message}")
+                }
+            }
+        }.show()
+        // return null
+        null
     }
 }

@@ -61,9 +61,11 @@ fun AudioBannersOrEncodingInformationRows(project: Project, filePathFieldState: 
             ) {
                 Link("Convert\u2026 (requires ffmpeg)", {
                     // open convert audio dialog
-                    DialogManager.openDialog(ConvertAudioDialog(), false)
-                    // todo: pass file to convert and project
-                    // todo: pass callback to replace selected file
+                    DialogManager.openDialog(ConvertAudioDialog(
+                        project = project,
+                        file = filePathFieldState.file,
+                        onConverted = { filePathFieldState.file = it }
+                    ), false)
                 })
             }
         }
