@@ -49,7 +49,12 @@ fun InterimInlineBanner(
     ) {
         Row(Modifier.padding(12.dp)) {
             Column(Modifier.padding(end = 8.dp)) {
-                Icon(AllIconsKeys.General.BalloonError, null)
+                Icon(when(type) {
+                    InterimInlineBannerType.Info -> AllIconsKeys.General.BalloonInformation
+                    InterimInlineBannerType.Success -> AllIconsKeys.Debugger.ThreadStates.Idle
+                    InterimInlineBannerType.Warning -> AllIconsKeys.General.BalloonWarning
+                    InterimInlineBannerType.Error -> AllIconsKeys.General.BalloonError
+                }, null)
             }
             Column {
                 Text(text)

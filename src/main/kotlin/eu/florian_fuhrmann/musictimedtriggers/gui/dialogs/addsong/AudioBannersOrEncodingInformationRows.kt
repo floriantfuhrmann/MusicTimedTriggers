@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.convertaudio.ConvertAudioDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.convertaudio.convertWithoutUI
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editsong.AudioEncodingInformationRow
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.FilePathFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.InterimInlineBanner
@@ -17,6 +18,7 @@ import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getAudioFormatOrNull
 import eu.florian_fuhrmann.musictimedtriggers.utils.file.findAvailableTargetFile
 import org.jetbrains.jewel.ui.component.Link
+import java.io.File
 import java.nio.file.Files
 import javax.sound.sampled.AudioFormat
 
@@ -31,8 +33,9 @@ fun AudioBannersOrEncodingInformationRows(project: Project, filePathFieldState: 
         }
     val encodingIsValid = audioFormat != null && audioFormat.encoding == AudioFormat.Encoding.PCM_SIGNED
     val fileLocationIsValid = project.isFileInsideAudioDirectory(filePathFieldState.file, false)
+    val conversionResult = remember { ConversionResultState() }
     // Move/Copy Banner
-    if(encodingIsValid && !fileLocationIsValid) {
+    if (encodingIsValid && !fileLocationIsValid) {
         Row {
             InterimInlineBanner(
                 InterimInlineBannerType.Error,
@@ -52,21 +55,53 @@ fun AudioBannersOrEncodingInformationRows(project: Project, filePathFieldState: 
         }
     }
     // Convert Banner
-    if(!encodingIsValid && filePathFieldState.isValid) {
+    if (!encodingIsValid && filePathFieldState.isValid) {
         Row {
             InterimInlineBanner(
                 InterimInlineBannerType.Error,
                 Modifier.fillMaxWidth(),
                 "Audio file has to be in PCM Signed format.",
             ) {
-                Link("Convert\u2026 (requires ffmpeg)", {
-                    // open convert audio dialog
-                    DialogManager.openDialog(ConvertAudioDialog(
+                val onConverted: (File, String, Int) -> Unit = { targetFile, codecName, sampleRateInHz ->
+                    filePathFieldState.file = targetFile
+                    conversionResult.converted = true
+                    conversionResult.codec = codecName
+                    conversionResult.sampleRateInHz = sampleRateInHz
+                }
+                // Link to convert audio without UI
+                Link("Convert", {
+                    convertWithoutUI(
                         project = project,
                         file = filePathFieldState.file,
-                        onConverted = { filePathFieldState.file = it }
-                    ), false)
+                        onConverted = onConverted
+                    )
                 })
+                // Link to open convert audio dialog
+                Link("Options\u2026", {
+                    // open convert audio dialog
+                    DialogManager.openDialog(
+                        ConvertAudioDialog(
+                            project = project,
+                            file = filePathFieldState.file,
+                            onConverted = onConverted
+                        ), false
+                    )
+                })
+            }
+        }
+    }
+    // Successful Conversion Banner
+    if (conversionResult.converted) {
+        Row(Modifier.padding(bottom = 6.dp)) {
+            InterimInlineBanner(
+                InterimInlineBannerType.Success,
+                Modifier.fillMaxWidth(),
+                "Audio file was converted to ${conversionResult.codec} ${conversionResult.sampleRateInHz}Hz.",
+            ) {
+                Link(
+                    onClick = { conversionResult.converted = false },
+                    text = "Ok"
+                )
             }
         }
     }
@@ -82,4 +117,10 @@ fun AudioBannersOrEncodingInformationRows(project: Project, filePathFieldState: 
             AudioEncodingInformationRow(audioFormat, Modifier.padding(start = 24.dp, top = 6.dp))
         }
     }
+}
+
+private class ConversionResultState {
+    var converted by mutableStateOf(false)
+    var codec by mutableStateOf("")
+    var sampleRateInHz by mutableStateOf(0)
 }
