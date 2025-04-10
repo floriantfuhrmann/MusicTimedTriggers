@@ -12,6 +12,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redr
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.ScrollableInspectorContentsContainer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.DoubleNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.NumberField
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.TimeNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
@@ -72,19 +73,19 @@ fun EditPlacedTriggerInspector(project: Project) {
 fun TriggerPlacementInputRow(trigger: AbstractPlacedTrigger, triggersLine: TriggerSequenceLine) {
     // States
     val startTimeState = remember {
-        DoubleNumberFieldState(
+        TimeNumberFieldState(
             initialValue = trigger.startTime,
             validRange = triggersLine.getFreeDurationUntil(trigger.startTime)..trigger.endTime - AbstractPlacedTrigger.MINIMUM_TRIGGER_DURATION
         )
     }
     val endTimeState = remember {
-        DoubleNumberFieldState(
+        TimeNumberFieldState(
             initialValue = trigger.endTime,
             validRange = trigger.startTime + AbstractPlacedTrigger.MINIMUM_TRIGGER_DURATION..trigger.endTime + triggersLine.getFreeDurationFrom(trigger.endTime, allowPastSequenceEnd = true)
         )
     }
     val durationState = remember {
-        DoubleNumberFieldState(
+        TimeNumberFieldState(
             initialValue = trigger.duration,
             validRange = AbstractPlacedTrigger.MINIMUM_TRIGGER_DURATION..trigger.duration + triggersLine.getFreeDurationFrom(trigger.endTime, allowPastSequenceEnd = true)
         )
