@@ -318,17 +318,25 @@ class BrowserState(
     /**
      * Adds a new trigger template
      */
-    fun newTriggerTemplate(triggerTemplate: AbstractTriggerTemplate, scrollTo: Boolean = true) {
-        newTriggerTemplates(listOf(triggerTemplate), scrollTo)
+    fun newTriggerTemplate(triggerTemplate: AbstractTriggerTemplate, scrollTo: Boolean = true, select: Boolean = true) {
+        newTriggerTemplates(listOf(triggerTemplate), scrollTo, select)
     }
 
     /**
      * Adds multiple new trigger template
      * @param scrollTo if true scrolls to the first new template
      */
-    fun newTriggerTemplates(newTriggerTemplates: List<AbstractTriggerTemplate>, scrollTo: Boolean = true) {
-        //add templates to templates list
-        templates.addAll(newTriggerTemplates.map { BrowserTemplate.fromTriggerTemplate(it) })
+    fun newTriggerTemplates(newTriggerTemplates: List<AbstractTriggerTemplate>, scrollTo: Boolean = true, select: Boolean = true) {
+        // create new browser templates from trigger templates
+        val newBrowserTemplates = newTriggerTemplates.map { BrowserTemplate.fromTriggerTemplate(it) }
+        // add templates to templates list
+        templates.addAll(newBrowserTemplates)
+        // select the new templates
+        if(select) {
+            selectedTemplates.clear()
+            selectedTemplates.addAll(newBrowserTemplates)
+        }
+        // scroll to the new templates
         if(scrollTo) {
             currentCoroutineScope?.launch {
                 templatesLazyListState.animateScrollToItem(templates.size - newTriggerTemplates.size, 0)
@@ -411,12 +419,15 @@ class BrowserState(
 
     fun paste() {
         val targetGroup = getSelectedTriggerTemplateGroup() ?: return
-        triggersManager.addTriggerTemplates(clipboard.map {
-            //update group for trigger template in clipboard
-            it.group = targetGroup
-            //return trigger template
-            it
-        })
+        triggersManager.addTriggerTemplates(
+            addedTriggerTemplates = clipboard.map {
+                //update group for trigger template in clipboard
+                it.group = targetGroup
+                //return trigger template
+                it
+            },
+            selectNewTemplates = false
+        )
         //replace all with copies so templates can be pasted again
         clipboard = clipboard.map { it.copy() }
     }

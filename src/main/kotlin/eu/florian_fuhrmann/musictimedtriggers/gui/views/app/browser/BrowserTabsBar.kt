@@ -236,7 +236,7 @@ fun AddTemplateButton() {
                             selected = false,
                             onClick = {
                                 expanded = false
-                                openNewEditDialog(triggerType)
+                                addNewTemplate(triggerType)
                             },
                             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
                         ) {
@@ -311,12 +311,13 @@ private fun TabDragHandle(
     }
 }
 
-fun openNewEditDialog(triggerType: TriggerType) {
-    //get currently selected group
-    val selectGroupUuid = ProjectManager.currentProject?.browserState?.selectedGroup?.value?.uuid ?: return
-    val triggerTemplateGroup = ProjectManager.currentProject?.triggersManager?.getTemplateGroup(selectGroupUuid) ?: return
-    //create a new template (but not yet added to the group)
+fun addNewTemplate(triggerType: TriggerType) {
+    // get project
+    val project = ProjectManager.currentProject ?: return
+    // get currently selected group
+    val selectGroupUuid = project.browserState.selectedGroup.value?.uuid ?: return
+    val triggerTemplateGroup = project.triggersManager.getTemplateGroup(selectGroupUuid) ?: return
+    // create a new template and add it to the group
     val triggerTemplate = AbstractTriggerTemplate.create(triggerType, triggerTemplateGroup)
-    //open edit dialog (when done editing the edit dialog should add the template to the group)
-    triggerTemplate.openEditDialog(true)
+    project.triggersManager.addTriggerTemplate(triggerTemplate, selectNewTemplates = true)
 }

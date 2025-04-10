@@ -2,9 +2,6 @@ package eu.florian_fuhrmann.musictimedtriggers.triggers.templates
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.configuration.ConfigurationDialog
-import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggerType
 import eu.florian_fuhrmann.musictimedtriggers.triggers.groups.TriggerTemplateGroup
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
@@ -24,62 +21,19 @@ abstract class AbstractTriggerTemplate(
 ) {
 
     /**
-     * Returns the Triggers Name (displayed in the Triggers Browser and on Placed Triggers)
+     * Returns the Triggers Name (displayed in the Triggers Browser and on
+     * Placed Triggers)
      */
     abstract fun name(): String
 
     abstract fun getType(): TriggerType
 
-    /**
-     * Called when the User wants to edit this Trigger (mostly through the Triggers Browser)
-     * By Default a ConfigurationDialog will be opened with the configuration.
-     *
-     * When Implementing your own Edit Dialog make sure, that if [creating] is true the trigger is added to the triggers
-     * group with [TriggerTemplateGroup.addTemplate] when the user confirms creation. This will also take care of saving
-     * the project.
-     * But if [creating] is false then the trigger needs to be updated in the ui using
-     * [BrowserState.updateTriggerTemplate] after editing is complete and the project needs to be saved using
-     * [Project.save]
-     *
-     * @param creating Specifies weither this template is currently being created. If so the template is not yet added
-     * to the groups templates list and should be done so once the user is finished editing.
-     */
-    @Deprecated("Moving away from dialogs to inspector")
-    fun openEditDialog(creating: Boolean) {
-        DialogManager.openDialog(ConfigurationDialog(
-            configuration = configuration,
-            heading = if (creating) {
-                "Create ${getType().displayName} Template"
-            } else {
-                "Configuring ${name()}"
-            },
-            showCancelButton = creating, //cancel is only possible when the trigger template is currently being created
-            onDone = {
-                if(creating) {
-                    //add trigger to group, that also should update the ui
-                    ProjectManager.currentProject!!.triggersManager.addTriggerTemplate(this)
-                }
-            },
-            onClose = {
-                //if the template is not being created (so already exists in the group) then upon closing it also needs
-                // to be updated because changes are applied anyway
-                if(!creating) {
-                    ProjectManager.currentProject?.browserState?.updateTriggerTemplate(this)
-                    //save group of modified template to file
-                    group.saveToFile(ProjectManager.currentProject?.projectDirectory!!)
-                }
-            }
-        ))
-    }
-
-    /**
-     * Creates a copy of this Trigger Template for another group
-     */
+    /** Creates a copy of this Trigger Template for another group */
     abstract fun copy(): AbstractTriggerTemplate
 
     /**
-     * Creates a JsonObject containing all info of this template. Json has to contain type and uuid. Custom data is
-     * added by #toJson(JsonObject).
+     * Creates a JsonObject containing all info of this template. Json has to
+     * contain type and uuid. Custom data is added by #toJson(JsonObject).
      */
     fun toJson(): JsonObject {
         //create json with type and uuid property

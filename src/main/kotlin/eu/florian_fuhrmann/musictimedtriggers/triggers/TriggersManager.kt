@@ -63,12 +63,13 @@ class TriggersManager(
         triggerTemplateGroup.deleteFile(getCurrentProjectDirectory())
     }
 
-    fun addTriggerTemplate(triggerTemplate: AbstractTriggerTemplate) {
-        addTriggerTemplates(listOf(triggerTemplate))
+    fun addTriggerTemplate(triggerTemplate: AbstractTriggerTemplate, selectNewTemplates: Boolean = false) {
+        addTriggerTemplates(listOf(triggerTemplate), selectNewTemplates)
     }
 
     fun addTriggerTemplates(
-        addedTriggerTemplates: List<AbstractTriggerTemplate>
+        addedTriggerTemplates: List<AbstractTriggerTemplate>,
+        selectNewTemplates: Boolean = false
     ) {
         //init set containing affected groups
         val affectedGroups = mutableSetOf<TriggerTemplateGroup>()
@@ -88,7 +89,7 @@ class TriggersManager(
             affectedGroups.add(triggerTemplate.group)
         }
         //update ui
-        ProjectManager.currentProject?.browserState?.newTriggerTemplates(addedTriggerTemplates, true)
+        ProjectManager.currentProject?.browserState?.newTriggerTemplates(addedTriggerTemplates, scrollTo = true, select = selectNewTemplates)
         //save affected groups in project files
         affectedGroups.forEach { it.saveToFile(getCurrentProjectDirectory()) }
     }

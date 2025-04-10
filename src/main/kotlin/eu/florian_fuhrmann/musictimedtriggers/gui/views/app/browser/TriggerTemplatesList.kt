@@ -51,12 +51,6 @@ fun TriggerTemplatesList() {
                     browserState.selectTemplate(hoveredTemplate, false)
                 }
                 listOfNotNull(
-                    ContextMenuItem("Edit") {
-                        // open edit dialog
-                        if (browserState.hoveredTemplate.value != null) {
-                            hoveredTemplate.getTriggerTemplate().openEditDialog(false)
-                        }
-                    },
                     ContextMenuItem("Search Usages") {
                         searchUsagesOfSelectedTemplates(browserState)
                     },
@@ -78,7 +72,7 @@ fun TriggerTemplatesList() {
                 listOf(
                     ContextMenuItem("Paste") {
                         browserState.paste()
-                    },
+                    }
                 )
             }
         },
@@ -185,6 +179,7 @@ fun TriggerTemplateItem(
                     },
                 ).padding(5.dp),
     ) {
+        // Icon
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.Start,
@@ -202,6 +197,7 @@ fun TriggerTemplateItem(
                 )
             }
         }
+        // Name
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.Start,
@@ -215,68 +211,21 @@ fun TriggerTemplateItem(
                 Text(color = textColor, text = browserTemplate.name.value)
             }
         }
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.Start,
-        ) {
+        // Drag Handle
+        Column(Modifier.padding(start = 5.dp)) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start,
                 modifier = Modifier.fillMaxHeight(),
-            ) {
-                var hovered by remember { mutableStateOf(false) }
-                Icon(
-                    key = MttIcons.pencil,
-                    null,
-                    modifier = Modifier
-                        .alpha(
-                            if (hovered) {
-                                1f
-                            } else {
-                                0.5f
-                            }
-                        )
-                        .size(16.dp)
-                        .pointerHoverIcon(icon = PointerIcon(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)))
-                        .onHover {
-                            hovered = it
-                        }
-                        .clickable(indication = null, interactionSource = null) {
-                            // open edit dialog
-                            browserTemplate.getTriggerTemplate().openEditDialog(false)
-                        },
-                    tint = textColor
-                )
-            }
-        }
-        Column(
-            modifier = Modifier.padding(start = 5.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.fillMaxHeight(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 var hovered by remember { mutableStateOf(false) }
                 Icon(
                     key = MttIcons.contentViewList,
                     null,
-                    modifier =
-                        with(scope) { Modifier.draggableHandle(interactionSource = interactionSource) }
-                            .alpha(
-                                if (hovered) {
-                                    1f
-                                } else {
-                                    0.5f
-                                }
-                            )
-                            .onHover {
-                                hovered = it
-                            }
-                            .size(16.dp),
-                    tint = textColor,
+                    modifier = with(scope) { Modifier.draggableHandle(interactionSource = interactionSource) }
+                        .alpha(if (hovered) 1f else 0.5f)
+                        .onHover { hovered = it }
+                        .size(16.dp),
+                    tint = textColor
                 )
             }
         }
