@@ -1,5 +1,7 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers
 
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.MoveTriggersManager.getTriggerAt
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.MoveTriggersManager.updateTriggerHover
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
@@ -49,6 +51,12 @@ object TriggerSelectionManager {
      */
     val selectedTriggers: MutableSet<AbstractPlacedTrigger> = mutableSetOf()
 
+    /**
+     * the currently selected trigger in a state object, so it can be observed
+     * from compose. null if not exactly one trigger is selected
+     */
+    var singleSelectedTriggerState: MutableState<AbstractPlacedTrigger?> = mutableStateOf(null)
+
     /** keyframes currently in the selection box */
     private var selectionBoxKeyframes: Map<Keyframes.Keyframe, AbstractPlacedIntensityTrigger> = emptyMap()
     /** keyframes that are currently fully selected mapped to their parents */
@@ -65,6 +73,8 @@ object TriggerSelectionManager {
             selectedTriggers.clear()
         }
         selectedTriggers.add(trigger)
+        // update single selected trigger state
+        updateSingleSelectedTriggerState()
         // redraw timeline to show selection
         redrawTimeline()
     }
@@ -84,6 +94,8 @@ object TriggerSelectionManager {
         if (removed && redraw) {
             redrawTimeline()
         }
+        // update single selected trigger state
+        updateSingleSelectedTriggerState()
     }
 
     fun deselectAllTriggersAndKeyframes(redraw: Boolean = true) {
@@ -91,6 +103,17 @@ object TriggerSelectionManager {
         selectedKeyframes.clear()
         if (redraw) {
             redrawTimeline()
+        }
+        // update single selected trigger state
+        updateSingleSelectedTriggerState()
+    }
+
+    private fun updateSingleSelectedTriggerState() {
+        // update single selected trigger state
+        if (selectedTriggers.size == 1) {
+            singleSelectedTriggerState.value = selectedTriggers.first()
+        } else {
+            singleSelectedTriggerState.value = null
         }
     }
 
@@ -126,6 +149,8 @@ object TriggerSelectionManager {
         if (!e.isShiftDown) {
             selectedTriggers.clear()
             selectedKeyframes.clear()
+            // update single selected trigger state
+            updateSingleSelectedTriggerState()
         }
         // start selection
         selecting = true
@@ -171,6 +196,8 @@ object TriggerSelectionManager {
         // reset selection boxes
         selectionBoxTriggers = emptySet()
         selectionBoxKeyframes = emptyMap()
+        // update single selected trigger state
+        updateSingleSelectedTriggerState()
         // redraw timeline to show selection
         redrawTimeline()
         // also update trigger hovered because pointer could have stopped on a trigger

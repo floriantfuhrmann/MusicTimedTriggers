@@ -79,6 +79,8 @@ abstract class AbstractPlacedTrigger(
         }
     }
 
+    fun getConfigurationContext() = PlacedTriggerConfigurationContext(this)
+
     fun toJson(): JsonObject {
         val json = JsonObject()
         json.addProperty("startTime", startTime)

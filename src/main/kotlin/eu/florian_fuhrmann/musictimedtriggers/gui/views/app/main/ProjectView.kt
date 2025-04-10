@@ -16,6 +16,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.TriggerBrows
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.SongEditor
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TimelineFocusManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.InspectorBar
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editplacedtrigger.EditPlacedTriggerInspector
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editsong.EditSongInspector
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.edittemplate.EditTemplateInspector
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.sidebar.Sidebar
@@ -93,6 +94,7 @@ fun ColumnScope.EditorWithBrowserAndInspectorContainer(project: Project, inspect
                 when(MainUiState.inspectorOption) {
                     InspectorOption.Song -> EditSongInspector(project, project.currentSong)
                     InspectorOption.TriggerTemplate -> EditTemplateInspector(project)
+                    InspectorOption.PlacedTrigger -> EditPlacedTriggerInspector(project)
                     else -> {
                         Box(Modifier.fillMaxSize().background(Color.Yellow).padding(5.dp)) {
                             Text(text = "Todo: Inspector Contents", color = Color.Black)
