@@ -12,6 +12,7 @@ import com.godaddy.android.colorpicker.ClassicColorPicker
 import com.godaddy.android.colorpicker.HsvColor
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.GenericColor
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.*
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Tooltip
@@ -21,6 +22,7 @@ class ColorConfigurationEntry(
     configuration: Configuration,
     field: Field,
     configurable: Configurable,
+    context: ConfigurationContext,
     customCheckers: List<RequireCustom>,
     visibleWhen: VisibleWhen?,
     private val showAlphaBar: Boolean,
@@ -28,6 +30,7 @@ class ColorConfigurationEntry(
     configuration,
     field,
     configurable,
+    context,
     customCheckers,
     visibleWhen
 ) {

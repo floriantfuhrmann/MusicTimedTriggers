@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.*
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.CheckResult
 import org.jetbrains.jewel.foundation.modifier.trackActivation
@@ -22,6 +23,7 @@ class StringConfigurationEntry(
     configuration: Configuration,
     field: Field,
     configurable: Configurable,
+    context: ConfigurationContext,
     customCheckers: List<RequireCustom>,
     visibleWhen: VisibleWhen?,
     private val intRange: RequireIntRange?,
@@ -29,6 +31,7 @@ class StringConfigurationEntry(
     configuration,
     field,
     configurable,
+    context,
     customCheckers,
     visibleWhen
 ) {

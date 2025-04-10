@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.IntegerField
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.*
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.Text
@@ -19,6 +20,7 @@ class IntegerConfigurationEntry(
     configuration: Configuration,
     field: Field,
     configurable: Configurable,
+    context: ConfigurationContext,
     customCheckers: List<RequireCustom>,
     visibleWhen: VisibleWhen?,
     private val intRange: RequireIntRange?,
@@ -27,6 +29,7 @@ class IntegerConfigurationEntry(
     configuration,
     field,
     configurable,
+    context,
     customCheckers,
     visibleWhen
 ) {

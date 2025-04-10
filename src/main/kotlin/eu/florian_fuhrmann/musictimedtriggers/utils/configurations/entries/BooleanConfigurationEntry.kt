@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.Configurable
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.RequireCustom
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.VisibleWhen
@@ -18,12 +19,14 @@ class BooleanConfigurationEntry(
     configuration: Configuration,
     field: Field,
     configurable: Configurable,
+    context: ConfigurationContext,
     customCheckers: List<RequireCustom>,
     visibleWhen: VisibleWhen?,
 ) : AbstractConfigurationEntry<Boolean>(
     configuration,
     field,
     configurable,
+    context,
     customCheckers,
     visibleWhen
 ) {

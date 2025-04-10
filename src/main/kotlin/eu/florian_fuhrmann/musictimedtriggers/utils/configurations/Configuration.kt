@@ -56,19 +56,19 @@ abstract class Configuration {
             Int::class.java -> {
                 val intRange = field.annotations.find { it.annotationClass == RequireIntRange::class } as? RequireIntRange
                 val buttonParams = field.annotations.find { it.annotationClass == PlusMinusButtons::class } as? PlusMinusButtons
-                IntegerConfigurationEntry(this, field, configurable, customCheckers, visibleWhen, intRange, buttonParams)
+                IntegerConfigurationEntry(this, field, configurable, context, customCheckers, visibleWhen, intRange, buttonParams)
             }
             Double::class.java -> {
                 val doubleRange = field.annotations.find { it.annotationClass == RequireDoubleRange::class } as? RequireDoubleRange
                 val buttonParams = field.annotations.find { it.annotationClass == PlusMinusButtons::class } as? PlusMinusButtons
-                DoubleConfigurationEntry(this, field, configurable, customCheckers, visibleWhen, doubleRange, buttonParams)
+                DoubleConfigurationEntry(this, field, configurable, context, customCheckers, visibleWhen, doubleRange, buttonParams)
             }
             Boolean::class.java -> {
-                BooleanConfigurationEntry(this, field, configurable, customCheckers, visibleWhen)
+                BooleanConfigurationEntry(this, field, configurable, context, customCheckers, visibleWhen)
             }
             String::class.java -> {
                 val intRange = field.annotations.find { it.annotationClass == RequireIntRange::class } as? RequireIntRange
-                StringConfigurationEntry(this, field, configurable, customCheckers, visibleWhen, intRange)
+                StringConfigurationEntry(this, field, configurable, context, customCheckers, visibleWhen, intRange)
             }
             java.awt.Color::class.java, androidx.compose.ui.graphics.Color::class.java, HsvColor::class.java, GenericColor::class.java -> {
                 val showAlphaBar = field.annotations.find { it.annotationClass == ShowAlphaBar::class } as? ShowAlphaBar
@@ -76,16 +76,17 @@ abstract class Configuration {
                     this,
                     field,
                     configurable,
+                    context,
                     customCheckers,
                     visibleWhen,
                     showAlphaBar != null && showAlphaBar.showAlphaBar
                 )
             }
             Keyframes::class.java -> {
-                KeyframesConfigurationEntry(this, field, configurable, visibleWhen, context)
+                KeyframesConfigurationEntry(this, field, configurable, context, visibleWhen)
             }
             else -> {
-                ErrorConfigurationEntry(this, field, configurable)
+                ErrorConfigurationEntry(this, field, configurable, context)
             }
         }
     }

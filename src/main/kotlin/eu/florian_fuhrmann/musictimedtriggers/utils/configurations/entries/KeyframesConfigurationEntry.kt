@@ -34,12 +34,13 @@ class KeyframesConfigurationEntry(
     configuration: Configuration,
     field: Field,
     configurable: Configurable,
-    visibleWhen: VisibleWhen?,
-    private val context: ConfigurationContext
+    context: ConfigurationContext,
+    visibleWhen: VisibleWhen?
 ) : AbstractConfigurationEntry<String>(
     configuration,
     field,
     configurable,
+    context,
     visibleWhen = visibleWhen
 ) {
     @Composable

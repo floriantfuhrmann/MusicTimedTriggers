@@ -44,6 +44,7 @@ abstract class AbstractTriggerTemplate(
      * @param creating Specifies weither this template is currently being created. If so the template is not yet added
      * to the groups templates list and should be done so once the user is finished editing.
      */
+    @Deprecated("Moving away from dialogs to inspector")
     fun openEditDialog(creating: Boolean) {
         DialogManager.openDialog(ConfigurationDialog(
             configuration = configuration,
