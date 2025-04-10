@@ -581,6 +581,8 @@ object MoveTriggersManager {
         updateTriggerHover(e, false)
         // update cursor
         updateCursor()
+        // also update selected trigger state, so position changes are visible in inspector
+        TriggerSelectionManager.updateSingleSelectedTriggerState()
         // also save all lines (keeping track of which lines were affected during the move might be something for the future)
         val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: throw IllegalStateException("No sequence")
         sequence.lines.forEach { it.saveToFile() }
