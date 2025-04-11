@@ -182,6 +182,15 @@ class Song (
         return currentAudioPlayer.value?.playing?.value ?: false
     }
 
+    fun jumpTo(time: Double, redraw: Boolean = true) {
+        //jump to time
+        currentAudioPlayer.value?.secondPosition = time
+        //redraw timeline
+        if(redraw) {
+            redrawTimeline()
+        }
+    }
+
     // Utility
 
     fun searchUsagesAfterTime(time: Double): List<TriggersManager.TriggerUsage> {

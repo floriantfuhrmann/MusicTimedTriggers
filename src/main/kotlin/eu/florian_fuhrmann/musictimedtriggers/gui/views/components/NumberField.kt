@@ -29,7 +29,8 @@ fun NumberField(
     plusMinusButtons: Boolean = false,
     outline: Outline = Outline.None,
     placeholder: @Composable (() -> Unit)? = null,
-    undecorated: Boolean = false
+    undecorated: Boolean = false,
+    customTrailingIcon: @Composable (() -> Unit)? = null
 ) {
     var textFieldFocused by remember { mutableStateOf(false) }
     if(state.isInValidRange == false && textFieldFocused) {
@@ -91,41 +92,44 @@ fun NumberField(
             }
         },
         trailingIcon = {
-            // only show plus and minus buttons if enabled
-            if(!plusMinusButtons) return@TextField
-            Row {
-                // Minus Button
-                Column {
-                    IconButton(
-                        onClick = {
-                            val newValue = state.value.let {
-                                when (it) {
-                                    is Double -> it - 1.0
-                                    is Int -> it - 1
-                                    else -> return@IconButton
+            // invoke custom trailing icon if present (will replace the plus and minus buttons)
+            if(customTrailingIcon != null) {
+                customTrailingIcon.invoke()
+            } else if(plusMinusButtons) {
+                Row {
+                    // Minus Button
+                    Column {
+                        IconButton(
+                            onClick = {
+                                val newValue = state.value.let {
+                                    when (it) {
+                                        is Double -> it - 1.0
+                                        is Int -> it - 1
+                                        else -> return@IconButton
+                                    }
                                 }
+                                state.textFieldState.setTextAndPlaceCursorAtEnd(newValue.toString())
                             }
-                            state.textFieldState.setTextAndPlaceCursorAtEnd(newValue.toString())
+                        ) {
+                            Icon(AllIconsKeys.General.Remove, null)
                         }
-                    ) {
-                        Icon(AllIconsKeys.General.Remove, null)
                     }
-                }
-                // Plus Button
-                Column {
-                    IconButton(
-                        onClick = {
-                            val newValue = state.value.let {
-                                when (it) {
-                                    is Double -> it + 1.0
-                                    is Int -> it + 1
-                                    else -> return@IconButton
+                    // Plus Button
+                    Column {
+                        IconButton(
+                            onClick = {
+                                val newValue = state.value.let {
+                                    when (it) {
+                                        is Double -> it + 1.0
+                                        is Int -> it + 1
+                                        else -> return@IconButton
+                                    }
                                 }
+                                state.textFieldState.setTextAndPlaceCursorAtEnd(newValue.toString())
                             }
-                            state.textFieldState.setTextAndPlaceCursorAtEnd(newValue.toString())
+                        ) {
+                            Icon(AllIconsKeys.General.Add, null)
                         }
-                    ) {
-                        Icon(AllIconsKeys.General.Add, null)
                     }
                 }
             }
@@ -151,7 +155,8 @@ class IntNumberFieldState(
     override val isDecimal = false
     /**
      * The current value of the field. This is an [Int] or null if the field is
-     * empty or invalid.
+     * empty or can not be parsed.
+     * Warning: It can have a value outside the valid range!
      */
     override val value by derivedStateOf { textFieldState.text.toString().toIntOrNull() }
 }
@@ -163,7 +168,8 @@ class DoubleNumberFieldState(
     override val isDecimal = true
     /**
      * The current value of the field. This is a [Double] or null if the field
-     * is empty or invalid.
+     * is empty or can not be parsed.
+     * Warning: It can have a value outside the valid range!
      */
     override val value by derivedStateOf { textFieldState.text.toString().toDoubleOrNull() }
 }
@@ -185,7 +191,8 @@ class TimeNumberFieldState(
     override val isDecimal = true
     /**
      * The current value of the field. This is a [Double] or null if the field
-     * is empty or invalid.
+     * is empty or can not be parsed.
+     * Warning: It can have a value outside the valid range!
      */
     override val value by derivedStateOf {
         val rawText = textFieldState.text.toString()

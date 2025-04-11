@@ -10,15 +10,24 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.configuration.Configur
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.ScrollableInspectorContentsContainer
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.DoubleNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.NumberField
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.TimeNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
+import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
+import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.ui.component.Link
-import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
+
+/**
+ * object to house global state for the edit placed trigger inspector (so
+ * state which should be persistent across placed triggers)
+ */
+private object GlobalState {
+    var moveStartWhenChangingDuration by mutableStateOf(false)
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -52,7 +61,7 @@ fun EditPlacedTriggerInspector(project: Project) {
                     Spacer(Modifier.height(8.dp))
                     // trigger position settings
                     key(TriggerSelectionManager.singleSelectedTriggerStartTimeState.value, TriggerSelectionManager.singleSelectedTriggerDurationState.value) {
-                        triggersLine?.let { triggersLine -> TriggerPlacementInputRow(trigger, triggersLine) }
+                        triggersLine?.let { triggersLine -> TriggerPlacementInputRow(project, trigger, triggersLine) }
                     }
                     // triggers configuration (with significant padding, so it is clearly separated from the other settings)
                     Spacer(Modifier.height(20.dp))
@@ -70,7 +79,7 @@ fun EditPlacedTriggerInspector(project: Project) {
 }
 
 @Composable
-fun TriggerPlacementInputRow(trigger: AbstractPlacedTrigger, triggersLine: TriggerSequenceLine) {
+fun TriggerPlacementInputRow(project: Project, trigger: AbstractPlacedTrigger, triggersLine: TriggerSequenceLine) {
     // States
     val startTimeState = remember {
         TimeNumberFieldState(
@@ -115,7 +124,11 @@ fun TriggerPlacementInputRow(trigger: AbstractPlacedTrigger, triggersLine: Trigg
         snapshotFlow { durationState.value }.collect { value ->
             if(!durationState.isValid) return@collect
             value?.let {
+                val currentEndTime = trigger.endTime
                 trigger.duration = it
+                if(GlobalState.moveStartWhenChangingDuration) {
+                    trigger.startTime = currentEndTime - it
+                }
                 redrawTimeline()
             }
         }
@@ -135,13 +148,50 @@ fun TriggerPlacementInputRow(trigger: AbstractPlacedTrigger, triggersLine: Trigg
         }
         Column(Modifier.padding(start = 6.dp).height(IntrinsicSize.Min)) {
             Row(Modifier.padding(vertical = 6.dp)) {
-                NumberField(startTimeState, Modifier.fillMaxWidth())
+                NumberField(state = startTimeState, modifier = Modifier.fillMaxWidth(), customTrailingIcon = {
+                    IconButton(
+                        onClick = {
+                            val targetTime = if(startTimeState.isValid) startTimeState.value else null
+                            if(targetTime == null) return@IconButton
+                            project.currentSong?.jumpTo(targetTime)
+                        }
+                    ) {
+                        Icon(AllIconsKeys.Actions.Undo, "Jump to start")
+                    }
+                })
             }
             Row(Modifier.padding(vertical = 6.dp)) {
-                NumberField(endTimeState, Modifier.fillMaxWidth())
+                NumberField(state = endTimeState, modifier = Modifier.fillMaxWidth(), customTrailingIcon = {
+                    IconButton(
+                        onClick = {
+                            val targetTime = if(endTimeState.isValid) endTimeState.value else null
+                            if(targetTime == null) return@IconButton
+                            project.currentSong?.jumpTo(targetTime)
+                        }
+                    ) {
+                        Icon(AllIconsKeys.Actions.Redo, "Jump to end")
+                    }
+                })
             }
             Row(Modifier.padding(vertical = 6.dp)) {
-                NumberField(durationState, Modifier.fillMaxWidth())
+                NumberField(state = durationState, modifier = Modifier.fillMaxWidth(), customTrailingIcon = {
+                    Row {
+                        SelectableIconButton(
+                            modifier = Modifier.trackActivation(),
+                            onClick = { GlobalState.moveStartWhenChangingDuration = true },
+                            selected = GlobalState.moveStartWhenChangingDuration
+                        ) {
+                            Icon(AllIconsKeys.Stub, "Move start")
+                        }
+                        SelectableIconButton(
+                            modifier = Modifier.trackActivation(),
+                            onClick = { GlobalState.moveStartWhenChangingDuration = false },
+                            selected = !GlobalState.moveStartWhenChangingDuration
+                        ) {
+                            Icon(AllIconsKeys.Stub, "Move end")
+                        }
+                    }
+                })
             }
         }
     }
