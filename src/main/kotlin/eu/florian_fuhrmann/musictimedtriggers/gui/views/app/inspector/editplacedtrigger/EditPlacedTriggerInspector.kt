@@ -7,13 +7,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.configuration.ConfigurationBox
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.InspectorOption
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.ScrollableInspectorContentsContainer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.NumberField
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.TimeNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
-import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 import org.jetbrains.jewel.foundation.modifier.trackActivation
@@ -55,7 +56,10 @@ fun EditPlacedTriggerInspector(project: Project) {
                     FlowRow {
                         Text("Instance of ")
                         Link(trigger.triggerTemplate.name(), overflow = TextOverflow.Ellipsis, onClick = {
-                            println("Todo: Select template in browser and open template inspector")
+                            // select the trigger template in the browser
+                            project.browserState.selectGroupAndTemplate(trigger.triggerTemplate.group.uuid, trigger.triggerTemplate.uuid)
+                            // open template inspector
+                            MainUiState.inspectorOption = InspectorOption.TriggerTemplate
                         })
                     }
                     Spacer(Modifier.height(8.dp))

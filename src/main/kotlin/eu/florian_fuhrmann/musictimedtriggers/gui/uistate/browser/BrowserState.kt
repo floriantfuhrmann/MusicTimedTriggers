@@ -152,6 +152,10 @@ class BrowserState(
 
     // Groups
 
+    private fun getBrowserGroupByUuid(uuid: UUID): BrowserGroup? {
+        return allGroups.value.find { it.uuid == uuid }
+    }
+
     fun getSelectedTriggerTemplateGroup(): TriggerTemplateGroup? {
         if(selectedGroup.value == null) return null
         return triggersManager.getTemplateGroup(selectedGroup.value!!.uuid)
@@ -172,9 +176,9 @@ class BrowserState(
     }
 
     /**
-     * Opens a group, if it is not already opened. Also Saves the Project.
+     * Opens a group, if it is not already opened. Also Saves the Project (when [saveToFile] is true).
      */
-    fun openGroup(browserGroup: BrowserGroup) {
+    fun openGroup(browserGroup: BrowserGroup, saveToFile: Boolean = true) {
         if (!openedGroups.value.contains(browserGroup)) {
             //add group to opened list
             openedGroups.value = openedGroups.value.toMutableList().apply { add(browserGroup) }
@@ -185,7 +189,9 @@ class BrowserState(
             //also make sure initially no triggers are selected
             unselectAllTemplates()
             //save state to file
-            saveToFileInCurrentProjectDirectory()
+            if(saveToFile) {
+                saveToFileInCurrentProjectDirectory()
+            }
         }
     }
 
@@ -218,9 +224,10 @@ class BrowserState(
     }
 
     /**
-     * Selects the [browserGroup]'s Tab in the Tab Bar. Also Saves the Project.
+     * Selects the [browserGroup]'s Tab in the Tab Bar. Also Saves the Project
+     * (when [saveToFile] is true).
      */
-    fun selectGroup(browserGroup: BrowserGroup) {
+    fun selectGroup(browserGroup: BrowserGroup, saveToFile: Boolean = true) {
         if(selectedGroup.value != browserGroup) {
             //set selected group
             selectedGroup.value = browserGroup
@@ -229,7 +236,9 @@ class BrowserState(
             //and make sure no templates are selected anymore
             unselectAllTemplates()
             //save state to file
-            saveToFileInCurrentProjectDirectory()
+            if(saveToFile) {
+                saveToFileInCurrentProjectDirectory()
+            }
         }
     }
 
@@ -356,6 +365,25 @@ class BrowserState(
         //move template
         val movedTemplate = templates.removeAt(fromIndex)
         templates.add(toIndex, movedTemplate)
+    }
+
+    fun selectGroupAndTemplate(groupUuid: UUID, templateUuid: UUID) {
+        // get group
+        val group = getBrowserGroupByUuid(groupUuid)
+        check(group != null) { "Couldn't find BrowserGroup with uuid $groupUuid" }
+        // open the group (if it is not already opened)
+        openGroup(group, saveToFile = false)
+        // select the group (if it is not already selected)
+        selectGroup(group, saveToFile = true)
+        // get browser template
+        val browserTemplate = getBrowserTemplateByUuid(templateUuid)
+        check(browserTemplate != null) { "Couldn't find BrowserTemplate with uuid $templateUuid" }
+        // select the template
+        selectTemplate(browserTemplate, false)
+        // scroll to the template
+        currentCoroutineScope?.launch {
+            templatesLazyListState.animateScrollToItem(templates.indexOf(browserTemplate), 0)
+        }
     }
 
     // Tracking hovered Template
