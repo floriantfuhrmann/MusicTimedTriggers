@@ -79,8 +79,6 @@ abstract class AbstractPlacedTrigger(
         }
     }
 
-    fun getConfigurationContext() = PlacedTriggerConfigurationContext(this)
-
     fun toJson(): JsonObject {
         val json = JsonObject()
         json.addProperty("startTime", startTime)
@@ -92,7 +90,7 @@ abstract class AbstractPlacedTrigger(
         return json
     }
 
-    class PlacedTriggerConfigurationContext(val placedTrigger: AbstractPlacedTrigger) : ConfigurationContext()
+    open class PlacedTriggerConfigurationContext(val placedTrigger: AbstractPlacedTrigger) : ConfigurationContext()
 
     companion object {
         const val DEFAULT_TRIGGER_DURATION = 1.0

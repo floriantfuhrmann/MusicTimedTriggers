@@ -17,10 +17,13 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.TimeNumberFie
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ChangeListenerContext
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.Configurable
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
+import java.lang.reflect.Field
 
 /**
  * object to house global state for the edit placed trigger inspector (so
@@ -72,7 +75,17 @@ fun EditPlacedTriggerInspector(project: Project) {
                     key(trigger) {
                         if(trigger.configuration != null) {
                             Row {
-                                ConfigurationBox(trigger.configuration, trigger.getConfigurationContext())
+                                ConfigurationBox(
+                                    configuration = trigger.configuration,
+                                    context = object : AbstractPlacedTrigger.PlacedTriggerConfigurationContext(trigger), ChangeListenerContext {
+                                        override fun onChange(field: Field, configurable: Configurable) {
+                                            // redraw timeline so any changes to the trigger are visible
+                                            redrawTimeline()
+                                            // save the triggers line to file (should be debounced in the future)
+                                            triggersLine?.saveToFile()
+                                        }
+                                    }
+                                )
                             }
                         }
                     }
