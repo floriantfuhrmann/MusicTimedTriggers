@@ -223,6 +223,22 @@ class BrowserState(
         saveToFileInCurrentProjectDirectory()
     }
 
+    fun closeMultipleGroups(groupsToClose: List<BrowserGroup>, saveToFile: Boolean = true) {
+        //remove the groups from opened groups list
+        openedGroups.value = openedGroups.value.toMutableList().apply { removeAll(groupsToClose) }
+        //make sure the group is not selected
+        if(groupsToClose.contains(selectedGroup.value)) {
+            selectedGroup.value = null
+            //and if it was selected then also unselect all triggers and update template list
+            unselectAllTemplates()
+            updateAllGroupTriggers(null)
+        }
+        //save state to file
+        if(saveToFile) {
+            saveToFileInCurrentProjectDirectory()
+        }
+    }
+
     /**
      * Selects the [browserGroup]'s Tab in the Tab Bar. Also Saves the Project
      * (when [saveToFile] is true).

@@ -4,27 +4,33 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.edittemplategroup.EditTemplateGroupDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserGroup
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SingleTab
+import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggerType
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
@@ -39,23 +45,19 @@ import sh.calvin.reorderable.ReorderableRow
 import sh.calvin.reorderable.ReorderableScope
 
 @Composable
-fun BrowserTabsBar() {
-    val openedGroups by remember {
-        derivedStateOf {
-            ProjectManager.currentProject?.browserState?.openedGroups?.value ?: emptyList()
-        }
-    }
+fun BrowserTabsBar(project: Project) {
     val closedGroups: List<BrowserGroup> by remember {
         derivedStateOf {
-            ProjectManager.currentProject?.browserState?.allGroups?.value?.filter {
-                ProjectManager.currentProject?.browserState?.openedGroups?.value?.contains(it) == false
-            } ?: emptyList()
+            project.browserState.allGroups.value.filter {
+                !project.browserState.openedGroups.value.contains(it)
+            }
         }
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         // Opened Groups Tabs
-        OpenGroupsTabs(this, openedGroups)
+        OpenGroupsTabs(project, project.browserState.openedGroups.value)
+        // Tools
         Row(Modifier.padding(top = 5.dp, bottom = 5.dp, end = 5.dp).height(26.dp)) {
             // More Options
             MoreOptionsDropdown(closedGroups)
@@ -92,11 +94,11 @@ fun CollapsedBrowserBar() {
 }
 
 @Composable
-fun OpenGroupsTabs(scope: RowScope, openedGroups: List<BrowserGroup>) {
+fun RowScope.OpenGroupsTabs(project: Project, openedGroups: List<BrowserGroup>) {
     val tabsScrollState = rememberScrollState()
     var tabsHovered by remember { mutableStateOf(false) }
     //Column with tabs
-    Column(with(scope) { Modifier.weight(1f).height(JewelTheme.defaultTabStyle.metrics.tabHeight) }) {
+    Column(Modifier.weight(1f).height(JewelTheme.defaultTabStyle.metrics.tabHeight)) {
         // This is similar to TabStrip from org.jetbrains.jewel.ui.component, but modified to be reorderable
         Box(
             Modifier.focusable(true, remember { MutableInteractionSource() }).onHover {
@@ -132,18 +134,49 @@ fun OpenGroupsTabs(scope: RowScope, openedGroups: List<BrowserGroup>) {
                 ReorderableRow(
                     list = openedGroups,
                     onSettle = { fromIndex, toIndex ->
-                        ProjectManager.currentProject?.browserState?.moveGroup(fromIndex, toIndex)
+                        project.browserState.moveGroup(fromIndex, toIndex)
                     }
-                ) { _, item, _ ->
+                ) { index, item, _ ->
                     // Item content
                     key(item.uuid) {
-                        TabDragHandle(
-                            this, item, item == ProjectManager.currentProject?.browserState?.selectedGroup?.value,
-                            onClick = {
-                                ProjectManager.currentProject?.browserState?.selectGroup(item)
+                        BrowserTab(
+                            scope = this,
+                            browserGroup = item,
+                            selected = item == project.browserState.selectedGroup.value,
+                            hasTabsToTheLeft = item != openedGroups.firstOrNull() && openedGroups.size > 1,
+                            hasTabsToTheRight = item != openedGroups.lastOrNull() && openedGroups.size > 1,
+                            onClick = { project.browserState.selectGroup(item) },
+                            onClose = { project.browserState.closeGroup(item) },
+                            onCloseOthers = { project.browserState.closeMultipleGroups(openedGroups.filter { it != item }) },
+                            onCloseAll = { project.browserState.closeMultipleGroups(openedGroups) },
+                            onCloseLeft = { project.browserState.closeMultipleGroups(openedGroups.subList(0, index)) },
+                            onCloseRight = { project.browserState.closeMultipleGroups(openedGroups.subList(index + 1, openedGroups.size)) },
+                            onRename = { newName ->
+                                // check if the new name is not empty
+                                if (newName.isBlank()) return@BrowserTab
+                                // get the trigger template group
+                                val triggerTemplateGroup = project.triggersManager.getTemplateGroup(item.uuid)
+                                check(triggerTemplateGroup != null) { "Could not find template group for ${item.uuid}" }
+                                // update the name
+                                project.triggersManager.updateTriggerTemplateGroup(triggerTemplateGroup, newName)
                             },
-                            onClose = {
-                                ProjectManager.currentProject?.browserState?.closeGroup(item)
+                            onDelete = {
+                                // get the trigger template group
+                                val triggerTemplateGroup = project.triggersManager.getTemplateGroup(item.uuid)
+                                check(triggerTemplateGroup != null) { "Could not find template group for ${item.uuid}" }
+                                // require the group to be empty
+                                if(triggerTemplateGroup.templates.isNotEmpty()) {
+                                    BasicAlert(
+                                        type = BasicAlert.Type.Error,
+                                        title = "Group not empty",
+                                        buttons = { OKButton() }
+                                    ) {
+                                        Text("Please remove all templates from the group before deleting it.")
+                                    }.show()
+                                } else {
+                                    //delete the group
+                                    project.triggersManager.deleteTriggerTemplateGroup(triggerTemplateGroup)
+                                }
                             }
                         )
                     }
@@ -292,22 +325,80 @@ fun ToggleBrowserButton() {
 }
 
 @Composable
-private fun TabDragHandle(
+private fun BrowserTab(
     scope: ReorderableScope,
     browserGroup: BrowserGroup,
     selected: Boolean,
+    hasTabsToTheLeft: Boolean,
+    hasTabsToTheRight: Boolean,
     onClick: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onCloseOthers: () -> Unit,
+    onCloseAll: () -> Unit,
+    onCloseLeft: () -> Unit,
+    onCloseRight: () -> Unit,
+    onRename: (String) -> Unit,
+    onDelete: () -> Unit
 ) {
-    SingleTab(
-        modifier = with(scope) { Modifier.draggableHandle() },
-        editorStyle = false,
-        selected = selected,
-        closable = true,
-        onClose = onClose,
-        onClick = onClick
+    // Popup for renaming the group
+    var showRenamePopup by remember { mutableStateOf(false) }
+    if (showRenamePopup) {
+        val textFieldState = rememberTextFieldState(browserGroup.name.value)
+        PopupContainer(
+            onDismissRequest = { showRenamePopup = false },
+            horizontalAlignment = Alignment.Start,
+            popupProperties = PopupProperties(focusable = true)
+        ) {
+            Column(Modifier.padding(12.dp)) {
+                Row {
+                    Text("Rename Group", fontWeight = FontWeight.SemiBold)
+                }
+                Row(Modifier.padding(vertical = 6.dp)) {
+                    val focusRequester = remember { FocusRequester() }
+                    TextField(
+                        modifier = Modifier.focusRequester(focusRequester),
+                        state = textFieldState,
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                        onKeyboardAction = {
+                            // rename group
+                            onRename(textFieldState.text.toString())
+                            // close popup
+                            showRenamePopup = false
+                        }
+                    )
+                    LaunchedEffect(Unit) {
+                        focusRequester.requestFocus()
+                    }
+                }
+            }
+        }
+    }
+    // Context Menu Area for the tab
+    ContextMenuArea(
+        items = {
+            listOfNotNull(
+                ContextMenuItem("Close") { onClose.invoke() },
+                if(hasTabsToTheLeft || hasTabsToTheRight) ContextMenuItem("Close Other Tabs") { onCloseOthers.invoke() } else null,
+                ContextMenuItem("Close All Tabs") { onCloseAll.invoke() },
+                if(hasTabsToTheLeft) ContextMenuItem("Close Tabs to the Left") { onCloseLeft.invoke() } else null,
+                if(hasTabsToTheRight) ContextMenuItem("Close Tabs to the Right") { onCloseRight.invoke() } else null,
+                ContextMenuDivider,
+                ContextMenuItem("Rename") { showRenamePopup = true },
+                ContextMenuItem("Delete") { onDelete.invoke() }
+            )
+        }
     ) {
-        Text(browserGroup.name.value)
+        // Tab
+        SingleTab(
+            modifier = with(scope) { Modifier.draggableHandle() },
+            editorStyle = false,
+            selected = selected,
+            closable = true,
+            onClose = onClose,
+            onClick = onClick
+        ) {
+            Text(browserGroup.name.value)
+        }
     }
 }
 

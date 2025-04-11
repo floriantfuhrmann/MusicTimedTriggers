@@ -29,7 +29,7 @@ fun TriggerBrowser(project: Project) {
             }
     ) {
         Row {
-            BrowserTabsBar()
+            BrowserTabsBar(project)
         }
         Row {
             TriggerTemplatesList()
