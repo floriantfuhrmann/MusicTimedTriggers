@@ -71,13 +71,6 @@ object RightClickMenuManager {
                 if(!TriggerSelectionManager.isSelected(clickedTrigger)) {
                     TriggerSelectionManager.selectTrigger(clickedTrigger, e.isShiftDown)
                 }
-                //Edit Option
-                menu.add(JMenuItem("Edit").apply {
-                    addActionListener {
-                        //open edit dialog for the clicked trigger
-                        clickedTrigger.openEditDialog()
-                    }
-                })
                 //Delete Option
                 menu.add(JMenuItem("Delete").apply {
                     addActionListener {

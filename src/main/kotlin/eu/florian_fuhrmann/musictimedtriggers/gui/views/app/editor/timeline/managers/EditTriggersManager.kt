@@ -59,10 +59,4 @@ object EditTriggersManager {
         }
     }
 
-    fun editSelectedTrigger() {
-        if (TriggerSelectionManager.selectedTriggers.size == 1) {
-            TriggerSelectionManager.selectedTriggers.first().openEditDialog()
-        }
-    }
-
 }

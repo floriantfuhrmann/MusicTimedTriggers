@@ -83,9 +83,6 @@ fun main() {
                     if (it.key == Key.Backspace || it.key == Key.Delete) {
                         EditTriggersManager.deleteSelectedTriggers()
                         return@DecoratedWindow true
-                    } else if (it.key == Key.Enter) {
-                        EditTriggersManager.editSelectedTrigger()
-                        return@DecoratedWindow true
                     }
                     return@DecoratedWindow false
                 },

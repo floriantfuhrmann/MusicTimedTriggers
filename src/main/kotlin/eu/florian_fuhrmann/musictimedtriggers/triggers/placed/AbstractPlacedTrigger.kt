@@ -62,23 +62,6 @@ abstract class AbstractPlacedTrigger(
      */
     open fun update(timePosition: Double) {}
 
-    /**
-     * Called when the User wants to edit this Placed Trigger (normally through the Timeline)
-     * By Default a ConfigurationDialog will be opened with the configuration
-     */
-    fun openEditDialog() {
-        if(configuration != null) {
-            DialogManager.openDialog(
-                ConfigurationDialog(
-                    configuration = configuration,
-                    context = PlacedTriggerConfigurationContext(this),
-                    heading = "Configuring Placed Trigger ${name()}",
-                    showCancelButton = false
-                )
-            )
-        }
-    }
-
     fun toJson(): JsonObject {
         val json = JsonObject()
         json.addProperty("startTime", startTime)
