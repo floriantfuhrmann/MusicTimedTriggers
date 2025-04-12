@@ -227,20 +227,40 @@ class BrowserState(
      * Closes the [browserGroup]'s Tab. Also Saves the Project.
      */
     fun closeGroup(browserGroup: BrowserGroup) {
+        //abort if the group is not opened
+        if(!openedGroups.value.contains(browserGroup)) return
+        //check whether the group is selected
+        val isSelected = selectedGroup.value?.uuid == browserGroup.uuid
+        //get index in opened groups (used to open a neighboring group if the selected group is closed)
+        val previousIndexOfClosedGroup = openedGroups.value.indexOf(browserGroup)
         //remove the group from opened groups list
         openedGroups.value = openedGroups.value.toMutableList().apply { remove(browserGroup) }
         //make sure the group is not selected
-        if(selectedGroup.value?.uuid == browserGroup.uuid) {
+        if(isSelected) {
             selectedGroup.value = null
             //and if it was selected then also unselect all triggers and update template list
             unselectAllTemplates()
             updateAllGroupTriggers(null)
+            //open the previous group if there is one
+            openedGroups.value.getOrNull(if (previousIndexOfClosedGroup > 0) previousIndexOfClosedGroup - 1 else previousIndexOfClosedGroup)?.let {
+                selectGroup(it, saveToFile = false)
+            }
         }
         //save state to file
         saveToFileInCurrentProjectDirectory()
     }
 
-    fun closeMultipleGroups(groupsToClose: List<BrowserGroup>, saveToFile: Boolean = true) {
+    /**
+     * Closes multiple groups. Also Saves the Project (when [saveToFile] is
+     * true).
+     *
+     * @param groupsToClose the groups to close
+     * @param selectedReplacement the group to select as a replacement of the
+     *    currently selected group, if it was closed. or null if no group
+     *    should be selected as replacement
+     * @param saveToFile if true, the browser state will be saved to file
+     */
+    fun closeMultipleGroups(groupsToClose: List<BrowserGroup>, selectedReplacement: BrowserGroup? = null, saveToFile: Boolean = true) {
         //remove the groups from opened groups list
         openedGroups.value = openedGroups.value.toMutableList().apply { removeAll(groupsToClose) }
         //make sure the group is not selected
@@ -249,6 +269,10 @@ class BrowserState(
             //and if it was selected then also unselect all triggers and update template list
             unselectAllTemplates()
             updateAllGroupTriggers(null)
+            //open the replacement group if there is one
+            selectedReplacement?.let {
+                selectGroup(it, saveToFile = false)
+            }
         }
         //save state to file
         if(saveToFile) {

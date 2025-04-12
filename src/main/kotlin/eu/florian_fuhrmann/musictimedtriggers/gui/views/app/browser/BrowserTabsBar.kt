@@ -144,10 +144,25 @@ fun RowScope.OpenGroupsTabs(project: Project, tabsScrollState: ScrollState, open
                             hasTabsToTheRight = item != openedGroups.lastOrNull() && openedGroups.size > 1,
                             onClick = { project.browserState.selectGroup(item) },
                             onClose = { project.browserState.closeGroup(item) },
-                            onCloseOthers = { project.browserState.closeMultipleGroups(openedGroups.filter { it != item }) },
+                            onCloseOthers = {
+                                project.browserState.closeMultipleGroups(
+                                    groupsToClose = openedGroups.filter { it != item },
+                                    selectedReplacement = item
+                                )
+                            },
                             onCloseAll = { project.browserState.closeMultipleGroups(openedGroups) },
-                            onCloseLeft = { project.browserState.closeMultipleGroups(openedGroups.subList(0, index)) },
-                            onCloseRight = { project.browserState.closeMultipleGroups(openedGroups.subList(index + 1, openedGroups.size)) },
+                            onCloseLeft = {
+                                project.browserState.closeMultipleGroups(
+                                    groupsToClose = openedGroups.subList(0, index),
+                                    selectedReplacement = item
+                                )
+                            },
+                            onCloseRight = {
+                                project.browserState.closeMultipleGroups(
+                                    groupsToClose = openedGroups.subList(index + 1, openedGroups.size),
+                                    selectedReplacement = item
+                                )
+                            },
                             onRename = { newName ->
                                 // get the trigger template group
                                 val triggerTemplateGroup = project.triggersManager.getTemplateGroup(item.uuid)
