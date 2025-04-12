@@ -98,31 +98,23 @@ fun EditPlacedTriggerInspector(project: Project) {
 @Composable
 fun TriggerPlacementInputRow(project: Project, trigger: AbstractPlacedTrigger, triggersLine: TriggerSequenceLine) {
     // States
-    val startTimeState = remember {
-        TimeNumberFieldState(
-            initialValue = trigger.startTime,
-            validRange = triggersLine.getFreeDurationUntil(trigger.startTime)..trigger.endTime - AbstractPlacedTrigger.MINIMUM_TRIGGER_DURATION
-        )
-    }
-    val endTimeState = remember {
-        TimeNumberFieldState(
-            initialValue = trigger.endTime,
-            validRange = trigger.startTime + AbstractPlacedTrigger.MINIMUM_TRIGGER_DURATION..trigger.endTime + triggersLine.getFreeDurationFrom(trigger.endTime, allowPastSequenceEnd = true)
-        )
-    }
-    val durationState = remember {
-        TimeNumberFieldState(
-            initialValue = trigger.duration,
-            validRange = AbstractPlacedTrigger.MINIMUM_TRIGGER_DURATION..trigger.duration + triggersLine.getFreeDurationFrom(trigger.endTime, allowPastSequenceEnd = true)
-        )
-    }
+    val startTimeState = remember { TimeNumberFieldState(trigger.startTime) }
+    val endTimeState = remember { TimeNumberFieldState(trigger.endTime) }
+    val durationState = remember { TimeNumberFieldState(trigger.duration) }
     LaunchedEffect(startTimeState) {
         snapshotFlow { startTimeState.value }.collect { value ->
             if(!startTimeState.isValid) return@collect
             value?.let {
+                // calculate new start time
+                val newStartTime = it.coerceIn(
+                    triggersLine.getFreeDurationUntil(trigger.startTime),
+                    trigger.endTime - AbstractPlacedTrigger.MINIMUM_TRIGGER_DURATION
+                )
+                // update trigger
                 val currentEndTime = trigger.endTime
-                trigger.startTime = it
-                trigger.duration = currentEndTime - it
+                trigger.startTime = newStartTime
+                trigger.duration = currentEndTime - newStartTime
+                // redraw timeline, so change becomes visible
                 redrawTimeline()
             }
 
@@ -132,7 +124,14 @@ fun TriggerPlacementInputRow(project: Project, trigger: AbstractPlacedTrigger, t
         snapshotFlow { endTimeState.value }.collect { value ->
             if(!endTimeState.isValid) return@collect
             value?.let {
-                trigger.duration = it - trigger.startTime
+                // calculate new end time
+                val newEndTime = it.coerceIn(
+                    trigger.startTime + AbstractPlacedTrigger.MINIMUM_TRIGGER_DURATION,
+                    trigger.endTime + triggersLine.getFreeDurationFrom(trigger.endTime, allowPastSequenceEnd = true)
+                )
+                // update trigger
+                trigger.duration = newEndTime - trigger.startTime
+                // redraw timeline, so change becomes visible
                 redrawTimeline()
             }
         }
@@ -141,11 +140,26 @@ fun TriggerPlacementInputRow(project: Project, trigger: AbstractPlacedTrigger, t
         snapshotFlow { durationState.value }.collect { value ->
             if(!durationState.isValid) return@collect
             value?.let {
-                val currentEndTime = trigger.endTime
-                trigger.duration = it
                 if(GlobalState.moveStartWhenChangingDuration) {
-                    trigger.startTime = currentEndTime - it
+                    // calculate new duration, which prevents overlapping
+                    val newDuration = it.coerceIn(
+                        AbstractPlacedTrigger.MINIMUM_TRIGGER_DURATION,
+                        trigger.duration + triggersLine.getFreeDurationUntil(trigger.startTime, allowTriggerStartAtTimePosition = true)
+                    )
+                    // update trigger
+                    val currentEndTime = trigger.endTime
+                    trigger.duration = newDuration
+                    trigger.startTime = currentEndTime - newDuration
+                } else {
+                    // calculate new duration, which prevents overlapping
+                    val newDuration = it.coerceIn(
+                        AbstractPlacedTrigger.MINIMUM_TRIGGER_DURATION,
+                        trigger.duration + triggersLine.getFreeDurationFrom(trigger.endTime, allowPastSequenceEnd = true)
+                    )
+                    // update trigger
+                    trigger.duration = newDuration
                 }
+                // redraw timeline, so change becomes visible
                 redrawTimeline()
             }
         }

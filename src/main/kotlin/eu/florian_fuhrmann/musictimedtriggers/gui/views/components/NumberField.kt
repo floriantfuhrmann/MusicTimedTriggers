@@ -176,12 +176,14 @@ class DoubleNumberFieldState(
 
 /**
  * A [NumberFieldState] that represents a time value in seconds.
+ *
  * @param initialValue The initial value of the field in seconds.
- * @param validRange The valid range of the field in seconds. Defaults to 0.0 to positive infinity.
+ * @param validRange The valid range of the field in seconds. Defaults to
+ *    negative infinity to positive infinity.
  */
 class TimeNumberFieldState(
     initialValue: Double,
-    override val validRange: ClosedRange<Double> = 0.0..Double.POSITIVE_INFINITY
+    override val validRange: ClosedRange<Double> = Double.NEGATIVE_INFINITY..Double.POSITIVE_INFINITY
 ) : NumberFieldState<Double>(initialValue, run {
     val minutes = (initialValue / 60).toInt()
     val seconds = (initialValue % 60).toInt()
