@@ -38,6 +38,7 @@ import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
@@ -158,7 +159,7 @@ fun RowScope.OpenGroupsTabs(project: Project, openedGroups: List<BrowserGroup>) 
                                 val triggerTemplateGroup = project.triggersManager.getTemplateGroup(item.uuid)
                                 check(triggerTemplateGroup != null) { "Could not find template group for ${item.uuid}" }
                                 // update the name
-                                project.triggersManager.updateTriggerTemplateGroup(triggerTemplateGroup, newName)
+                                project.triggersManager.updateTriggerTemplateGroup(triggerTemplateGroup, newName.trim())
                             },
                             onDelete = {
                                 // get the trigger template group
@@ -358,6 +359,7 @@ private fun BrowserTab(
                     TextField(
                         modifier = Modifier.focusRequester(focusRequester),
                         state = textFieldState,
+                        outline = if(textFieldState.text.isBlank()) Outline.Error else Outline.None,
                         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                         onKeyboardAction = {
                             // rename group
