@@ -12,6 +12,9 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 
 @Composable
 fun TriggerBrowser(project: Project) {
+    // pass the current coroutine scope to the browser state, so that we can use it for auto-scrolling
+    project.browserState.currentCoroutineScope = rememberCoroutineScope()
+    // Column with tabs bar and trigger templates list
     Column(
         Modifier.trackActivation()
             .background(JewelTheme.globalColors.panelBackground)
@@ -32,7 +35,7 @@ fun TriggerBrowser(project: Project) {
             BrowserTabsBar(project)
         }
         Row {
-            TriggerTemplatesList()
+            TriggerTemplatesList(project)
         }
     }
 }

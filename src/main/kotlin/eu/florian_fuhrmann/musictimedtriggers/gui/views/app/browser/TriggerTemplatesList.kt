@@ -22,6 +22,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.triggerusages.TriggerU
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserTemplate
+import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.getContrasting
@@ -30,16 +31,14 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
 import sh.calvin.reorderable.*
-import java.awt.Cursor
 
 @Composable
-fun TriggerTemplatesList() {
+fun TriggerTemplatesList(project: Project) {
     // State
-    val browserState = ProjectManager.currentProject!!.browserState
+    val browserState = project.browserState
     val reorderableLazyListState = rememberReorderableLazyListState(browserState.templatesLazyListState) { from, to ->
-        ProjectManager.currentProject?.browserState?.getSelectedTriggerTemplateGroup()?.moveTemplate(from.index, to.index)
+        project.browserState.getSelectedTriggerTemplateGroup()?.moveTemplate(from.index, to.index)
     }
-    browserState.currentCoroutineScope = rememberCoroutineScope() // need to allow auto-scrolling to templates
     // UI
     ContextMenuArea(
         items = {

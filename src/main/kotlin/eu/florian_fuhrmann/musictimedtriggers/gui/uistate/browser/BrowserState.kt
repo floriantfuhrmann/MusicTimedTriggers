@@ -1,5 +1,6 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -27,6 +28,7 @@ import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTrigger
 import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
 import eu.florian_fuhrmann.musictimedtriggers.windowState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.ui.component.Link
 import org.jetbrains.jewel.ui.component.Text
@@ -137,12 +139,14 @@ class BrowserState(
         return json
     }
 
+    // Coroutine Scope (set during composition)
     var currentCoroutineScope: CoroutineScope? = null
 
     // State
     var openedGroups: MutableState<List<BrowserGroup>> = mutableStateOf(emptyList())
     var selectedGroup: MutableState<BrowserGroup?> = mutableStateOf(null)
     var allGroups: MutableState<List<BrowserGroup>> = mutableStateOf(emptyList())
+    var tabsScrollState = ScrollState(0)
 
     val templates: MutableList<BrowserTemplate> = mutableStateListOf()
     val templatesLazyListState = LazyListState(0, 0)
@@ -176,9 +180,15 @@ class BrowserState(
     }
 
     /**
-     * Opens a group, if it is not already opened. Also Saves the Project (when [saveToFile] is true).
+     * Opens a group, if it is not already opened. Also Saves the Project (when
+     * [saveToFile] is true).
+     *
+     * @param browserGroup the group to open
+     * @param saveToFile if true, the browser state will be saved to file
+     * @param scrollToBack if true, the tabs bar will be scrolled to the back
+     *    (so the newly opened group is visible)
      */
-    fun openGroup(browserGroup: BrowserGroup, saveToFile: Boolean = true) {
+    fun openGroup(browserGroup: BrowserGroup, saveToFile: Boolean = true, scrollToBack: Boolean = true) {
         if (!openedGroups.value.contains(browserGroup)) {
             //add group to opened list
             openedGroups.value = openedGroups.value.toMutableList().apply { add(browserGroup) }
@@ -188,6 +198,13 @@ class BrowserState(
             updateAllGroupTriggers(triggersManager.getTemplateGroup(browserGroup.uuid)!!)
             //also make sure initially no triggers are selected
             unselectAllTemplates()
+            //scroll all the way to the back, so the opened group is visible
+            if(scrollToBack) {
+                currentCoroutineScope?.launch {
+                    delay(5) // small delay so the tabs bar has already been recomposed with the added group before scrolling
+                    tabsScrollState.animateScrollTo(tabsScrollState.maxValue)
+                }
+            }
             //save state to file
             if(saveToFile) {
                 saveToFileInCurrentProjectDirectory()
@@ -273,6 +290,11 @@ class BrowserState(
         updateAllGroupTriggers(triggerTemplateGroup)
         //also make sure no templates are selected
         unselectAllTemplates()
+        //scroll all the way to the back, so the new group is visible
+        currentCoroutineScope?.launch {
+            delay(5) // small delay so the tabs bar has already been recomposed with the new group before scrolling
+            tabsScrollState.animateScrollTo(tabsScrollState.maxValue)
+        }
         //save state to file
         saveToFileInCurrentProjectDirectory()
     }
@@ -388,7 +410,7 @@ class BrowserState(
         val group = getBrowserGroupByUuid(groupUuid)
         check(group != null) { "Couldn't find BrowserGroup with uuid $groupUuid" }
         // open the group (if it is not already opened)
-        openGroup(group, saveToFile = false)
+        openGroup(group, saveToFile = false, scrollToBack = true)
         // select the group (if it is not already selected)
         selectGroup(group, saveToFile = true)
         // get browser template

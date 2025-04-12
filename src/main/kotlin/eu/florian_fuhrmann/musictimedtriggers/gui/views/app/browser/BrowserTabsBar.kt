@@ -25,8 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.edittemplategroup.EditTemplateGroupDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserGroup
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SingleTab
@@ -34,7 +32,6 @@ import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggerType
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
-import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -57,11 +54,11 @@ fun BrowserTabsBar(project: Project) {
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         // Opened Groups Tabs
-        OpenGroupsTabs(project, project.browserState.openedGroups.value)
+        OpenGroupsTabs(project, project.browserState.tabsScrollState, project.browserState.openedGroups.value)
         // Tools
         Row(Modifier.padding(top = 5.dp, bottom = 5.dp, end = 5.dp).height(26.dp)) {
             // More Options
-            MoreOptionsDropdown(closedGroups)
+            MoreOptionsDropdown(project, closedGroups)
             // Divider
             Divider(org.jetbrains.jewel.ui.Orientation.Vertical, Modifier.fillMaxHeight().padding(horizontal = 4.dp))
             // Remove Templates Button
@@ -95,8 +92,7 @@ fun CollapsedBrowserBar() {
 }
 
 @Composable
-fun RowScope.OpenGroupsTabs(project: Project, openedGroups: List<BrowserGroup>) {
-    val tabsScrollState = rememberScrollState()
+fun RowScope.OpenGroupsTabs(project: Project, tabsScrollState: ScrollState, openedGroups: List<BrowserGroup>) {
     var tabsHovered by remember { mutableStateOf(false) }
     //Column with tabs
     Column(Modifier.weight(1f).height(JewelTheme.defaultTabStyle.metrics.tabHeight)) {
@@ -153,13 +149,11 @@ fun RowScope.OpenGroupsTabs(project: Project, openedGroups: List<BrowserGroup>) 
                             onCloseLeft = { project.browserState.closeMultipleGroups(openedGroups.subList(0, index)) },
                             onCloseRight = { project.browserState.closeMultipleGroups(openedGroups.subList(index + 1, openedGroups.size)) },
                             onRename = { newName ->
-                                // check if the new name is not empty
-                                if (newName.isBlank()) return@BrowserTab
                                 // get the trigger template group
                                 val triggerTemplateGroup = project.triggersManager.getTemplateGroup(item.uuid)
                                 check(triggerTemplateGroup != null) { "Could not find template group for ${item.uuid}" }
                                 // update the name
-                                project.triggersManager.updateTriggerTemplateGroup(triggerTemplateGroup, newName.trim())
+                                project.triggersManager.updateTriggerTemplateGroup(triggerTemplateGroup, newName)
                             },
                             onDelete = {
                                 // get the trigger template group
@@ -188,60 +182,56 @@ fun RowScope.OpenGroupsTabs(project: Project, openedGroups: List<BrowserGroup>) 
 }
 
 @Composable
-fun MoreOptionsDropdown(closedGroups: List<BrowserGroup>) {
-    var expanded by remember { mutableStateOf(false) }
-    IconButton(onClick = { expanded = true }, focusable = false) {
+fun MoreOptionsDropdown(project: Project, closedGroups: List<BrowserGroup>) {
+    // States
+    var menuExpanded by remember { mutableStateOf(false) }
+    var showCreatePopup by remember { mutableStateOf(false) }
+    // Icon Button
+    IconButton(onClick = { menuExpanded = true }, focusable = false) {
         Icon(AllIconsKeys.Actions.More, null)
     }
-    if(expanded) {
+    // Popups
+    if(menuExpanded) {
+        // Menu with closed groups and create group option
         PopupMenu(
             onDismissRequest = {
-                expanded = false
+                menuExpanded = false
                 true
             }, content = {
-                selectableItem(
-                    selected = false,
-                    onClick = {
-                        val selectedUuid = ProjectManager.currentProject?.browserState?.selectedGroup?.value?.uuid
-                        if(selectedUuid != null) {
-                            val templateGroup = ProjectManager.currentProject?.triggersManager?.getTemplateGroup(selectedUuid)
-                            if(templateGroup != null) {
-                                DialogManager.openDialog(EditTemplateGroupDialog(false, templateGroup))
-                            }
-                        }
-                    },
-                    iconKey = MttIcons.pencilOutline,
-                ) {
-                    Text("Edit Group")
+                // Open Group
+                closedGroups.forEach {
+                    selectableItem(
+                        selected = false,
+                        onClick = { project.browserState.openGroup(it, scrollToBack = true) }
+                    ) {
+                        Text(it.name.value)
+                    }
                 }
+                if(closedGroups.isNotEmpty()) {
+                    separator()
+                }
+                // Create New Group
                 selectableItem(
                     selected = false,
                     onClick = {
-                        DialogManager.openDialog(EditTemplateGroupDialog(true, null))
+                        showCreatePopup = true
                     },
-                    iconKey = MttIcons.plusLine,
+                    iconKey = AllIconsKeys.General.Add,
                 ) {
                     Text("Create Group")
                 }
-                submenu(
-                    enabled = closedGroups.isNotEmpty(),
-                    submenu = {
-                        closedGroups.forEach {
-                            selectableItem(
-                                selected = false,
-                                onClick = {
-                                    ProjectManager.currentProject?.browserState?.openGroup(it)
-                                }
-                            ) {
-                                Text(it.name.value)
-                            }
-                        }
-                    }
-                ) {
-                    Text("Open Group")
-                }
             },
             horizontalAlignment = Alignment.Start
+        )
+    } else if (showCreatePopup) {
+        // Create Group Popup
+        CreateRenameGroupPopup(
+            creating = true,
+            onClose = { showCreatePopup = false },
+            onDone = { newName ->
+                // create group
+                project.triggersManager.createNewTriggerTemplateGroup(newName)
+            }
         )
     }
 }
@@ -344,36 +334,12 @@ private fun BrowserTab(
     // Popup for renaming the group
     var showRenamePopup by remember { mutableStateOf(false) }
     if (showRenamePopup) {
-        val textFieldState = rememberTextFieldState(browserGroup.name.value)
-        PopupContainer(
-            onDismissRequest = { showRenamePopup = false },
-            horizontalAlignment = Alignment.Start,
-            popupProperties = PopupProperties(focusable = true)
-        ) {
-            Column(Modifier.padding(12.dp)) {
-                Row {
-                    Text("Rename Group", fontWeight = FontWeight.SemiBold)
-                }
-                Row(Modifier.padding(vertical = 6.dp)) {
-                    val focusRequester = remember { FocusRequester() }
-                    TextField(
-                        modifier = Modifier.focusRequester(focusRequester),
-                        state = textFieldState,
-                        outline = if(textFieldState.text.isBlank()) Outline.Error else Outline.None,
-                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                        onKeyboardAction = {
-                            // rename group
-                            onRename(textFieldState.text.toString())
-                            // close popup
-                            showRenamePopup = false
-                        }
-                    )
-                    LaunchedEffect(Unit) {
-                        focusRequester.requestFocus()
-                    }
-                }
-            }
-        }
+        CreateRenameGroupPopup(
+            creating = false,
+            initialName = browserGroup.name.value,
+            onClose = { showRenamePopup = false },
+            onDone = onRename
+        )
     }
     // Context Menu Area for the tab
     ContextMenuArea(
@@ -400,6 +366,48 @@ private fun BrowserTab(
             onClick = onClick
         ) {
             Text(browserGroup.name.value)
+        }
+    }
+}
+
+@Composable
+fun CreateRenameGroupPopup(
+    creating: Boolean,
+    initialName: String = "",
+    onClose: () -> Unit,
+    onDone: (String) -> Unit
+) {
+    val textFieldState = rememberTextFieldState(initialName)
+    PopupContainer(
+        onDismissRequest = { onClose() },
+        horizontalAlignment = if(creating) Alignment.CenterHorizontally else Alignment.Start,
+        popupProperties = PopupProperties(focusable = true)
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            Row {
+                Text(if(creating) "Create Group" else "Rename Group", fontWeight = FontWeight.SemiBold)
+            }
+            Row(Modifier.padding(top = 12.dp)) {
+                val focusRequester = remember { FocusRequester() }
+                TextField(
+                    modifier = Modifier.focusRequester(focusRequester),
+                    state = textFieldState,
+                    outline = if(textFieldState.text.isBlank()) Outline.Error else Outline.None,
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                    onKeyboardAction = {
+                        // call onDone (if a valid name is given)
+                        textFieldState.text.toString().let {
+                            if(it.isBlank()) return@TextField
+                            onDone(it.trim())
+                        }
+                        // close popup
+                        onClose()
+                    }
+                )
+                LaunchedEffect(Unit) {
+                    focusRequester.requestFocus()
+                }
+            }
         }
     }
 }
