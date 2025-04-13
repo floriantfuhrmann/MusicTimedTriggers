@@ -14,7 +14,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.Collapsible
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.DoubleField
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.DoubleField
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SimpleIconButton
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes

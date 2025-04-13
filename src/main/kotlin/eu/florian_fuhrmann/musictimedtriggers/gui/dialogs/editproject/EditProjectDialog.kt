@@ -15,7 +15,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.components.CloseDialogButton
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.components.DialogFrame
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.FilePathField
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.FilePathField
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.GenericColor

@@ -11,6 +11,8 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.addsong.AudioBannersOrEncodingInformationRows
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.triggerusages.TriggerUsagesDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.*
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.FilePathField
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.FilePathFieldState
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getAudioFormatOrNull

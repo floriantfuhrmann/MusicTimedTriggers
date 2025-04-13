@@ -1,4 +1,4 @@
-package eu.florian_fuhrmann.musictimedtriggers.gui.views.components
+package eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -27,6 +27,7 @@ fun NumberField(
     enabled: Boolean = true,
     readOnly: Boolean = false,
     plusMinusButtons: Boolean = false,
+    plusMinusButtonsStep: Number = 1,
     outline: Outline = Outline.None,
     placeholder: @Composable (() -> Unit)? = null,
     undecorated: Boolean = false,
@@ -35,15 +36,7 @@ fun NumberField(
     var textFieldFocused by remember { mutableStateOf(false) }
     if(state.isInValidRange == false && textFieldFocused) {
         // show error message
-        PopupContainer(
-            onDismissRequest = {},
-            horizontalAlignment = Alignment.Start,
-            popupProperties = PopupProperties(focusable = false)
-        ) {
-            Box(modifier = Modifier.background(JewelTheme.globalColors.outlines.error).padding(5.dp)) {
-                Text("must be in range ${state.validRange.start} - ${state.validRange.endInclusive}", color = JewelTheme.globalColors.text.error)
-            }
-        }
+        InvalidInputPopup("must be in range ${state.validRange.start} - ${state.validRange.endInclusive}")
     }
     TextField(
         state = state.textFieldState,
@@ -103,8 +96,8 @@ fun NumberField(
                             onClick = {
                                 val newValue = state.value.let {
                                     when (it) {
-                                        is Double -> it - 1.0
-                                        is Int -> it - 1
+                                        is Double -> it - plusMinusButtonsStep.toDouble()
+                                        is Int -> it - plusMinusButtonsStep.toInt()
                                         else -> return@IconButton
                                     }
                                 }

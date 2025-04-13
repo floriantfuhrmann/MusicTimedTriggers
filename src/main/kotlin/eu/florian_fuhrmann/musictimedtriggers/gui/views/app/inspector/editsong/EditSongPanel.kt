@@ -17,8 +17,8 @@ import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.addsong.AudioBannersOrEncodingInformationRows
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.replaceaudio.ReplaceAudioDialog
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.FilePathField
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.FilePathFieldState
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.FilePathField
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.FilePathFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.song.Song

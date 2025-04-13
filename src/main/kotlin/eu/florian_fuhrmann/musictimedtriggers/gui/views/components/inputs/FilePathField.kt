@@ -1,12 +1,10 @@
-package eu.florian_fuhrmann.musictimedtriggers.gui.views.components
+package eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.onClick
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.*
@@ -24,7 +22,6 @@ import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
-import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Outline
@@ -48,15 +45,7 @@ fun FilePathField(
     // Error Popup
     if(!state.isValid && textFieldFocused) {
         // show error message
-        PopupContainer(
-            onDismissRequest = {},
-            horizontalAlignment = Alignment.Start,
-            popupProperties = PopupProperties(focusable = false)
-        ) {
-            Box(modifier = Modifier.background(JewelTheme.globalColors.outlines.error).padding(5.dp)) {
-                Text(state.invalidMessage ?: "", color = JewelTheme.globalColors.text.error)
-            }
-        }
+        InvalidInputPopup(state.invalidMessage ?: "")
     }
     // Text Field
     TextField(
@@ -161,6 +150,7 @@ class FilePathFieldState(
 }
 
 @Composable
+@Deprecated("Use the not deprecated FilePathFieldState instead")
 fun FilePathField(
     file: File = File(""),
     placeholder: String = "File Path",

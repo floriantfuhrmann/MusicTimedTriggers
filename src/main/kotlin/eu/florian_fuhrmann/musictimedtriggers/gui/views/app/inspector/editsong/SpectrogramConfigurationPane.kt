@@ -10,9 +10,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.window.PopupProperties
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.DoubleNumberFieldState
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.IntNumberFieldState
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.NumberField
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.DoubleNumberFieldState
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.IntNumberFieldState
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.InvalidInputPopup
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.NumberField
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.SpectrogramParameters
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.calculateWindowSizeFromTargetDuration
 import eu.florian_fuhrmann.musictimedtriggers.utils.number.isPowerOf2
@@ -167,15 +168,7 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
                 Column {
                     if(fixedSamplesCountState.isValid && !fixedSamplesCountValid) {
                         // show power of 2 error (because we know it's not a range error since the number field state is valid)
-                        PopupContainer(
-                            onDismissRequest = {},
-                            horizontalAlignment = Alignment.Start,
-                            popupProperties = PopupProperties(focusable = false)
-                        ) {
-                            Box(modifier = Modifier.background(JewelTheme.globalColors.outlines.error).padding(5.dp)) {
-                                Text("must be power of 2", color = JewelTheme.globalColors.text.error)
-                            }
-                        }
+                        InvalidInputPopup("must be power of 2")
                     }
                     NumberField(
                         state = fixedSamplesCountState,

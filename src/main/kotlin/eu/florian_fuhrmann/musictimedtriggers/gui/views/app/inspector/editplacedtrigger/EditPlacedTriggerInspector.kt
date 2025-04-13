@@ -12,8 +12,8 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.ScrollableInspectorContentsContainer
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.NumberField
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.TimeNumberFieldState
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.NumberField
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.TimeNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine

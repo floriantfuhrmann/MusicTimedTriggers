@@ -10,7 +10,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.convertaudio.ConvertAudioDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.convertaudio.convertWithoutUI
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editsong.AudioEncodingInformationRow
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.FilePathFieldState
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.FilePathFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.InterimInlineBanner
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.InterimInlineBannerType
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
