@@ -19,7 +19,7 @@ abstract class AbstractConfigurationEntry<T : Any>(
     val context: ConfigurationContext,
     private val customCheckers: List<RequireCustom> = emptyList(),
     private val visibleWhen: VisibleWhen? = null,
-    val visible: MutableState<Boolean> = mutableStateOf( true )
+    val visible: MutableState<Boolean> = mutableStateOf(true)
 ) {
     init {
         //update visible in init to get initial visible value
@@ -37,9 +37,7 @@ abstract class AbstractConfigurationEntry<T : Any>(
         } ?: CheckResult(true, "")
     }
 
-    /**
-     * Called when the value for this entry is changed
-     */
+    /** Called when the value for this entry is changed */
     fun handleValueChanged() {
         //recheck visible for alle entries
         configuration.entries?.forEach {

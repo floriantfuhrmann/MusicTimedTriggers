@@ -7,7 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.configuration.ConfigurationBox
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.configuration.ConfigurationBox
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.ScrollableInspectorContentsContainer
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ChangeListenerContext
@@ -33,6 +33,7 @@ fun EditTemplateInspector(project: Project) {
                 key(template.uuid) {
                     // configuration box
                     ConfigurationBox(
+                        modifier = Modifier.fillMaxSize(),
                         configuration = template.getTriggerTemplate().configuration,
                         context = object : ConfigurationContext(), ChangeListenerContext {
                             override fun onChange(field: Field, configurable: Configurable) {

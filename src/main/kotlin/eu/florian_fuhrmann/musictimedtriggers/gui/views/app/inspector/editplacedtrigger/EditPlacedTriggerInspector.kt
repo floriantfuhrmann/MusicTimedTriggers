@@ -6,7 +6,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.configuration.ConfigurationBox
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.configuration.ConfigurationBox
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.InspectorOption
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
@@ -76,6 +76,7 @@ fun EditPlacedTriggerInspector(project: Project) {
                         if(trigger.configuration != null) {
                             Row {
                                 ConfigurationBox(
+                                    modifier = Modifier.fillMaxSize(),
                                     configuration = trigger.configuration,
                                     context = object : AbstractPlacedTrigger.PlacedTriggerConfigurationContext(trigger), ChangeListenerContext {
                                         override fun onChange(field: Field, configurable: Configurable) {

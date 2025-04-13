@@ -1,8 +1,6 @@
 package eu.florian_fuhrmann.musictimedtriggers.triggers.placed
 
 import com.google.gson.JsonObject
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.configuration.ConfigurationDialog
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
