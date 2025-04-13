@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,10 +16,15 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.triggerusages.TriggerUsagesDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.InspectorOption
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserTemplate
@@ -27,9 +33,11 @@ import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.getContrasting
 import org.jetbrains.jewel.foundation.modifier.onHover
+import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.util.thenIf
 import sh.calvin.reorderable.*
 
 @Composable
@@ -49,6 +57,7 @@ fun TriggerTemplatesList(project: Project) {
                 if (!browserState.isSelected(hoveredTemplate)) {
                     browserState.selectTemplate(hoveredTemplate, false)
                 }
+                // context menu for the hovered template
                 listOfNotNull(
                     ContextMenuItem("Search Usages") {
                         searchUsagesOfSelectedTemplates(browserState)
@@ -68,6 +77,9 @@ fun TriggerTemplatesList(project: Project) {
                     }
                 )
             } else {
+                // unselect all templates
+                browserState.unselectAllTemplates()
+                // context menu for not hovered template
                 listOf(
                     ContextMenuItem("Paste") {
                         browserState.paste()
@@ -96,12 +108,12 @@ fun TriggerTemplatesList(project: Project) {
                     },
             state = browserState.templatesLazyListState,
             contentPadding = PaddingValues(3.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             items(browserState.templates, key = { it }) { item ->
                 ReorderableItem(reorderableLazyListState, key = item, animateItemModifier = Modifier) { isDragging ->
                     val interactionSource = remember { MutableInteractionSource() }
-                    TriggerTemplateItem(this, browserState, item, isDragging, interactionSource)
+                    TriggerTemplateItem(this, browserState, item, isDragging, interactionSource, project.browserState.selectedTemplates.indexOf(item))
                 }
             }
         }
@@ -116,31 +128,37 @@ fun TriggerTemplateItem(
     browserTemplate: BrowserTemplate,
     isDragging: Boolean,
     interactionSource: MutableInteractionSource,
+    selectedIndex: Int,
 ) {
     val selected by derivedStateOf { browserState.selectedTemplates.contains(browserTemplate) }
+    val hovered = browserState.hoveredTemplate.value == browserTemplate
     val backgroundColor = browserTemplate.composeColor.value
     val textColor = backgroundColor.getContrasting(Color.White, Color.Black)
+    val borderColor = backgroundColor.getContrasting(Color.White, Color.Gray)
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min)
+                .background(Color.Transparent)
+                .padding(0.5.dp)
+                .thenIf(selected) {
+                    border(
+                        width = 3.dp,
+                        color = borderColor,
+                        shape = RoundedCornerShape(5.dp)
+                    )
+                }
+                .thenIf(hovered && !selected) {
+                    border(
+                        width = 1.dp,
+                        color = borderColor,
+                        shape = RoundedCornerShape(6.dp)
+                    )
+                }
+                .padding(1.dp)
                 .background(
                     color = backgroundColor,
-                    shape = RoundedCornerShape(5.dp),
-                ).border(
-                    width =
-                        if (selected) {
-                            5
-                        } else {
-                            0
-                        }.dp,
-                    color =
-                        if (selected) {
-                            MainUiState.theme.primaryColor()
-                        } else {
-                            Color.Black
-                        },
                     shape = RoundedCornerShape(5.dp),
                 )
                 .onPointerEvent(PointerEventType.Enter) {
@@ -151,13 +169,19 @@ fun TriggerTemplateItem(
                     matcher = PointerMatcher.mouse(PointerButton.Primary),
                     onClick = {
                         browserState.selectTemplate(browserTemplate, false)
+                    },
+                    onDoubleClick = {
+                        // select the template
+                        browserState.selectTemplate(browserTemplate, false)
+                        // open the template inspector
+                        MainUiState.inspectorOption = InspectorOption.TriggerTemplate
                     }
                 ).onClick(
                     keyboardModifiers = { isShiftPressed },
                     matcher = PointerMatcher.mouse(PointerButton.Primary),
                     onClick = {
                         browserState.selectTemplate(browserTemplate, true)
-                    },
+                    }
                 ).onDrag(
                     onDragStart = {
                         // select the template if not already selected
@@ -176,8 +200,27 @@ fun TriggerTemplateItem(
                     onDragCancel = {
                         browserState.stopDragging()
                     },
-                ).padding(5.dp),
+                ).padding(3.5.dp).trackActivation(),
     ) {
+        // Selection Number
+        if(selected) {
+            Column(Modifier.fillMaxHeight().padding(start = 2.dp, end = 5.dp), verticalArrangement = Arrangement.Center) {
+                Row {
+                    Box(Modifier.size(16.dp).background(textColor, CircleShape), contentAlignment = Alignment.Center) {
+                        Text(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = "${selectedIndex + 1}",
+                            color = backgroundColor,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            overflow = TextOverflow.Visible,
+                            letterSpacing = 0.1.sp,
+                        )
+                    }
+                }
+            }
+        }
         // Icon
         Column(
             verticalArrangement = Arrangement.Center,
@@ -216,13 +259,13 @@ fun TriggerTemplateItem(
                 modifier = Modifier.fillMaxHeight(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                var hovered by remember { mutableStateOf(false) }
+                var handleHovered by remember { mutableStateOf(false) }
                 Icon(
                     key = MttIcons.contentViewList,
                     null,
                     modifier = with(scope) { Modifier.draggableHandle(interactionSource = interactionSource) }
-                        .alpha(if (hovered) 1f else 0.5f)
-                        .onHover { hovered = it }
+                        .alpha(if (handleHovered) 1f else 0.5f)
+                        .onHover { handleHovered = it }
                         .size(16.dp),
                     tint = textColor
                 )
