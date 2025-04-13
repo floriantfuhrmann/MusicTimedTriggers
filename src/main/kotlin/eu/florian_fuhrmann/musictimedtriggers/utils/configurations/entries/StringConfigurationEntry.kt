@@ -1,13 +1,14 @@
 package eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.InvalidInputPopup
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.*
@@ -27,6 +28,7 @@ class StringConfigurationEntry(
     customCheckers: List<RequireCustom>,
     visibleWhen: VisibleWhen?,
     private val intRange: RequireIntRange?,
+    private val placeholderText: PlaceholderText?
 ) : AbstractConfigurationEntry<String>(
     configuration,
     field,
@@ -38,49 +40,58 @@ class StringConfigurationEntry(
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     override fun Content() {
-        var checkerMessage: String? by remember { mutableStateOf(null) }
-        var textValue by remember { mutableStateOf(field.get(configuration) as String) }
-        Row(
-            modifier = Modifier.padding(top = 5.dp)
-        ) {
-            Tooltip(tooltip = {
-                Text(configurable.description)
-            }) {
-                Text("${configurable.displayName}:")
+        // State
+        var fieldFocused by remember { mutableStateOf(false) }
+        var invalidInputMessage: String? by remember { mutableStateOf(null) }
+        val textFieldState = rememberTextFieldState(field.get(configuration) as String)
+        // Ui
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            // label
+            Column {
+                Tooltip(
+                    tooltip = { Text(configurable.description) },
+                    enabled = configurable.description.isNotEmpty()
+                ) {
+                    Text("${configurable.displayName}:")
+                }
             }
-        }
-        Row(
-            modifier = Modifier.padding(top = 2.dp)
-        ) {
-            TextField(
-                value = textValue,
-                onValueChange = { newValue ->
-                    //update ui value
-                    textValue = newValue
-                    //check length
-                    if(intRange == null || (intRange.min <= newValue.length && intRange.max >= newValue.length)) {
-                        //custom check
-                        val checkResult = checkCustom(newValue)
-                        if(checkResult.valid) {
-                            //set checker message
-                            checkerMessage = null
-                            //set field and call change callback
-                            field.set(configuration, newValue)
-                            handleValueChanged()
-                        } else {
-                            checkerMessage = checkResult.message
-                        }
-                    } else {
-                        checkerMessage = "Has to be between ${intRange.min} and ${intRange.max} characters"
+            // text field (verticalArrangement = Arrangement.Center)
+            Column {
+                // checker message
+                invalidInputMessage?.let {
+                    if(fieldFocused) {
+                        InvalidInputPopup(it)
                     }
-                },
-                outline = if(checkerMessage == null) { Outline.None } else { Outline.Error },
-                modifier = Modifier.trackActivation().fillMaxWidth()
-            )
-        }
-        if(checkerMessage != null) {
-            Row {
-                Text(color = Color.Red, text = checkerMessage!!)
+                }
+                // text field
+                TextField(
+                    state = textFieldState,
+                    outline = if(invalidInputMessage == null) Outline.None else Outline.Error,
+                    modifier = Modifier.trackActivation().fillMaxWidth().onFocusChanged { fieldFocused = it.isFocused },
+                    placeholder = { placeholderText?.text?.let { Text(it) } }
+                )
+            }
+            // Export State back to field
+            LaunchedEffect(textFieldState) {
+                snapshotFlow { textFieldState.text }.collect { value ->
+                    // check length
+                    if(intRange != null && (value.length < intRange.min || value.length > intRange.max)) {
+                        // set message
+                        invalidInputMessage = "Has to be between ${intRange.min} and ${intRange.max} characters"
+                        return@collect
+                    }
+                    // do custom check
+                    val checkResult = checkCustom(value.toString())
+                    if(!checkResult.valid) {
+                        // set message
+                        invalidInputMessage = checkResult.message
+                        return@collect
+                    }
+                    // unset message, set field and call change callback
+                    invalidInputMessage = null
+                    field.set(configuration, value)
+                    handleValueChanged()
+                }
             }
         }
     }

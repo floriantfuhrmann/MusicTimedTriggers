@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.*
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
@@ -22,6 +23,7 @@ abstract class NumberConfigurationEntry<T>(
     customCheckers: List<RequireCustom>,
     visibleWhen: VisibleWhen?,
     private val buttonsParams: PlusMinusButtons?,
+    private val placeholderText: PlaceholderText?,
     private val numberFieldState: NumberFieldState<T>
 ) : AbstractConfigurationEntry<T>(
     configuration,
@@ -35,6 +37,7 @@ abstract class NumberConfigurationEntry<T>(
     @Composable
     override fun Content() {
         // State
+        var fieldFocused by remember { mutableStateOf(false) }
         var checkerMessage: String? by remember { mutableStateOf(null) }
         // Ui
         Row(
@@ -54,17 +57,18 @@ abstract class NumberConfigurationEntry<T>(
             Column {
                 // Checker message (only show if number field itself is valid)
                 checkerMessage?.let {
-                    if(numberFieldState.isValid) {
+                    if(fieldFocused && numberFieldState.isValid) {
                         InvalidInputPopup(it)
                     }
                 }
                 // Input field
                 NumberField(
                     state = numberFieldState,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().onFocusChanged { fieldFocused = it.isFocused },
                     plusMinusButtons = buttonsParams != null,
                     plusMinusButtonsStep = buttonsParams?.step ?: 1,
-                    outline = if(checkerMessage != null) Outline.Error else Outline.None
+                    outline = if(checkerMessage != null) Outline.Error else Outline.None,
+                    placeholder = { placeholderText?.text?.let { Text(it) } },
                 )
             }
             // Export State back to field
@@ -109,7 +113,8 @@ class IntegerConfigurationEntry(
     customCheckers: List<RequireCustom>,
     visibleWhen: VisibleWhen?,
     intRange: RequireIntRange?,
-    buttonsParams: PlusMinusButtons?
+    buttonsParams: PlusMinusButtons?,
+    placeholderText: PlaceholderText?
 ) : NumberConfigurationEntry<Int>(
     configuration,
     field,
@@ -118,6 +123,7 @@ class IntegerConfigurationEntry(
     customCheckers,
     visibleWhen,
     buttonsParams,
+    placeholderText,
     IntNumberFieldState(
         field.getInt(configuration),
         (intRange?.min ?: Int.MIN_VALUE)..(intRange?.max ?: Int.MAX_VALUE)
@@ -132,7 +138,8 @@ class DoubleConfigurationEntry(
     customCheckers: List<RequireCustom>,
     visibleWhen: VisibleWhen?,
     doubleRange: RequireDoubleRange?,
-    buttonsParams: PlusMinusButtons?
+    buttonsParams: PlusMinusButtons?,
+    placeholderText: PlaceholderText?
 ) : NumberConfigurationEntry<Double>(
     configuration,
     field,
@@ -141,6 +148,7 @@ class DoubleConfigurationEntry(
     customCheckers,
     visibleWhen,
     buttonsParams,
+    placeholderText,
     DoubleNumberFieldState(
         field.getDouble(configuration),
         (doubleRange?.min ?: Double.NEGATIVE_INFINITY)..(doubleRange?.max ?: Double.POSITIVE_INFINITY)

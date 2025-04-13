@@ -1,21 +1,14 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.PopupProperties
-import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
@@ -113,8 +106,8 @@ fun NumberField(
                             onClick = {
                                 val newValue = state.value.let {
                                     when (it) {
-                                        is Double -> it + 1.0
-                                        is Int -> it + 1
+                                        is Double -> it + plusMinusButtonsStep.toDouble()
+                                        is Int -> it + plusMinusButtonsStep.toInt()
                                         else -> return@IconButton
                                     }
                                 }

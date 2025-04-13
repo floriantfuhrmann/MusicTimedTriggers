@@ -56,19 +56,22 @@ abstract class Configuration {
             Int::class.java -> {
                 val intRange = field.annotations.find { it.annotationClass == RequireIntRange::class } as? RequireIntRange
                 val buttonParams = field.annotations.find { it.annotationClass == PlusMinusButtons::class } as? PlusMinusButtons
-                IntegerConfigurationEntry(this, field, configurable, context, customCheckers, visibleWhen, intRange, buttonParams)
+                val placeholderText = field.annotations.find { it.annotationClass == PlaceholderText::class } as? PlaceholderText
+                IntegerConfigurationEntry(this, field, configurable, context, customCheckers, visibleWhen, intRange, buttonParams, placeholderText)
             }
             Double::class.java -> {
                 val doubleRange = field.annotations.find { it.annotationClass == RequireDoubleRange::class } as? RequireDoubleRange
                 val buttonParams = field.annotations.find { it.annotationClass == PlusMinusButtons::class } as? PlusMinusButtons
-                DoubleConfigurationEntry(this, field, configurable, context, customCheckers, visibleWhen, doubleRange, buttonParams)
+                val placeholderText = field.annotations.find { it.annotationClass == PlaceholderText::class } as? PlaceholderText
+                DoubleConfigurationEntry(this, field, configurable, context, customCheckers, visibleWhen, doubleRange, buttonParams, placeholderText)
             }
             Boolean::class.java -> {
                 BooleanConfigurationEntry(this, field, configurable, context, customCheckers, visibleWhen)
             }
             String::class.java -> {
                 val intRange = field.annotations.find { it.annotationClass == RequireIntRange::class } as? RequireIntRange
-                StringConfigurationEntry(this, field, configurable, context, customCheckers, visibleWhen, intRange)
+                val placeholderText = field.annotations.find { it.annotationClass == PlaceholderText::class } as? PlaceholderText
+                StringConfigurationEntry(this, field, configurable, context, customCheckers, visibleWhen, intRange, placeholderText)
             }
             java.awt.Color::class.java, androidx.compose.ui.graphics.Color::class.java, HsvColor::class.java, GenericColor::class.java -> {
                 val showAlphaBar = field.annotations.find { it.annotationClass == ShowAlphaBar::class } as? ShowAlphaBar
