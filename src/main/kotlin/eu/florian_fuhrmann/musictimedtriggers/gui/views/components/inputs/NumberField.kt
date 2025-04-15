@@ -1,27 +1,33 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
+import org.jetbrains.jewel.ui.theme.textFieldStyle
 
 @Composable
 fun NumberField(
     state: NumberFieldState<*>,
     modifier: Modifier = Modifier,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    style: TextFieldStyle = JewelTheme.textFieldStyle,
     enabled: Boolean = true,
     readOnly: Boolean = false,
     plusMinusButtons: Boolean = false,
     plusMinusButtonsStep: Number = 1,
     outline: Outline = Outline.None,
+    forceOverrideOutline: Boolean = false,
     placeholder: @Composable (() -> Unit)? = null,
     undecorated: Boolean = false,
     customTrailingIcon: @Composable (() -> Unit)? = null
@@ -36,9 +42,11 @@ fun NumberField(
         modifier = modifier.onFocusChanged {
             textFieldFocused = it.isFocused
         },
+        textStyle = textStyle,
+        style = style,
         enabled = enabled,
         readOnly = readOnly,
-        outline = if(state.isValid) outline else Outline.Error,
+        outline = if(forceOverrideOutline || state.isValid) outline else Outline.Error,
         placeholder = placeholder,
         undecorated = undecorated,
         keyboardOptions = KeyboardOptions.Default.copy(
@@ -126,7 +134,7 @@ fun NumberField(
 sealed class NumberFieldState<T>(initialValue: Number, initialTextFieldValue: String = initialValue.toString()) where T : Number, T : Comparable<T> {
     abstract val isDecimal: Boolean
     val textFieldState = TextFieldState(initialTextFieldValue)
-    abstract val validRange: ClosedRange<T>
+    abstract var validRange: ClosedRange<T>
     abstract val value: T?
     val isValid: Boolean
         get() = value.let { it != null && it in validRange }
@@ -136,7 +144,7 @@ sealed class NumberFieldState<T>(initialValue: Number, initialTextFieldValue: St
 
 class IntNumberFieldState(
     initialValue: Int,
-    override val validRange: ClosedRange<Int> = Int.MIN_VALUE..Int.MAX_VALUE
+    override var validRange: ClosedRange<Int> = Int.MIN_VALUE..Int.MAX_VALUE
 ) : NumberFieldState<Int>(initialValue) {
     override val isDecimal = false
     /**
@@ -149,7 +157,7 @@ class IntNumberFieldState(
 
 class DoubleNumberFieldState(
     initialValue: Double,
-    override val validRange: ClosedRange<Double> = Double.NEGATIVE_INFINITY..Double.POSITIVE_INFINITY
+    override var validRange: ClosedRange<Double> = Double.NEGATIVE_INFINITY..Double.POSITIVE_INFINITY
 ) : NumberFieldState<Double>(initialValue) {
     override val isDecimal = true
     /**
@@ -169,7 +177,7 @@ class DoubleNumberFieldState(
  */
 class TimeNumberFieldState(
     initialValue: Double,
-    override val validRange: ClosedRange<Double> = Double.NEGATIVE_INFINITY..Double.POSITIVE_INFINITY
+    override var validRange: ClosedRange<Double> = Double.NEGATIVE_INFINITY..Double.POSITIVE_INFINITY
 ) : NumberFieldState<Double>(initialValue, run {
     val minutes = (initialValue / 60).toInt()
     val seconds = (initialValue % 60).toInt()
