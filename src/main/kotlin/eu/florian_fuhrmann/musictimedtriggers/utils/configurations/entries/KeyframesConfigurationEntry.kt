@@ -22,6 +22,7 @@ import androidx.compose.ui.zIndex
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.DoubleNumberFieldState
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.InvalidInputPopup
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.NumberField
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
@@ -37,6 +38,7 @@ import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
+import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.component.styling.TextFieldColors
 import org.jetbrains.jewel.ui.component.styling.TextFieldMetrics
@@ -45,6 +47,7 @@ import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.*
 import org.jetbrains.jewel.ui.util.thenIf
 import java.lang.reflect.Field
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 class KeyframesConfigurationEntry(
@@ -182,11 +185,21 @@ class KeyframesConfigurationEntry(
                             .trackActivation()
                             .border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.panelBackground, RectangleShape) // hack to hide the default outline border, which can not be turned off
                             .thenIf(keyframeState.positionFieldFocused) {
-                               border(Stroke.Alignment.Inside, 2.dp, if(keyframeState.positionNumberFieldState.isValid) JewelTheme.globalColors.outlines.focused else JewelTheme.globalColors.outlines.focusedError, RectangleShape)
-                            }
-                            ,
+                                border(
+                                    alignment = Stroke.Alignment.Inside,
+                                    width = 2.dp,
+                                    color = if (keyframeState.positionNumberFieldState.isValid && keyframeState.positionDistanceValid) {
+                                        JewelTheme.globalColors.outlines.focused
+                                    } else {
+                                        JewelTheme.globalColors.outlines.focusedError
+                                    },
+                                    shape = RectangleShape
+                                )
+                            },
                         state = keyframeState.positionNumberFieldState,
-                        style = cellTextFieldStyle
+                        style = cellTextFieldStyle,
+                        outline = if(keyframeState.positionDistanceValid) Outline.None else Outline.Error,
+                        enabled = keyframeState != state.keyframeStates.first() && keyframeState != state.keyframeStates.last()
                     )
                     // export position value
                     LaunchedEffect(keyframeState.positionNumberFieldState) {
@@ -194,6 +207,10 @@ class KeyframesConfigurationEntry(
                             // handle position value change
                             state.handlePositionValueChange(keyframeState)
                         }
+                    }
+                    // invalid position popup
+                    if(!keyframeState.positionDistanceValid && keyframeState.positionFieldFocused) {
+                        InvalidInputPopup("too close to neighbor keyframe")
                     }
                 }
             }
@@ -339,8 +356,13 @@ class KeyframesConfigurationEntry(
         }
 
         fun handlePositionValueChange(changedKeyframeState: KeyframeState): Boolean {
+            // update whether the distance to other keyframes is valid for all keyframes
+            // (This is O(n^2) and could/should be optimized! Especially since we are already doing the work of having
+            // the list sorted. For example by recursively checking neighbors. But realistically you'll never have
+            // enough keyframes for this to remotely be a problem.)
+            keyframeStates.forEach { it.updatePositionDistanceValid(selectedPositionFormat, trigger) }
             // abort if any position value is currently invalid
-            if(keyframeStates.any {!it.positionNumberFieldState.isValid}) {
+            if(keyframeStates.any {!it.positionNumberFieldState.isValid || !it.positionDistanceValid}) {
                 return false
             }
             // check whether the keyframes are in correct order
@@ -387,7 +409,7 @@ class KeyframesConfigurationEntry(
             // ensure there are enough keyframe states
             val additionallyNeededKeyframeStates = keyframesObject.keyframesList.size - keyframeStates.size
             repeat(additionallyNeededKeyframeStates) {
-                keyframeStates.add(KeyframeState(null))
+                keyframeStates.add(KeyframeState(this, null))
             }
             // update keyframe states
             keyframesObject.keyframesList.forEachIndexed { index, keyframeObject ->
@@ -403,7 +425,7 @@ class KeyframesConfigurationEntry(
         }
     }
 
-    class KeyframeState(var keyframeObject: Keyframes.Keyframe?) {
+    class KeyframeState(private val parent: KeyframesConfigurationState, var keyframeObject: Keyframes.Keyframe?) {
         var positionNumberFieldState = DoubleNumberFieldState(-1.0)
         var valueNumberFieldState = DoubleNumberFieldState(-1.0, 0.0..1.0)
         var positionFieldFocused by mutableStateOf(false)
@@ -412,6 +434,37 @@ class KeyframesConfigurationEntry(
             get() = positionFieldFocused || valueFieldFocused
         var positionFieldFocusRequester: FocusRequester = FocusRequester()
         var valueFieldFocusRequester: FocusRequester = FocusRequester()
+
+        /**
+         * Whether enough distance is kept to the other keyframe positions. Only
+         * calculated from valid position values, so this state can be valid, even
+         * when any field is invalid.
+         * Needs to be manually recalculated when the position value changes!
+         */
+        var positionDistanceValid by mutableStateOf(true)
+
+        /**
+         * Check whether the distance to other keyframes is valid. Only compares
+         * valid states, so will return true even if own state is invalid.
+         */
+        private fun isPositionDistanceValid(format: PositionFormat, trigger: AbstractPlacedTrigger): Boolean {
+            // get own position value
+            val ownPositionFieldValue = positionNumberFieldState.value ?: return true
+            // calculate required distance to other keyframes
+            val requiredDistance = when(format) {
+                PositionFormat.Proportional -> Keyframes.MINIMUM_POSITION_DISTANCE_IN_SECONDS / trigger.duration
+                PositionFormat.Relative, PositionFormat.Absolute -> Keyframes.MINIMUM_POSITION_DISTANCE_IN_SECONDS
+            }
+            // check that no other keyframe is to close to our position
+            return parent.keyframeStates.filter { it != this }.none {
+                val otherPositionFieldValue = it.positionNumberFieldState.value ?: return false
+                (ownPositionFieldValue - otherPositionFieldValue).absoluteValue < requiredDistance
+            }
+        }
+
+        fun updatePositionDistanceValid(format: PositionFormat, trigger: AbstractPlacedTrigger) {
+            positionDistanceValid = isPositionDistanceValid(format, trigger)
+        }
 
         fun importPositionFromKeyframeObject(format: PositionFormat, trigger: AbstractPlacedTrigger) {
             keyframeObject.let { kObj ->

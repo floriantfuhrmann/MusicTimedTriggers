@@ -32,9 +32,6 @@ class Keyframes(
         keyframesList.add(index, newKeyframe)
     }
 
-    @Transient
-    private val minKeyframePositionDifferenceSeconds = 0.05 // 50ms
-
     /**
      * Checks whether a new Keyframe can be inserted at [index] while keeping
      * minimum distance to previous and next Keyframe.
@@ -48,7 +45,7 @@ class Keyframes(
             return false
         }
         // check distance to previous and next keyframe
-        val minPositionDifference = minKeyframePositionDifferenceSeconds / triggerDuration
+        val minPositionDifference = MINIMUM_POSITION_DISTANCE_IN_SECONDS / triggerDuration
         val prevPosition = keyframesList[index - 1].position
         val nextPosition = keyframesList[index].position
         return nextPosition - prevPosition > minPositionDifference * 2
@@ -156,6 +153,9 @@ class Keyframes(
     }
 
     companion object {
+        @Transient
+        const val MINIMUM_POSITION_DISTANCE_IN_SECONDS = 0.02 // 20ms
+
         /** Dummy Keyframes, which should not be modified. */
         val DUMMY_KEYFRAMES = create()
 

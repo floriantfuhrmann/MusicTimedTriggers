@@ -590,8 +590,8 @@ object MoveTriggersManager {
 
     // Keyframe Movement
 
-    private const val KEYFRAMES_PREVENT_CROWDING_TIME_PERIOD_IN_SECONDS = 0.039_999_999_999_999 // slightly less than 40ms
-    private const val KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS = 0.02 // 20ms
+    private const val KEYFRAMES_PREVENT_CROWDING_TIME_PERIOD_IN_SECONDS = 2*Keyframes.MINIMUM_POSITION_DISTANCE_IN_SECONDS - 0.000_000_001 // previous: 0.039_999_999_999_999 = slightly less than 40ms
+    private const val KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS = Keyframes.MINIMUM_POSITION_DISTANCE_IN_SECONDS // previous: 0.02 = 20ms
     val isMovingKeyframes: Boolean
         get() = keyframeMoveCaptain != null
     private var keyframeMoveCaptain: Keyframes.Keyframe? = null
