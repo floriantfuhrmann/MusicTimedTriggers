@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.*
@@ -19,12 +18,16 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.DoubleNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.InvalidInputPopup
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.NumberField
+import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 import eu.florian_fuhrmann.musictimedtriggers.triggers.utils.intensity.Keyframes
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
@@ -65,8 +68,8 @@ class KeyframesConfigurationEntry(
 ) {
 
     // init state when configuration entry is created
-    val state = (if(context is AbstractPlacedTrigger.PlacedTriggerConfigurationContext) context.placedTrigger else null)?.let { trigger ->
-        KeyframesConfigurationState(trigger, field.get(configuration) as Keyframes)
+    val state = (if(context is AbstractPlacedTrigger.PlacedTriggerConfigurationContext) context else null)?.let { context ->
+        KeyframesConfigurationState(context.sequence, context.placedTrigger, field.get(configuration) as Keyframes)
     }
 
     @Composable
@@ -91,7 +94,7 @@ class KeyframesConfigurationEntry(
                 )
                 // Keyframes table
                 if(state.tableExpanded) {
-                    LaunchedEffect(Unit) {
+                    LaunchedEffect(TriggerSelectionManager.singleSelectedTriggerStartTimeState.value, TriggerSelectionManager.singleSelectedTriggerDurationState.value) {
                         // import keyframes from keyframes object
                         state.importFromKeyframesObject()
                     }
@@ -111,8 +114,12 @@ class KeyframesConfigurationEntry(
         // Ui
         Column(Modifier.fillMaxWidth().border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal)) {
             // Toolbar
-            Row(Modifier.fillMaxWidth().border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal)) {
-                Text("Todo: Toolbar")
+            Row(modifier = Modifier
+                .height(20.dp).fillMaxWidth()
+                .border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "Todo: Toolbar", modifier = Modifier.padding(horizontal = 6.dp))
             }
             // Table with Position Type and Value columns
             Row(Modifier.fillMaxWidth()) {
@@ -322,6 +329,8 @@ class KeyframesConfigurationEntry(
                                 keyframeState.exportValueToKeyframeObject()
                                 // and redraw timeline, so changes are visible
                                 redrawTimeline()
+                                // save to file
+                                state.saveChangesToFile()
                             }
                         }
                     }
@@ -343,7 +352,7 @@ class KeyframesConfigurationEntry(
         }
     }
 
-    class KeyframesConfigurationState(val trigger: AbstractPlacedTrigger, val keyframesObject: Keyframes) {
+    class KeyframesConfigurationState(val sequence: TriggerSequence, val trigger: AbstractPlacedTrigger, val keyframesObject: Keyframes) {
         var currentFocusManager: FocusManager? = null
         var currentCoroutineScope: CoroutineScope? = null
         var tableExpanded by mutableStateOf(false)
@@ -402,6 +411,8 @@ class KeyframesConfigurationEntry(
             }
             // redraw timeline so changes are visible
             redrawTimeline()
+            // save to file
+            saveChangesToFile()
             return true
         }
 
@@ -422,6 +433,29 @@ class KeyframesConfigurationEntry(
             if (keyframeStates.size > keyframesObject.keyframesList.size) {
                 keyframeStates.removeRange(keyframesObject.keyframesList.size, keyframeStates.size)
             }
+        }
+
+        private var lastKnownLine: TriggerSequenceLine? = null
+        private var lastKnownTriggerIndex: Int? = null
+        private fun getTriggersLine(): TriggerSequenceLine? {
+            // check whether the trigger is in the same line as the last known line
+            lastKnownLine?.let { lastLine ->
+                lastKnownTriggerIndex?.let { lastIndex ->
+                    if(lastLine.getTriggerByIndex(lastIndex) == trigger) {
+                        return lastLine
+                    }
+                }
+            }
+            // otherwise we need to find the line again
+            val pair = sequence.findLineAndIndexOf(trigger) ?: return null
+            lastKnownLine = pair.first
+            lastKnownTriggerIndex = pair.second
+            return lastKnownLine
+        }
+
+        fun saveChangesToFile() {
+            val line = getTriggersLine() ?: error("Line of trigger not found")
+            line.saveToFile() // in future this should be debounced to avoid too many writes
         }
     }
 

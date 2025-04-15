@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
@@ -119,7 +120,8 @@ class Song (
      * (called before currentSong reference has been set)
      */
     fun closing() {
-
+        // clear editors selection manager
+        TriggerSelectionManager.deselectAllTriggersAndKeyframes(redraw = false)
     }
 
     /**

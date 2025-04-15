@@ -78,7 +78,10 @@ fun EditPlacedTriggerInspector(project: Project) {
                                 ConfigurationBox(
                                     modifier = Modifier.fillMaxSize(),
                                     configuration = trigger.configuration,
-                                    context = object : AbstractPlacedTrigger.PlacedTriggerConfigurationContext(trigger), ChangeListenerContext {
+                                    context = object : AbstractPlacedTrigger.PlacedTriggerConfigurationContext(
+                                        sequence = project.currentSong?.sequence ?: error("Can only create configuration context if the sequence is available. This sequence must be the sequence of the trigger!"),
+                                        placedTrigger = trigger
+                                    ), ChangeListenerContext {
                                         override fun onChange(field: Field, configurable: Configurable) {
                                             // redraw timeline so any changes to the trigger are visible
                                             redrawTimeline()

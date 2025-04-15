@@ -362,7 +362,7 @@ class TriggerSequenceLine(
      * if Trigger B has a duration of 2s, so ends at time position 5.0s, it will be active at 4.99s, but will no longer
      * be active at 5.0s
      */
-    private fun indexOfTriggerAt(timePosition: Double): Int {
+    fun indexOfTriggerAt(timePosition: Double): Int {
         return triggers.binarySearch {
             if (it.startTime <= timePosition && it.endTime > timePosition) {
                 return@binarySearch 0

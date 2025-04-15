@@ -1,6 +1,7 @@
 package eu.florian_fuhrmann.musictimedtriggers.triggers.placed
 
 import com.google.gson.JsonObject
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
@@ -71,7 +72,11 @@ abstract class AbstractPlacedTrigger(
         return json
     }
 
-    open class PlacedTriggerConfigurationContext(val placedTrigger: AbstractPlacedTrigger) : ConfigurationContext()
+    /**
+     * Configuration context for this trigger. This is used to pass the trigger and the sequence to the configuration ui.
+     * The line is not passed, as the trigger may be moved between lines, but not between sequences.
+     */
+    open class PlacedTriggerConfigurationContext(val sequence: TriggerSequence, val placedTrigger: AbstractPlacedTrigger) : ConfigurationContext()
 
     companion object {
         const val DEFAULT_TRIGGER_DURATION = 1.0
