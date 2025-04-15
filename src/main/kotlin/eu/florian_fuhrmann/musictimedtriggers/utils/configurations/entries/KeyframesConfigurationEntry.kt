@@ -18,13 +18,13 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.MoveTriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.DoubleNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.InvalidInputPopup
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.NumberField
-import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrigger
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
@@ -94,7 +94,11 @@ class KeyframesConfigurationEntry(
                 )
                 // Keyframes table
                 if(state.tableExpanded) {
-                    LaunchedEffect(TriggerSelectionManager.singleSelectedTriggerStartTimeState.value, TriggerSelectionManager.singleSelectedTriggerDurationState.value) {
+                    LaunchedEffect(
+                        TriggerSelectionManager.singleSelectedTriggerStartTimeState.value,
+                        TriggerSelectionManager.singleSelectedTriggerDurationState.value,
+                        MoveTriggersManager.endKeyframeMoveCounter
+                    ) {
                         // import keyframes from keyframes object
                         state.importFromKeyframesObject()
                     }

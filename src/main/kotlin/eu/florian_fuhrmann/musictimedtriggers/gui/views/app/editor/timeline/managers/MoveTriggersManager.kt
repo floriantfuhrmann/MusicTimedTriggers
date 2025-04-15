@@ -1,5 +1,8 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer.durationToWidth
@@ -750,6 +753,7 @@ object MoveTriggersManager {
         redrawTimeline()
     }
 
+    var endKeyframeMoveCounter: Int by mutableStateOf(0)
     fun endKeyframeMove(e: MouseEvent) {
         // do one last update
         updateKeyframesMove(e)
@@ -759,6 +763,8 @@ object MoveTriggersManager {
         keyframeMoveOffsets = emptyMap()
         // update cursor
         updateCursor()
+        // increment endKeyframeMoveCounter to trigger a recomposition
+        endKeyframeMoveCounter++
         // save affected lines
         val affectedLines = mutableSetOf<TriggerSequenceLine>()
         val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: throw IllegalStateException("No sequence")
@@ -767,7 +773,6 @@ object MoveTriggersManager {
         }
         affectedLines.forEach { line ->
             line.saveToFile()
-            println("Saved line: ${line.name}")
         }
     }
 
