@@ -19,6 +19,7 @@ import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedTrig
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ChangeListenerContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.Configurable
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries.KeyframesConfigurationEntry
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
@@ -118,6 +119,8 @@ fun TriggerPlacementInputRow(project: Project, trigger: AbstractPlacedTrigger, t
                 val currentEndTime = trigger.endTime
                 trigger.startTime = newStartTime
                 trigger.duration = currentEndTime - newStartTime
+                // reimport keyframe table (since it also depends on trigger start time/duration)
+                KeyframesConfigurationEntry.reimportKeyframeTable()
                 // redraw timeline, so change becomes visible
                 redrawTimeline()
             }
@@ -135,6 +138,8 @@ fun TriggerPlacementInputRow(project: Project, trigger: AbstractPlacedTrigger, t
                 )
                 // update trigger
                 trigger.duration = newEndTime - trigger.startTime
+                // reimport keyframe table (since it also depends on trigger start time/duration)
+                KeyframesConfigurationEntry.reimportKeyframeTable()
                 // redraw timeline, so change becomes visible
                 redrawTimeline()
             }
@@ -163,6 +168,8 @@ fun TriggerPlacementInputRow(project: Project, trigger: AbstractPlacedTrigger, t
                     // update trigger
                     trigger.duration = newDuration
                 }
+                // reimport keyframe table (since it also depends on trigger start time/duration)
+                KeyframesConfigurationEntry.reimportKeyframeTable()
                 // redraw timeline, so change becomes visible
                 redrawTimeline()
             }

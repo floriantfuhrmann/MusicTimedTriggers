@@ -7,6 +7,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redr
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer.getSequenceLineAt
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedIntensityTrigger
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries.KeyframesConfigurationEntry
 import org.jetbrains.jewel.ui.component.Text
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
@@ -41,8 +42,10 @@ object RightClickMenuManager {
                     //only enable if keyframe can be inserted at index
                     isEnabled = clickedTrigger.keyframes().canInsertAt(clickedKeyframeIndex, clickedTrigger.duration)
                     addActionListener {
-                        // insert new keyframe and redraw timeline, so the new keyframe is shown
+                        // insert new keyframe
                         clickedTrigger.keyframes().insertNewAtIndex(clickedKeyframeIndex)
+                        // redraw timeline and reimport keyframe table, so changes are shown
+                        KeyframesConfigurationEntry.reimportKeyframeTable()
                         redrawTimeline()
                     }
                 })
@@ -51,8 +54,10 @@ object RightClickMenuManager {
                     //only enable if keyframe can be inserted at index
                     isEnabled = clickedTrigger.keyframes().canInsertAt(clickedKeyframeIndex + 1, clickedTrigger.duration)
                     addActionListener {
-                        // insert new keyframe and redraw timeline, so the new keyframe is shown
+                        // insert new keyframe
                         clickedTrigger.keyframes().insertNewAtIndex(clickedKeyframeIndex + 1)
+                        // redraw timeline and reimport keyframe table, so changes are shown
+                        KeyframesConfigurationEntry.reimportKeyframeTable()
                         redrawTimeline()
                     }
                 })
@@ -61,8 +66,10 @@ object RightClickMenuManager {
                     //only enable when not first or last index
                     isEnabled = clickedTrigger.keyframes().canRemoveAt(clickedKeyframeIndex)
                     addActionListener {
-                        //delete keyframe and redraw timeline
+                        //delete keyframe
                         clickedTrigger.keyframes().removeAtIndex(clickedKeyframeIndex)
+                        // redraw timeline and reimport keyframe table, so changes are shown
+                        KeyframesConfigurationEntry.reimportKeyframeTable()
                         redrawTimeline()
                     }
                 })

@@ -14,6 +14,7 @@ import androidx.compose.ui.focus.*
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -88,16 +89,17 @@ class KeyframesConfigurationEntry(
             Column {
                 // Header
                 OpenableGroupHeader(
-                    open = state.tableExpanded,
-                    onOpenedChange = { state.tableExpanded = it },
+                    open = tableExpanded,
+                    onOpenedChange = { tableExpanded = it },
                     text = configurable.displayName
                 )
                 // Keyframes table
-                if(state.tableExpanded) {
+                if(tableExpanded) {
                     LaunchedEffect(
-                        TriggerSelectionManager.singleSelectedTriggerStartTimeState.value,
-                        TriggerSelectionManager.singleSelectedTriggerDurationState.value,
-                        MoveTriggersManager.endKeyframeMoveCounter
+                        TriggerSelectionManager.singleSelectedTriggerStartTimeState.value, // updated when trigger is moved through timeline editor
+                        TriggerSelectionManager.singleSelectedTriggerDurationState.value, // updated when trigger is moved through timeline editor
+                        MoveTriggersManager.endKeyframeMoveCounter, // updated when keyframes are moved through timeline editor
+                        reimportKeyframeTableCounter // updated by updateKeyframeTable()
                     ) {
                         // import keyframes from keyframes object
                         state.importFromKeyframesObject()
@@ -110,31 +112,16 @@ class KeyframesConfigurationEntry(
         }
     }
 
-    @Composable
-    fun RowScope.KeyframesTableMainColumn(state: KeyframesConfigurationState) {
-        // set focus manager
-        state.currentFocusManager = LocalFocusManager.current
-        state.currentCoroutineScope = rememberCoroutineScope()
-        // Ui
-        Column(Modifier.fillMaxWidth().border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal)) {
-            // Toolbar
-            Row(modifier = Modifier
-                .height(20.dp).fillMaxWidth()
-                .border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "Todo: Toolbar", modifier = Modifier.padding(horizontal = 6.dp))
-            }
-            // Table with Position Type and Value columns
-            Row(Modifier.fillMaxWidth()) {
-                // Position Column
-                PositionColumn(state)
-                // Value Column
-                ValueColumn(state)
-            }
-        }
-    }
-
+    private val rowHeight
+        @Composable
+        get() = 24.dp
+    private val cellHorizontalPadding = 8.dp
+    private val cellBackgroundSelected
+        @Composable
+        get() = JewelTheme.treeStyle.colors.backgroundSelectedFocused
+    private val tableBorderColor
+        @Composable
+        get() = JewelTheme.groupHeaderStyle.colors.divider
     private val cellTextFieldStyle
         @Composable
         get() = TextFieldStyle(
@@ -163,11 +150,36 @@ class KeyframesConfigurationEntry(
             ),
             metrics = TextFieldMetrics(
                 borderWidth = JewelTheme.textFieldStyle.metrics.borderWidth,
-                contentPadding = PaddingValues(horizontal = 6.dp), // PaddingValues(1.dp)
+                contentPadding = PaddingValues(horizontal = cellHorizontalPadding), // PaddingValues(1.dp)
                 cornerSize = CornerSize(0.dp),
                 minSize = JewelTheme.textFieldStyle.metrics.minSize
             )
         )
+
+    @Composable
+    fun RowScope.KeyframesTableMainColumn(state: KeyframesConfigurationState) {
+        // set focus manager
+        state.currentFocusManager = LocalFocusManager.current
+        state.currentCoroutineScope = rememberCoroutineScope()
+        // Ui
+        Column(Modifier.fillMaxWidth().border(Stroke.Alignment.Outside, 1.dp, tableBorderColor)) {
+            // Toolbar
+            Row(modifier = Modifier
+                .height(rowHeight).fillMaxWidth()
+                .border(Stroke.Alignment.Outside, 1.dp, tableBorderColor),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "Todo: Toolbar", modifier = Modifier.padding(horizontal = cellHorizontalPadding))
+            }
+            // Table with Position Type and Value columns
+            Row(Modifier.fillMaxWidth()) {
+                // Position Column
+                PositionColumn(state)
+                // Value Column
+                ValueColumn(state)
+            }
+        }
+    }
 
     @Composable
     fun RowScope.PositionColumn(state: KeyframesConfigurationState) {
@@ -176,9 +188,9 @@ class KeyframesConfigurationEntry(
             PositionHeader(state)
             // Position Rows
             state.keyframeStates.forEach { keyframeState ->
-                Divider(Orientation.Horizontal, Modifier.fillMaxWidth().zIndex(0.1f), JewelTheme.globalColors.borders.normal)
+                Divider(Orientation.Horizontal, Modifier.fillMaxWidth().zIndex(0.1f), tableBorderColor)
                 Row(
-                    modifier = Modifier.height(20.dp),
+                    modifier = Modifier.height(rowHeight),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // the number field for the position (with some styling hacks)
@@ -186,7 +198,7 @@ class KeyframesConfigurationEntry(
                         modifier = Modifier.fillMaxSize()
                             .focusRequester(keyframeState.positionFieldFocusRequester)
                             .thenIf(keyframeState.anyFieldFocused) {
-                                background(JewelTheme.simpleListItemStyle.colors.backgroundSelected)
+                                background(cellBackgroundSelected)
                             }
                             .wrapContentHeight(align = Alignment.CenterVertically)
                             .onFocusChanged {
@@ -206,6 +218,35 @@ class KeyframesConfigurationEntry(
                                     },
                                     shape = RectangleShape
                                 )
+                            }.onKeyEvent {
+                                // if not key up don't handle, but still intercept Tab and Enter
+                                if(it.type != KeyEventType.KeyUp) {
+                                    return@onKeyEvent it.key == Key.Tab || it.key == Key.Enter
+                                }
+                                // handle key events for key up
+                                when (it.key) {
+                                    Key.Tab -> {
+                                        keyframeState.moveFocusToValueField()
+                                        return@onKeyEvent true
+                                    }
+                                    Key.Enter -> {
+                                        // find next keyframe state
+                                        val nextKeyframeState = state.keyframeStates.getOrNull(state.keyframeStates.indexOf(keyframeState) + 1)
+                                        // either move focus to next keyframe state or to second keyframe state (first should be skipped because it is not editable)
+                                        if(nextKeyframeState != null && nextKeyframeState != state.keyframeStates.last()) {
+                                            nextKeyframeState.moveFocusToPositionField()
+                                        } else {
+                                            state.keyframeStates[1].moveFocusToPositionField()
+                                        }
+                                        return@onKeyEvent true
+                                    }
+                                    Key.Escape -> {
+                                        // ESC clears focus
+                                        state.currentFocusManager?.clearFocus()
+                                        return@onKeyEvent true
+                                    }
+                                    else -> return@onKeyEvent false
+                                }
                             },
                         state = keyframeState.positionNumberFieldState,
                         style = cellTextFieldStyle,
@@ -233,16 +274,16 @@ class KeyframesConfigurationEntry(
         var menuExpanded by remember { mutableStateOf(false) }
         Row(
             modifier = Modifier
-                .height(20.dp)
+                .height(rowHeight)
                 .clickable { menuExpanded = true }
                 .focusable().trackActivation(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // left padding
-            Spacer(Modifier.width(6.dp))
+            Spacer(Modifier.width(cellHorizontalPadding))
             // Position Format Type header with dropdown chevron
             Column(Modifier.weight(1f)) {
-                Text(state.selectedPositionFormat.displayName, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(selectedPositionFormat.displayName, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Column(Modifier.width(16.dp)) {
                 Box(Modifier.size(16.dp)) {
@@ -250,7 +291,7 @@ class KeyframesConfigurationEntry(
                 }
             }
             // right padding
-            Spacer(Modifier.width(6.dp))
+            Spacer(Modifier.width(cellHorizontalPadding))
             // Position Type dropdown menu
             if(menuExpanded) {
                 PopupMenu(
@@ -262,9 +303,9 @@ class KeyframesConfigurationEntry(
                     content = {
                         PositionFormat.entries.forEach {
                             selectableItem(
-                                selected = state.selectedPositionFormat == it,
+                                selected = selectedPositionFormat == it,
                                 onClick = {
-                                    state.selectedPositionFormat = it
+                                    selectedPositionFormat = it
                                     state.handlePositionFormatChange()
                                 }
                             ) {
@@ -285,7 +326,7 @@ class KeyframesConfigurationEntry(
             // Value Rows
             state.keyframeStates.forEach { keyframeState ->
                 // Divider to separate rows (with left border to overlay the default text field border, which can not be turned off)
-                val dividerColor = JewelTheme.globalColors.borders.normal
+                val dividerColor = tableBorderColor
                 Divider(
                     orientation = Orientation.Horizontal,
                     modifier = Modifier.fillMaxWidth().zIndex(0.1f)
@@ -302,7 +343,7 @@ class KeyframesConfigurationEntry(
                 )
                 // Row with Value NumberField
                 Row(
-                    modifier = Modifier.height(20.dp),
+                    modifier = Modifier.height(rowHeight),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // the number field for the value (with some styling hacks)
@@ -310,7 +351,7 @@ class KeyframesConfigurationEntry(
                         modifier = Modifier.fillMaxSize()
                             .focusRequester(keyframeState.valueFieldFocusRequester)
                             .thenIf(keyframeState.anyFieldFocused) {
-                                background(JewelTheme.simpleListItemStyle.colors.backgroundSelected)
+                                background(cellBackgroundSelected)
                             }
                             .wrapContentHeight(align = Alignment.CenterVertically)
                             .onFocusChanged {
@@ -319,9 +360,40 @@ class KeyframesConfigurationEntry(
                             .focusable().trackActivation()
                             .thenIf(keyframeState.valueFieldFocused) {
                                 border(Stroke.Alignment.Inside, 2.dp, if(keyframeState.valueNumberFieldState.isValid) JewelTheme.globalColors.outlines.focused else JewelTheme.globalColors.outlines.focusedError, RectangleShape)
-                                    .border(Stroke.Alignment.Outside, 1.dp, JewelTheme.simpleListItemStyle.colors.backgroundSelected, RectangleShape) // hack to hide the default outline border, which can not be turned off
-                            }
-                        ,
+                                    .border(Stroke.Alignment.Outside, 1.dp, cellBackgroundSelected, RectangleShape) // hack to hide the default outline border, which can not be turned off
+                            }.onKeyEvent {
+                                // if not key up don't handle, but still intercept Tab and Enter
+                                if(it.type != KeyEventType.KeyUp) {
+                                    return@onKeyEvent it.key == Key.Tab || it.key == Key.Enter
+                                }
+                                // handle key events for key up
+                                when (it.key) {
+                                    Key.Tab -> {
+                                        // move focus back to position field (if not first or last keyframe)
+                                        if(!keyframeState.isFirstOrLastKeyframe()) {
+                                            keyframeState.moveFocusToPositionField()
+                                        }
+                                        return@onKeyEvent true
+                                    }
+                                    Key.Enter -> {
+                                        // find next keyframe state
+                                        val nextKeyframeState = state.keyframeStates.getOrNull(state.keyframeStates.indexOf(keyframeState) + 1)
+                                        // either move focus to next keyframe state or to top value field
+                                        if(nextKeyframeState != null) {
+                                            nextKeyframeState.moveFocusToValueField()
+                                        } else {
+                                            state.keyframeStates.first().moveFocusToValueField()
+                                        }
+                                        return@onKeyEvent true
+                                    }
+                                    Key.Escape -> {
+                                        // ESC clears focus
+                                        state.currentFocusManager?.clearFocus()
+                                        return@onKeyEvent true
+                                    }
+                                    else -> return@onKeyEvent false
+                                }
+                            },
                         state = keyframeState.valueNumberFieldState,
                         style = cellTextFieldStyle
                     )
@@ -345,22 +417,20 @@ class KeyframesConfigurationEntry(
 
     @Composable
     fun ColumnScope.ValueHeader() {
-        Row(Modifier.height(20.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.height(rowHeight), verticalAlignment = Alignment.CenterVertically) {
             // Divider to separate from Position Type column
-            Divider(Orientation.Vertical, Modifier.fillMaxHeight(), JewelTheme.globalColors.borders.normal)
+            Divider(Orientation.Vertical, Modifier.fillMaxHeight(), tableBorderColor)
             // Value header with left spacer
-            Spacer(Modifier.width(6.dp))
+            Spacer(Modifier.width(cellHorizontalPadding))
             Column(Modifier.weight(1f)) {
                 Text("Value", maxLines = 1, overflow = TextOverflow.Visible)
             }
         }
     }
 
-    class KeyframesConfigurationState(val sequence: TriggerSequence, val trigger: AbstractPlacedTrigger, val keyframesObject: Keyframes) {
+    class KeyframesConfigurationState(val sequence: TriggerSequence, val trigger: AbstractPlacedTrigger, private val keyframesObject: Keyframes) {
         var currentFocusManager: FocusManager? = null
         var currentCoroutineScope: CoroutineScope? = null
-        var tableExpanded by mutableStateOf(false)
-        var selectedPositionFormat by mutableStateOf(PositionFormat.Absolute)
         var keyframeStates = mutableStateListOf<KeyframeState>()
 
         fun handlePositionFormatChange() {
@@ -406,12 +476,7 @@ class KeyframesConfigurationEntry(
                     keyframesObject.keyframesList[index] = keyframeState.keyframeObject ?: error("Keyframe object may not be null")
                 }
                 // move focus to new field
-                changedKeyframeState.positionFieldFocusRequester.requestFocus()
-                currentCoroutineScope?.launch {
-                    delay(1)
-                    changedKeyframeState.positionFieldFocusRequester.requestFocus()
-                    currentFocusManager?.moveFocus(FocusDirection.Next)
-                }
+                changedKeyframeState.moveFocusToPositionField()
             }
             // redraw timeline so changes are visible
             redrawTimeline()
@@ -495,13 +560,39 @@ class KeyframesConfigurationEntry(
             }
             // check that no other keyframe is to close to our position
             return parent.keyframeStates.filter { it != this }.none {
-                val otherPositionFieldValue = it.positionNumberFieldState.value ?: return false
+                val otherPositionFieldValue = it.positionNumberFieldState.value ?: return@none false
                 (ownPositionFieldValue - otherPositionFieldValue).absoluteValue < requiredDistance
             }
         }
 
         fun updatePositionDistanceValid(format: PositionFormat, trigger: AbstractPlacedTrigger) {
             positionDistanceValid = isPositionDistanceValid(format, trigger)
+        }
+
+        fun isFirstKeyframe() = this == parent.keyframeStates.first()
+        fun isLastKeyframe() = this == parent.keyframeStates.last()
+        fun isFirstOrLastKeyframe() = isFirstKeyframe() || isLastKeyframe()
+
+        fun moveFocusToPositionField(alsoMoveFocusInsideTextField: Boolean = !isFirstKeyframe() && !isLastKeyframe()) = moveFocusToField(
+            fieldFocusRequester = positionFieldFocusRequester,
+            alsoMoveFocusInsideTextField = alsoMoveFocusInsideTextField
+        )
+        fun moveFocusToValueField(alsoMoveFocusInsideTextField: Boolean = true) = moveFocusToField(
+            fieldFocusRequester = valueFieldFocusRequester,
+            alsoMoveFocusInsideTextField = alsoMoveFocusInsideTextField
+        )
+        private fun moveFocusToField(
+            fieldFocusRequester: FocusRequester,
+            alsoMoveFocusInsideTextField: Boolean = true
+        ) {
+            fieldFocusRequester.requestFocus()
+            parent.currentCoroutineScope?.launch {
+                delay(1)
+                fieldFocusRequester.requestFocus()
+                if (alsoMoveFocusInsideTextField) {
+                    parent.currentFocusManager?.moveFocus(FocusDirection.Next)
+                }
+            }
         }
 
         fun importPositionFromKeyframeObject(format: PositionFormat, trigger: AbstractPlacedTrigger) {
@@ -512,10 +603,16 @@ class KeyframesConfigurationEntry(
                     PositionFormat.Relative -> (kObj.relativeSecondPosition(trigger) * 1000).roundToInt() / 1000.0
                     PositionFormat.Absolute -> (kObj.absoluteSecondPosition(trigger) * 1000).roundToInt() / 1000.0
                 }.toString())
-                positionNumberFieldState.validRange = when(format) {
-                    PositionFormat.Proportional -> 0.0..1.0
-                    PositionFormat.Relative -> 0.0..trigger.duration
-                    PositionFormat.Absolute -> trigger.startTime..trigger.startTime+trigger.duration
+                // set valid range if not first or last keyframe, which are not editable anyway
+                if(!isFirstKeyframe() && !isLastKeyframe()) {
+                    // set valid range for position field
+                    positionNumberFieldState.validRange = when(format) {
+                        PositionFormat.Proportional -> 0.0..1.0
+                        PositionFormat.Relative -> 0.0..trigger.duration
+                        PositionFormat.Absolute -> trigger.startTime..trigger.startTime+trigger.duration
+                    }
+                } else {
+                    positionNumberFieldState.validRange = Double.NEGATIVE_INFINITY..Double.POSITIVE_INFINITY
                 }
             }
         }
@@ -554,6 +651,20 @@ class KeyframesConfigurationEntry(
         Proportional("Proportional"),
         Relative("Relative Seconds"),
         Absolute("Absolute Seconds")
+    }
+
+    companion object {
+        private var tableExpanded by mutableStateOf(false)
+        private var selectedPositionFormat by mutableStateOf(PositionFormat.Relative)
+        private var reimportKeyframeTableCounter by mutableStateOf(0)
+
+        /**
+         * Can be used to manually trigger a reimport of the keyframe table, when
+         * changing attributes of a trigger, which are not wrapped in a state.
+         */
+        fun reimportKeyframeTable() {
+            reimportKeyframeTableCounter++
+        }
     }
 
 }
