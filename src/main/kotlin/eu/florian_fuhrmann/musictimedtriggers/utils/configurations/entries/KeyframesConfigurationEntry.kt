@@ -70,7 +70,7 @@ class KeyframesConfigurationEntry(
 ) {
 
     // init state when configuration entry is created
-    val state = (if(context is AbstractPlacedTrigger.PlacedTriggerConfigurationContext) context else null)?.let { context ->
+    val state = (context as? AbstractPlacedTrigger.PlacedTriggerConfigurationContext)?.let { context ->
         KeyframesConfigurationState(context.sequence, context.placedTrigger, field.get(configuration) as Keyframes)
     }
 
@@ -97,10 +97,10 @@ class KeyframesConfigurationEntry(
                 // Keyframes table
                 if(tableExpanded) {
                     LaunchedEffect(
-                        TriggerSelectionManager.singleSelectedTriggerStartTimeState.value, // updated when trigger is moved through timeline editor
-                        TriggerSelectionManager.singleSelectedTriggerDurationState.value, // updated when trigger is moved through timeline editor
-                        MoveTriggersManager.endKeyframeMoveCounter, // updated when keyframes are moved through timeline editor
-                        reimportKeyframeTableCounter // updated by updateKeyframeTable()
+                        TriggerSelectionManager.singleSelectedTriggerStartTimeState.value, // updated when the trigger is moved through the timeline editor
+                        TriggerSelectionManager.singleSelectedTriggerDurationState.value, // updated when the trigger is moved through the timeline editor
+                        MoveTriggersManager.endKeyframeMoveCounter, // updated when keyframes are moved through the timeline editor
+                        reimportKeyframeTableCounter // updated by reimportKeyframeTable()
                     ) {
                         // import keyframes from keyframes object
                         state.importFromKeyframesObject()
@@ -151,7 +151,7 @@ class KeyframesConfigurationEntry(
             ),
             metrics = TextFieldMetrics(
                 borderWidth = JewelTheme.textFieldStyle.metrics.borderWidth,
-                contentPadding = PaddingValues(horizontal = cellHorizontalPadding), // PaddingValues(1.dp)
+                contentPadding = PaddingValues(horizontal = cellHorizontalPadding),
                 cornerSize = CornerSize(0.dp),
                 minSize = JewelTheme.textFieldStyle.metrics.minSize
             )
@@ -264,7 +264,7 @@ class KeyframesConfigurationEntry(
                             }
                             .focusable()
                             .trackActivation()
-                            .border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.panelBackground, RectangleShape) // hack to hide the default outline border, which can not be turned off
+                            .border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.panelBackground, RectangleShape) // hack to hide the default outline border, which cannot be turned off
                             .border(
                                 alignment = Stroke.Alignment.Inside,
                                 width = 2.dp,
@@ -275,7 +275,7 @@ class KeyframesConfigurationEntry(
                                     else -> Color.Transparent
                                 },
                                 shape = RectangleShape
-                            )
+                            ) // cell inner border
                             .onKeyEvent {
                                 // if not key up don't handle, but still intercept Tab and Enter
                                 if(it.type != KeyEventType.KeyUp) {
@@ -288,7 +288,7 @@ class KeyframesConfigurationEntry(
                                         return@onKeyEvent true
                                     }
                                     Key.Enter -> {
-                                        // find next keyframe state
+                                        // find the next keyframe state
                                         val nextKeyframeState = state.keyframeStates.getOrNull(state.keyframeStates.indexOf(keyframeState) + 1)
                                         // either move focus to next keyframe state or to second keyframe state (first should be skipped because it is not editable)
                                         if(nextKeyframeState != null && nextKeyframeState != state.keyframeStates.last()) {
@@ -383,7 +383,7 @@ class KeyframesConfigurationEntry(
             ValueHeader()
             // Value Rows
             state.keyframeStates.forEach { keyframeState ->
-                // Divider to separate rows (with left border to overlay the default text field border, which can not be turned off)
+                // Divider to separate rows (with a left border to overlay the default text field border, which cannot be turned off)
                 val dividerColor = tableBorderColor
                 Divider(
                     orientation = Orientation.Horizontal,
@@ -468,14 +468,14 @@ class KeyframesConfigurationEntry(
                                 // handle key events for key up
                                 when (it.key) {
                                     Key.Tab -> {
-                                        // move focus back to position field (if not first or last keyframe)
+                                        // move focus back to the position field (if not first or last keyframe)
                                         if(!keyframeState.isFirstOrLastKeyframe()) {
                                             keyframeState.moveFocusToPositionField()
                                         }
                                         return@onKeyEvent true
                                     }
                                     Key.Enter -> {
-                                        // find next keyframe state
+                                        // find the next keyframe state
                                         val nextKeyframeState = state.keyframeStates.getOrNull(state.keyframeStates.indexOf(keyframeState) + 1)
                                         // either move focus to next keyframe state or to top value field
                                         if(nextKeyframeState != null) {
@@ -517,7 +517,7 @@ class KeyframesConfigurationEntry(
     @Composable
     fun ColumnScope.ValueHeader() {
         Row(Modifier.height(rowHeight), verticalAlignment = Alignment.CenterVertically) {
-            // Divider to separate from Position Type column
+            // Divider to separate from the Position Type column
             Divider(Orientation.Vertical, Modifier.fillMaxHeight(), tableBorderColor)
             // Value header with left spacer
             Spacer(Modifier.width(cellHorizontalPadding))
@@ -534,14 +534,14 @@ class KeyframesConfigurationEntry(
         var selectedKeyframeState by mutableStateOf<KeyframeState?>(null)
 
         fun handlePositionFormatChange() {
-            // update position input field states by reimporting from keyframe object
+            // update the position input field states by reimporting from the keyframe object
             importFromKeyframesObject()
         }
 
         fun handlePositionValueChange(changedKeyframeState: KeyframeState): Boolean {
             // update whether the distance to other keyframes is valid for all keyframes
             // (This is O(n^2) and could/should be optimized! Especially since we are already doing the work of having
-            // the list sorted. For example by recursively checking neighbors. But realistically you'll never have
+            // the list sorted. For example, by recursively checking neighbors. But realistically, you'll never have
             // enough keyframes for this to remotely be a problem.)
             keyframeStates.forEach { it.updatePositionDistanceValid(selectedPositionFormat, trigger) }
             // abort if any position value is currently invalid
@@ -616,9 +616,9 @@ class KeyframesConfigurationEntry(
             val valueFieldWasFocused = selectedKeyframeState?.valueFieldFocused ?: false
             // insert keyframe in keyframes object
             keyframesObject.insertNewAtIndex(insertionIndex)
-            // reimport keyframes so change is reflected here
+            // reimport keyframes so the change is reflected here
             importFromKeyframesObject()
-            // move focus to new keyframe
+            // move focus to the new keyframe
             currentFocusManager?.clearFocus()
             if(valueFieldWasFocused) {
                 keyframeStates[insertionIndex].moveFocusToValueField()
@@ -634,9 +634,9 @@ class KeyframesConfigurationEntry(
             check(selectedKeyframeIndex != -1) { "Selected keyframe state should not be null!" }
             // remove keyframe in keyframes object
             keyframesObject.removeAtIndex(selectedKeyframeIndex)
-            // reimport keyframes so change is reflected here
+            // reimport keyframes so the change is reflected here
             importFromKeyframesObject()
-            // clear selected keyframe, because the removed keyframe can't be selected anymore
+            // clear the selected keyframe, because the removed keyframe should not be selected anymore
             clearSelectedKeyframe()
         }
 
@@ -665,7 +665,7 @@ class KeyframesConfigurationEntry(
 
         fun saveChangesToFile() {
             val line = getTriggersLine() ?: error("Line of trigger not found")
-            line.saveToFile() // in future this should be debounced to avoid too many writes
+            line.saveToFile() // in future this should be debounced to avoid too many writing operations
         }
     }
 
@@ -695,7 +695,7 @@ class KeyframesConfigurationEntry(
         private fun isPositionDistanceValid(format: PositionFormat, trigger: AbstractPlacedTrigger): Boolean {
             // get own position value
             val ownPositionFieldValue = positionNumberFieldState.value ?: return true
-            // calculate required distance to other keyframes
+            // calculate the required distance to other keyframes
             val requiredDistance = when(format) {
                 PositionFormat.Proportional -> Keyframes.MINIMUM_POSITION_DISTANCE_IN_SECONDS / trigger.duration
                 PositionFormat.Relative, PositionFormat.Absolute -> Keyframes.MINIMUM_POSITION_DISTANCE_IN_SECONDS
