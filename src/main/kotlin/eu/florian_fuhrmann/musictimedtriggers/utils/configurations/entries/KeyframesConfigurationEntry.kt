@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.geometry.Offset
@@ -165,11 +166,63 @@ class KeyframesConfigurationEntry(
         Column(Modifier.fillMaxWidth().border(Stroke.Alignment.Outside, 1.dp, tableBorderColor)) {
             // Toolbar
             Row(modifier = Modifier
-                .height(rowHeight).fillMaxWidth()
-                .border(Stroke.Alignment.Outside, 1.dp, tableBorderColor),
+                .height(IntrinsicSize.Min).fillMaxWidth()
+                .border(Stroke.Alignment.Outside, 1.dp, tableBorderColor)
+                .padding(horizontal = cellHorizontalPadding, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Todo: Toolbar", modifier = Modifier.padding(horizontal = cellHorizontalPadding))
+                var addPopupExpanded by remember { mutableStateOf(false) }
+                val addEnabled = state.selectedKeyframeState != null
+                // Add Keyframe Button
+                IconButton(
+                    onClick = { addPopupExpanded = true },
+                    focusable = false,
+                    enabled = addEnabled,
+                    modifier = Modifier.thenIf(!addEnabled) {
+                        alpha(0.5f)
+                    }
+                ) {
+                    Icon(AllIconsKeys.General.Add, null)
+                    Icon(AllIconsKeys.General.Dropdown, null)
+                }
+                // Add Keyframe Popup Menu
+                if(addPopupExpanded) {
+                    PopupMenu(
+                        onDismissRequest = {
+                            addPopupExpanded = false
+                            true
+                        },
+                        horizontalAlignment = Alignment.Start,
+                        content = {
+                            selectableItem(
+                                selected = false,
+                                onClick = { state.addKeyframeAboveSelected() },
+                                enabled = state.selectedKeyframeState.let { it != null && !it.isFirstKeyframe() }
+                            ) {
+                                Text("Add Above")
+                            }
+                            selectableItem(
+                                selected = false,
+                                onClick = { state.addKeyframeBellowSelected() },
+                                enabled = state.selectedKeyframeState.let { it != null && !it.isLastKeyframe() }
+                            ) {
+                                Text("Add Bellow")
+                            }
+                        }
+                    )
+                }
+                // Remove Keyframe Button
+                val removeEnabled = state.selectedKeyframeState.let { it != null && !it.isFirstOrLastKeyframe() }
+                IconButton(
+                    onClick = { state.removeSelectedKeyframe() },
+                    focusable = false,
+                    enabled = removeEnabled,
+                    modifier = Modifier.thenIf(!removeEnabled) {
+                        alpha(0.5f)
+                    }
+                ) {
+                    Icon(AllIconsKeys.General.Remove, null)
+                }
             }
             // Table with Position Type and Value columns
             Row(Modifier.fillMaxWidth()) {
@@ -203,22 +256,27 @@ class KeyframesConfigurationEntry(
                             .wrapContentHeight(align = Alignment.CenterVertically)
                             .onFocusChanged {
                                 keyframeState.positionFieldFocused = it.hasFocus
+                                if(it.hasFocus) {
+                                    state.selectedKeyframeState = keyframeState
+                                } else if(state.selectedKeyframeState == keyframeState) {
+                                    state.selectedKeyframeState = null
+                                }
                             }
                             .focusable()
                             .trackActivation()
                             .border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.panelBackground, RectangleShape) // hack to hide the default outline border, which can not be turned off
-                            .thenIf(keyframeState.positionFieldFocused) {
-                                border(
-                                    alignment = Stroke.Alignment.Inside,
-                                    width = 2.dp,
-                                    color = if (keyframeState.positionNumberFieldState.isValid && keyframeState.positionDistanceValid) {
-                                        JewelTheme.globalColors.outlines.focused
-                                    } else {
-                                        JewelTheme.globalColors.outlines.focusedError
-                                    },
-                                    shape = RectangleShape
-                                )
-                            }.onKeyEvent {
+                            .border(
+                                alignment = Stroke.Alignment.Inside,
+                                width = 2.dp,
+                                color = when {
+                                    keyframeState.positionFieldFocused && keyframeState.positionNumberFieldState.isValid && keyframeState.positionDistanceValid -> JewelTheme.globalColors.outlines.focused
+                                    keyframeState.positionFieldFocused && (!keyframeState.positionNumberFieldState.isValid || !keyframeState.positionDistanceValid) -> JewelTheme.globalColors.outlines.focusedError
+                                    !keyframeState.positionFieldFocused && (!keyframeState.positionNumberFieldState.isValid || !keyframeState.positionDistanceValid) -> JewelTheme.globalColors.outlines.error
+                                    else -> Color.Transparent
+                                },
+                                shape = RectangleShape
+                            )
+                            .onKeyEvent {
                                 // if not key up don't handle, but still intercept Tab and Enter
                                 if(it.type != KeyEventType.KeyUp) {
                                     return@onKeyEvent it.key == Key.Tab || it.key == Key.Enter
@@ -356,12 +414,53 @@ class KeyframesConfigurationEntry(
                             .wrapContentHeight(align = Alignment.CenterVertically)
                             .onFocusChanged {
                                 keyframeState.valueFieldFocused = it.hasFocus
+                                if(it.hasFocus) {
+                                    state.selectedKeyframeState = keyframeState
+                                } else if(state.selectedKeyframeState == keyframeState) {
+                                    state.selectedKeyframeState = null
+                                }
                             }
                             .focusable().trackActivation()
+                            // hack to hide the default outline border, which cannot be turned off:
+                            // overlays the default border with a border, which has the same color as the neighboring
+                            // cell on the right edge (so either background color or border color of neighboring cell)
                             .thenIf(keyframeState.valueFieldFocused) {
-                                border(Stroke.Alignment.Inside, 2.dp, if(keyframeState.valueNumberFieldState.isValid) JewelTheme.globalColors.outlines.focused else JewelTheme.globalColors.outlines.focusedError, RectangleShape)
-                                    .border(Stroke.Alignment.Outside, 1.dp, cellBackgroundSelected, RectangleShape) // hack to hide the default outline border, which can not be turned off
-                            }.onKeyEvent {
+                                border(
+                                    Stroke.Alignment.Outside,
+                                    1.dp,
+                                    if (keyframeState.positionFieldValid) cellBackgroundSelected else JewelTheme.globalColors.outlines.error,
+                                    RectangleShape
+                                )
+                            }
+                            .thenIf(keyframeState.positionFieldFocused) {
+                                border(
+                                    Stroke.Alignment.Outside,
+                                    1.dp,
+                                    if (keyframeState.positionFieldValid) JewelTheme.globalColors.outlines.focused else JewelTheme.globalColors.outlines.focusedError,
+                                    RectangleShape
+                                )
+                            }
+                            .thenIf(!keyframeState.anyFieldFocused) {
+                                border(
+                                    Stroke.Alignment.Outside,
+                                    1.dp,
+                                    if (keyframeState.positionFieldValid) JewelTheme.globalColors.panelBackground else JewelTheme.globalColors.outlines.error,
+                                    RectangleShape
+                                )
+                            }
+                            // inner border of this cell:
+                            .border(
+                                alignment = Stroke.Alignment.Inside,
+                                width = 2.dp,
+                                color = when {
+                                    keyframeState.valueFieldFocused && keyframeState.valueNumberFieldState.isValid -> JewelTheme.globalColors.outlines.focused
+                                    keyframeState.valueFieldFocused && (!keyframeState.valueNumberFieldState.isValid) -> JewelTheme.globalColors.outlines.focusedError
+                                    !keyframeState.valueFieldFocused && (!keyframeState.valueNumberFieldState.isValid) -> JewelTheme.globalColors.outlines.error
+                                    else -> Color.Transparent
+                                },
+                                shape = RectangleShape
+                            )
+                            .onKeyEvent {
                                 // if not key up don't handle, but still intercept Tab and Enter
                                 if(it.type != KeyEventType.KeyUp) {
                                     return@onKeyEvent it.key == Key.Tab || it.key == Key.Enter
@@ -432,6 +531,7 @@ class KeyframesConfigurationEntry(
         var currentFocusManager: FocusManager? = null
         var currentCoroutineScope: CoroutineScope? = null
         var keyframeStates = mutableStateListOf<KeyframeState>()
+        var selectedKeyframeState by mutableStateOf<KeyframeState?>(null)
 
         fun handlePositionFormatChange() {
             // update position input field states by reimporting from keyframe object
@@ -460,22 +560,22 @@ class KeyframesConfigurationEntry(
                     break
                 }
             }
-            // if ordered correctly just export position to keyframe object
+            // if ordered correctly export position to the keyframe object
             if(orderedCorrectly) {
-                // export position to keyframe object
+                // export position to the keyframe object
                 changedKeyframeState.exportPositionToKeyframeObject(selectedPositionFormat, trigger)
             } else {
                 // otherwise sort keyframe states
                 keyframeStates.sortBy {
                     it.positionNumberFieldState.value ?: error("Position value may not be for sorting")
                 }
-                // and then export all positions to keyframe object
+                // and then export all positions to the keyframe object
                 keyframeStates.forEach { it.exportPositionToKeyframeObject(selectedPositionFormat, trigger) }
-                // copy order from keyframe states to keyframes object
+                // copy order from keyframe states to the keyframes object
                 keyframeStates.forEachIndexed { index, keyframeState ->
                     keyframesObject.keyframesList[index] = keyframeState.keyframeObject ?: error("Keyframe object may not be null")
                 }
-                // move focus to new field
+                // move focus to the new field
                 changedKeyframeState.moveFocusToPositionField()
             }
             // redraw timeline so changes are visible
@@ -502,6 +602,47 @@ class KeyframesConfigurationEntry(
             if (keyframeStates.size > keyframesObject.keyframesList.size) {
                 keyframeStates.removeRange(keyframesObject.keyframesList.size, keyframeStates.size)
             }
+        }
+
+        fun addKeyframeAboveSelected() = addKeyframeAboveBellowSelected(true)
+        fun addKeyframeBellowSelected() = addKeyframeAboveBellowSelected(false)
+        private fun addKeyframeAboveBellowSelected(above: Boolean) {
+            // get current index
+            val selectedKeyframeIndex = keyframeStates.indexOf(selectedKeyframeState)
+            check(selectedKeyframeIndex != -1) { "Selected keyframe state should not be null!" }
+            // calculate insertion index
+            val insertionIndex = if(above) selectedKeyframeIndex else selectedKeyframeIndex + 1
+            // remember which field is focused
+            val valueFieldWasFocused = selectedKeyframeState?.valueFieldFocused ?: false
+            // insert keyframe in keyframes object
+            keyframesObject.insertNewAtIndex(insertionIndex)
+            // reimport keyframes so change is reflected here
+            importFromKeyframesObject()
+            // move focus to new keyframe
+            currentFocusManager?.clearFocus()
+            if(valueFieldWasFocused) {
+                keyframeStates[insertionIndex].moveFocusToValueField()
+            } else {
+                keyframeStates[insertionIndex].moveFocusToPositionField()
+            }
+            selectedKeyframeState = keyframeStates[insertionIndex]
+        }
+
+        fun removeSelectedKeyframe() {
+            // get current index
+            val selectedKeyframeIndex = keyframeStates.indexOf(selectedKeyframeState)
+            check(selectedKeyframeIndex != -1) { "Selected keyframe state should not be null!" }
+            // remove keyframe in keyframes object
+            keyframesObject.removeAtIndex(selectedKeyframeIndex)
+            // reimport keyframes so change is reflected here
+            importFromKeyframesObject()
+            // clear selected keyframe, because the removed keyframe can't be selected anymore
+            clearSelectedKeyframe()
+        }
+
+        fun clearSelectedKeyframe() {
+            currentFocusManager?.clearFocus()
+            selectedKeyframeState = null
         }
 
         private var lastKnownLine: TriggerSequenceLine? = null
@@ -537,6 +678,7 @@ class KeyframesConfigurationEntry(
             get() = positionFieldFocused || valueFieldFocused
         var positionFieldFocusRequester: FocusRequester = FocusRequester()
         var valueFieldFocusRequester: FocusRequester = FocusRequester()
+        val positionFieldValid by derivedStateOf { positionNumberFieldState.isValid && positionDistanceValid }
 
         /**
          * Whether enough distance is kept to the other keyframe positions. Only
@@ -634,7 +776,7 @@ class KeyframesConfigurationEntry(
                 PositionFormat.Relative -> Keyframes.Keyframe.fromRelativeSecondPositionToProportion(positionInFormat, trigger)
                 PositionFormat.Absolute -> Keyframes.Keyframe.fromAbsoluteSecondPositionToProportion(positionInFormat, trigger)
             }.coerceIn(0.0, 1.0)
-            // set keyframe object position
+            // set position on the keyframe object
             keyframeObject?.position = proportionalPosition
         }
 
