@@ -24,6 +24,7 @@ import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Text
 import java.io.File
 
+@Deprecated("Use independent CreateProject Dialog or ProjectSettings")
 class EditProjectDialog(val create: Boolean, val project: Project? = null) : Dialog() {
 
     @Composable

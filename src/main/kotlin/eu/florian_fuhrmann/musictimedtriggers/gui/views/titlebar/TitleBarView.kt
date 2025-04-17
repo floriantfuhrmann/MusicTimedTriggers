@@ -10,6 +10,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.createproject.CreateProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editproject.EditProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.openproject.OpenProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.styles.dropdownLikeIconButtonStyle
@@ -103,7 +104,7 @@ fun DecoratedWindowScope.TitleBarView() {
                 selectableItem(
                     selected = false,
                     onClick = {
-                        DialogManager.openDialog(EditProjectDialog(create = true))
+                        DialogManager.openDialog(CreateProjectDialog())
                     },
                     iconKey = MttIcons.plusLine
                 ) {

@@ -63,6 +63,7 @@ class ColorConfigurationEntry(
                 }
             }
             Column {
+                // maybe use the ColorField here, especially when it is extended, by some hex input in the future
                 val shape = RoundedCornerShape(JewelTheme.textFieldStyle.metrics.cornerSize)
                 Box(Modifier
                     .height(28.dp).width(50.dp)

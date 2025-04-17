@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editproject.EditProjectDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.createproject.CreateProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.openproject.OpenProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -46,7 +46,7 @@ fun NoProjectView() {
             DefaultButton(
                 modifier = Modifier.padding(start = 5.dp),
                 onClick = {
-                    DialogManager.openDialog(EditProjectDialog(create = true))
+                    DialogManager.openDialog(CreateProjectDialog())
                 }
             ) {
                 Text("Create Project")
