@@ -6,16 +6,12 @@ import androidx.compose.runtime.setValue
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.unusedfiles.UnusedFilesDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
 import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
-import org.jetbrains.jewel.ui.component.Text
 import java.io.File
 import java.nio.charset.StandardCharsets
 
@@ -38,32 +34,6 @@ class Project(
         } else {
             File(getAudioDirectory(), file.name).canonicalPath == file.canonicalPath
         }
-
-    @Deprecated("Moved into Project Settings")
-    fun scanForUnusedAudioFiles() {
-        //find unused files
-        val unusedAudioFiles = getAudioDirectory().listFiles()?.filter { file ->
-            //check if no song has this file as audio file
-            songs.none { song ->
-                song.audioFile == file
-            }
-        }?.toList()
-        if (unusedAudioFiles?.isNotEmpty() == true) {
-            //Open UnusedFiles Dialog
-            DialogManager.openDialog(UnusedFilesDialog(unusedAudioFiles))
-        } else {
-            //alert
-            BasicAlert(
-                type = BasicAlert.Type.Info,
-                title = "No unused files found",
-                buttons = {
-                    OKButton { close() }
-                }
-            ) {
-                Text("No unused Audio Files where found in ${getAudioDirectory().canonicalPath}")
-            }.show()
-        }
-    }
 
     // UI States
 
@@ -119,20 +89,7 @@ class Project(
         saveSonglistToFile()
         //delete the corresponding sequence
         song.sequence.removeSaveFiles()
-        //alert
-        BasicAlert(
-            type = BasicAlert.Type.Info,
-            title = "Song deleted",
-            buttons = {
-                CancelButton("No")
-                OKButton(onClick = {
-                    close()
-                    scanForUnusedAudioFiles()
-                }, label = "Yes")
-            }
-        ) {
-            Text("Song ${song.name} has been deleted. Do you want to scan the Audio directory for unused files?")
-        }.show()
+        //maybe show an unused files notification here in the future
     }
 
     /**

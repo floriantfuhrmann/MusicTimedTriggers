@@ -115,23 +115,6 @@ fun DecoratedWindowScope.TitleBarView() {
                         Text("Create Project")
                     }
                 }
-                //Advanced Options
-                if(ProjectManager.currentProject != null) {
-                    submenu(submenu = {
-                        if (ProjectManager.currentProject != null) {
-                            selectableItem(
-                                selected = false,
-                                onClick = {
-                                    ProjectManager.currentProject?.scanForUnusedAudioFiles()
-                                }
-                            ) {
-                                Text("Scan for unused Audio Files")
-                            }
-                        }
-                    }) {
-                        Text("Advanced")
-                    }
-                }
             }) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(3.dp),
