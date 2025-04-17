@@ -13,7 +13,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
-import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.IntUiThemes
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.Theme
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.main.App
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.EditTriggersManager
@@ -59,9 +59,9 @@ fun main() {
                 ComponentStyling.decoratedWindow(
                     titleBarStyle =
                         when (MainUiState.theme) {
-                            IntUiThemes.Light -> TitleBarStyle.lightWithLightHeader()
-                            IntUiThemes.Dark -> TitleBarStyle.dark()
-                            IntUiThemes.System ->
+                            Theme.Light -> TitleBarStyle.lightWithLightHeader()
+                            Theme.Dark -> TitleBarStyle.dark()
+                            Theme.System ->
                                 if (MainUiState.theme.isDark()) {
                                     TitleBarStyle.dark()
                                 } else {

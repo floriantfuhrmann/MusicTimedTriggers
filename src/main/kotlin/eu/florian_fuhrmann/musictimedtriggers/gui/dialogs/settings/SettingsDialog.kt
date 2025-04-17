@@ -29,7 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.components.CloseDialogButton
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.settings.categories.SettingsCategory
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.settings.categories.AppearanceCategory
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.settings.categories.AudioFilesCategory
@@ -37,6 +37,7 @@ import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
+import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
@@ -112,7 +113,9 @@ class SettingsDialog(val project: Project) : Dialog("Settings", 750.dp, 525.dp) 
             Divider(Orientation.Horizontal, Modifier.fillMaxWidth())
             Row(Modifier.padding(horizontal = 20.dp, vertical = 15.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Spacer(Modifier.weight(1f))
-                CloseDialogButton("Close", dialog = this@SettingsDialog)
+                DefaultButton(onClick = { DialogManager.closeDialog(this@SettingsDialog) }) {
+                    Text("OK")
+                }
             }
         }
     }

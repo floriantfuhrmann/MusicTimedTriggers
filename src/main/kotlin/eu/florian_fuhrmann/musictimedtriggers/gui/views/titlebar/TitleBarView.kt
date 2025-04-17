@@ -10,7 +10,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.createproject.CreateProjectDialog
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editproject.EditProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.openproject.OpenProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.settings.SettingsDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.styles.dropdownLikeIconButtonStyle
@@ -56,7 +55,7 @@ fun DecoratedWindowScope.TitleBarView() {
             }
             //Dropdown
             Dropdown(Modifier.height(30.dp).trackActivation(), menuContent = {
-                //track if dropdown is opened
+                //track if the dropdown is opened
                 passiveItem {
                     DisposableEffect(this) {
                         titleBarDropdownOpened.value = true
@@ -66,11 +65,12 @@ fun DecoratedWindowScope.TitleBarView() {
                     }
                 }
                 //Project Settings Item
-                if(ProjectManager.currentProject != null) {
+                val project = ProjectManager.currentProject
+                if(project != null) {
                     selectableItem(
                         selected = false,
                         onClick = {
-                            DialogManager.openDialog(EditProjectDialog(create = false, project = ProjectManager.currentProject))
+                            DialogManager.openDialog(SettingsDialog(project))
                         },
                         iconKey = MttIcons.settingLine
                     ) {

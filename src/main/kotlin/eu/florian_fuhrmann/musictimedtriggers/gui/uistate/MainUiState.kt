@@ -1,9 +1,11 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.uistate
 
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import org.jetbrains.skiko.SystemTheme
 import org.jetbrains.skiko.currentSystemTheme
 
@@ -18,8 +20,9 @@ object MainUiState {
     // Currently selected inspector panel (this could also be moved to project settings or some general project ui state)
     var inspectorOption: InspectorOption by mutableStateOf(InspectorOption.None)
 
-    // Currently selected theme (this should probably be moved to project or global settings sometime)
-    var theme: IntUiThemes by mutableStateOf(IntUiThemes.Dark)
+    // Currently selected theme or system theme if no project is opened (derived from project settings)
+    // should be moved to some global settings in the future
+    val theme: Theme by derivedStateOf { ProjectManager.currentProject?.projectSettings?.selectedTheme ?: Theme.System }
 
     fun toggleSidebar() {
         sidebarExpanded = !sidebarExpanded
@@ -38,18 +41,14 @@ enum class InspectorOption {
     TriggerTemplate
 }
 
-enum class IntUiThemes {
-    Light, Dark, System;
+enum class Theme(val displayName: String) {
+    Light("Light"),
+    Dark("Dark"),
+    System("System");
 
     fun isDark() =
         (if (this == System) fromSystemTheme(currentSystemTheme) else this) == Dark
 
-    fun primaryColor(): Color = Color(0, 100, 255)
-    fun secondaryColor(): Color = if (isDark()) {
-        Color(40, 45, 52)
-    } else {
-        Color(242, 242, 242)
-    }
     fun highlightGray(): Color = if (isDark()) {
         Color.LightGray
     } else {
@@ -59,11 +58,6 @@ enum class IntUiThemes {
         Color(224, 0, 0)
     } else {
         Color.Red
-    }
-    fun successTextColor(): Color = if (isDark()) {
-        Color(0, 255, 0)
-    } else {
-        Color(0, 192, 0)
     }
     fun iconColor(): Color = if (isDark()) {
         Color(255, 255, 255)
