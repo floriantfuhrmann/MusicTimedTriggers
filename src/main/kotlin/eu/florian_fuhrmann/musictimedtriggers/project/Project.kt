@@ -39,6 +39,7 @@ class Project(
             File(getAudioDirectory(), file.name).canonicalPath == file.canonicalPath
         }
 
+    @Deprecated("Moved into Project Settings")
     fun scanForUnusedAudioFiles() {
         //find unused files
         val unusedAudioFiles = getAudioDirectory().listFiles()?.filter { file ->

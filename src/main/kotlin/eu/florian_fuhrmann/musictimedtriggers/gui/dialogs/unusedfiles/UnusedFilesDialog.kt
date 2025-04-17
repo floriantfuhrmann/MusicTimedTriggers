@@ -20,6 +20,7 @@ import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.Text
 import java.io.File
 
+@Deprecated("Moved into Project Settings")
 class UnusedFilesDialog(private val unusedFiles: List<File>) : Dialog(windowed = true) {
     @Composable
     override fun Content() {
