@@ -1,6 +1,5 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.titlebar
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +12,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.createproject.CreateProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editproject.EditProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.openproject.OpenProjectDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.settings.SettingsDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.styles.dropdownLikeIconButtonStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
@@ -35,8 +35,7 @@ fun DecoratedWindowScope.TitleBarView() {
         modifier = Modifier.newFullscreenControls().trackActivation(),
         gradientStartColor = (ProjectManager.currentProject?.projectSettings?.projectColor?.toComposeColor()
             ?.mix(JewelTheme.globalColors.panelBackground, 0.55f) ?: Color.Unspecified)
-    )
-    {
+    ) {
         Row(Modifier.align(Alignment.Start).padding(5.dp).trackActivation()) {
             // Sidebar Toggle
             if (ProjectManager.currentProject != null) {
@@ -153,10 +152,13 @@ fun DecoratedWindowScope.TitleBarView() {
         Text(modifier = Modifier.scale(1f), text = title)
 
         Row(Modifier.align(Alignment.End)) {
-            IconButton(onClick = {
-                DialogManager.openDialog(EditProjectDialog(create = false, project = ProjectManager.currentProject))
-            }, Modifier.size(40.dp).padding(5.dp)) {
-                Icon(AllIconsKeys.General.Settings, null, hint = Size(20))
+            val project = ProjectManager.currentProject
+            if(project != null) {
+                IconButton(onClick = {
+                    DialogManager.openDialog(SettingsDialog(project))
+                }, Modifier.size(40.dp).padding(5.dp)) {
+                    Icon(AllIconsKeys.General.Settings, null, hint = Size(20))
+                }
             }
         }
     }

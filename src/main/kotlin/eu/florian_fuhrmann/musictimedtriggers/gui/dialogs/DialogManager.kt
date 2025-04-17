@@ -7,7 +7,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.FrameWindowScope
 import androidx.compose.ui.window.WindowPosition
@@ -74,8 +73,8 @@ object DialogManager {
                 // DialogWindow is used to create a windowed dialog
                 DialogWindow(
                     state = rememberDialogState(
-                        getCenteredAbsolutePosition(frameWindowScope, 500.dp, 350.dp),
-                        500.dp, 350.dp
+                        getCenteredAbsolutePosition(frameWindowScope, dialog.defaultWidth, dialog.defaultHeight),
+                        dialog.defaultWidth, dialog.defaultHeight
                     ),
                     onCloseRequest = { closeDialog(dialog) },
                     alwaysOnTop = alwaysOnTop,
@@ -84,13 +83,13 @@ object DialogManager {
                     this.window.minimumSize = Dimension(350, 350)
                     // Dialog Content
                     dialog.Content()
-                    // Alerts Container (only for last dialog)
-                    if(dialog == openedDialogs.last()) {
+                    // Alerts Container (only for the last dialog)
+                    if(dialog == openedDialogs.lastOrNull()) {
                         AlertsManager.AlertsContainer(this@DialogWindow)
                     }
                 }
                 // put a box behind the dialog to prevent the user from interacting with the main window
-                if(dialog == openedDialogs.last()) {
+                if(dialog == openedDialogs.lastOrNull()) {
                     Box(modifier = Modifier.zIndex(2f).fillMaxSize().background(Color.Black.copy(alpha = 0.5f))) {
                         // empty box
                     }
