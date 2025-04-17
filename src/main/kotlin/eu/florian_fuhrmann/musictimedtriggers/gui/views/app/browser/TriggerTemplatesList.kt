@@ -37,6 +37,7 @@ import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.util.thenIf
 import sh.calvin.reorderable.*
 
@@ -134,7 +135,11 @@ fun TriggerTemplateItem(
     val hovered = browserState.hoveredTemplate.value == browserTemplate
     val backgroundColor = browserTemplate.composeColor.value
     val textColor = backgroundColor.getContrasting(Color.White, Color.Black)
-    val borderColor = backgroundColor.getContrasting(Color.White, Color.Gray)
+    val borderColor = if (MainUiState.theme.isDark()) {
+        backgroundColor.getContrasting(Color.White, Color.Gray)
+    } else {
+        backgroundColor.getContrasting(Color.Gray, Color.Black)
+    }
     Row(
         modifier =
             Modifier
@@ -200,11 +205,11 @@ fun TriggerTemplateItem(
                     onDragCancel = {
                         browserState.stopDragging()
                     },
-                ).padding(3.5.dp).trackActivation(),
+                ).padding(3.5.dp).padding(horizontal = 2.5.dp).trackActivation(),
     ) {
         // Selection Number
         if(selected) {
-            Column(Modifier.fillMaxHeight().padding(start = 2.dp, end = 5.dp), verticalArrangement = Arrangement.Center) {
+            Column(Modifier.fillMaxHeight().padding(end = 5.dp), verticalArrangement = Arrangement.Center) {
                 Row {
                     Box(Modifier.size(16.dp).background(textColor, CircleShape), contentAlignment = Alignment.Center) {
                         Text(
@@ -261,7 +266,7 @@ fun TriggerTemplateItem(
             ) {
                 var handleHovered by remember { mutableStateOf(false) }
                 Icon(
-                    key = MttIcons.contentViewList,
+                    key = MttIcons.dragHandle,
                     null,
                     modifier = with(scope) { Modifier.draggableHandle(interactionSource = interactionSource) }
                         .alpha(if (handleHovered) 1f else 0.5f)

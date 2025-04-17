@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.configuration.ConfigurationBox
@@ -20,6 +21,7 @@ import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceL
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ChangeListenerContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.Configurable
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries.KeyframesConfigurationEntry
+import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
@@ -223,14 +225,14 @@ fun TriggerPlacementInputRow(project: Project, trigger: AbstractPlacedTrigger, t
                             onClick = { GlobalState.moveStartWhenChangingDuration = true },
                             selected = GlobalState.moveStartWhenChangingDuration
                         ) {
-                            Icon(AllIconsKeys.Stub, "Move start")
+                            Icon(MttIcons.moveTriggerEnd, "Move start", Modifier.rotate(180f))
                         }
                         SelectableIconButton(
                             modifier = Modifier.trackActivation(),
                             onClick = { GlobalState.moveStartWhenChangingDuration = false },
                             selected = !GlobalState.moveStartWhenChangingDuration
                         ) {
-                            Icon(AllIconsKeys.Stub, "Move end")
+                            Icon(MttIcons.moveTriggerEnd, "Move end")
                         }
                     }
                 })

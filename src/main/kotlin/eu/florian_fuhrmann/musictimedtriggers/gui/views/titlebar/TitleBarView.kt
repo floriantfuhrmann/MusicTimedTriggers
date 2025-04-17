@@ -72,7 +72,7 @@ fun DecoratedWindowScope.TitleBarView() {
                         onClick = {
                             DialogManager.openDialog(SettingsDialog(project))
                         },
-                        iconKey = MttIcons.settingLine
+                        iconKey = AllIconsKeys.General.Settings
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -89,7 +89,7 @@ fun DecoratedWindowScope.TitleBarView() {
                     onClick = {
                         DialogManager.openDialog(OpenProjectDialog())
                     },
-                    iconKey = MttIcons.openFolderOutline
+                    iconKey = AllIconsKeys.Actions.MenuOpen
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -105,7 +105,7 @@ fun DecoratedWindowScope.TitleBarView() {
                     onClick = {
                         DialogManager.openDialog(CreateProjectDialog())
                     },
-                    iconKey = MttIcons.plusLine
+                    iconKey = AllIconsKeys.General.Add
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),

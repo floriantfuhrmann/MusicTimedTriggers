@@ -38,7 +38,7 @@ fun InspectorBar() {
             modifier = Modifier.trackActivation()
         )
         SelectableIconActionButton(
-            key = AllIconsKeys.Stub,
+            key = MttIcons.placedTrigger,
             contentDescription = null,
             onClick = { selectOption(InspectorOption.PlacedTrigger) },
             extraHint = Size(20),
@@ -47,7 +47,7 @@ fun InspectorBar() {
             modifier = Modifier.padding(top = 5.dp).trackActivation()
         )
         SelectableIconActionButton(
-            key = AllIconsKeys.Stub,
+            key = MttIcons.triggerTemplate,
             contentDescription = null,
             onClick = { selectOption(InspectorOption.TriggerTemplate) },
             extraHint = Size(20),
