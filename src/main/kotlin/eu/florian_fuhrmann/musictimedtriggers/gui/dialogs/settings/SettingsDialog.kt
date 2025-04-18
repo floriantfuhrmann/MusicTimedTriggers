@@ -33,6 +33,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.settings.categories.SettingsCategory
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.settings.categories.AppearanceCategory
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.settings.categories.AudioFilesCategory
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -45,7 +46,7 @@ import org.jetbrains.jewel.ui.component.VerticalScrollbar
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.colorPalette
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
-import org.jetbrains.jewel.ui.theme.treeStyle
+import org.jetbrains.jewel.ui.theme.simpleListItemStyle
 
 class SettingsSection(val name: String, val categories: List<SettingsCategory>)
 
@@ -133,11 +134,14 @@ class SettingsDialog(val project: Project) : Dialog("Settings", 750.dp, 525.dp) 
         Row(Modifier
             .padding(horizontal = 12.dp)
             .fillMaxWidth()
-            .background(when {
-                selected -> JewelTheme.treeStyle.colors.backgroundSelectedFocused
-                hovered -> JewelTheme.iconButtonStyle.colors.backgroundHovered
-                else -> Color.Transparent
-            }, RoundedCornerShape(JewelTheme.treeStyle.metrics.simpleListItemMetrics.selectionBackgroundCornerSize))
+            .background(
+                color = when {
+                    selected -> MainUiState.theme.secondarySelectedBackgroundColor
+                    hovered -> JewelTheme.iconButtonStyle.colors.backgroundHovered
+                    else -> Color.Transparent
+                },
+                shape = RoundedCornerShape(JewelTheme.simpleListItemStyle.metrics.selectionBackgroundCornerSize)
+            )
             .clickable(indication = null, interactionSource = null) {
                 selectedSection = section
                 selectedCategory = category
