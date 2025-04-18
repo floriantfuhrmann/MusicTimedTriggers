@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -70,6 +71,8 @@ class AppearanceCategory : SettingsCategory("Appearance") {
                 }
                 Row(Modifier.padding(vertical = 3.dp)) {
                     ListComboBox(
+                        modifier = Modifier.width(100.dp),
+                        maxPopupHeight = 100.dp,
                         items = Theme.entries.map { it.name },
                         isEditable = false,
                         onSelectedItemChange = { itemName ->

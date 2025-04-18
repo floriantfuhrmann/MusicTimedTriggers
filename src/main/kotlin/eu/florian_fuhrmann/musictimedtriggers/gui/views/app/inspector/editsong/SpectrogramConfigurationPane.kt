@@ -100,7 +100,7 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
             validRange = 5..500
         )
     }
-    FlowRow(verticalArrangement = Arrangement.Center) {
+    FlowRow(modifier = Modifier.padding(start = 20.dp), verticalArrangement = Arrangement.Center) {
         Column(Modifier.width(IntrinsicSize.Max).fillMaxRowHeight(), verticalArrangement = Arrangement.Center) {
             // Target Duration Option
             RadioButtonRow(
@@ -153,7 +153,7 @@ fun WindowSizeConfigurationRows(spectrogramParameters: SpectrogramParameters, re
         )
     }
     val fixedSamplesCountValid by derivedStateOf { fixedSamplesCountState.isValid && fixedSamplesCountState.value?.isPowerOf2() ?: false }
-    FlowRow {
+    FlowRow(modifier = Modifier.padding(start = 20.dp)) {
         Column(Modifier.width(IntrinsicSize.Max).fillMaxRowHeight(), verticalArrangement = Arrangement.Center) {
             // Radio Button
             RadioButtonRow(
@@ -232,12 +232,14 @@ fun WindowFunctionConfigurationRows(spectrogramParameters: SpectrogramParameters
 
     // Hamming Window Option
     RadioButtonRow(
+        modifier = Modifier.padding(start = 20.dp),
         text = "Hamming",
         selected = hammingSelected,
         onClick = { hammingSelected = true }
     )
     // Rectangle Option
     RadioButtonRow(
+        modifier = Modifier.padding(start = 20.dp),
         text = "Rectangle",
         selected = !hammingSelected,
         onClick = { hammingSelected = false }
@@ -333,11 +335,12 @@ fun YAxisConfigurationRows(spectrogramParameters: SpectrogramParameters, refresh
     }
     // Linear and Logarithmic Axis Options
     RadioButtonRow(
+        modifier = Modifier.padding(start = 20.dp),
         text = "Linear",
         selected = !log10YAxisSelected,
         onClick = { log10YAxisSelected = false }
     )
-    FlowRow {
+    FlowRow(modifier = Modifier.padding(start = 20.dp)) {
         Column(Modifier.fillMaxRowHeight(), verticalArrangement = Arrangement.Center) {
             RadioButtonRow(
                 text = "Logarithmic",
