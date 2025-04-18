@@ -131,11 +131,6 @@ fun EditSongPanel(
                                     // File Input for Audio
                                     Box(Modifier.padding(vertical = 6.dp)) {
                                         FilePathField(audioFilePathFieldState, modifier = Modifier.fillMaxWidth())
-                                        LaunchedEffect(audioFilePathFieldState) {
-                                            snapshotFlow { audioFilePathFieldState.file }.collect {
-                                                println("Flow collected: $it")
-                                            }
-                                        }
                                     }
                                 } else {
                                     // Placeholder audio input with swap button

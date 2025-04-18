@@ -679,7 +679,6 @@ object MoveTriggersManager {
                     val keyframeBeforeNewPosition = parentKeyframes.keyframesList[indexOfKeyframeAfterNewPosition - 1]
                     // don't allow move if these are too close
                     if(keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent) < KEYFRAMES_PREVENT_CROWDING_TIME_PERIOD_IN_SECONDS) {
-                        println("Forbidden because difference is only: ${keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent)}")
                         // so jumping between these keyframes is not allowed, instead move as close to the previous keyframe as possible
                         keyframe.position = minPositionWithoutJumping
                         return@forEach
@@ -724,7 +723,6 @@ object MoveTriggersManager {
                     val keyframeBeforeNewPosition = parentKeyframes.keyframesList[indexOfKeyframeAfterNewPosition - 1]
                     // don't allow move if these are too close
                     if(keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent) < KEYFRAMES_PREVENT_CROWDING_TIME_PERIOD_IN_SECONDS) {
-                        println("Forbidden because difference is only: ${keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent)}")
                         // so jumping between these keyframes is not allowed, instead move as close to the next keyframe as possible
                         keyframe.position = maxPositionWithoutJumping
                         return@forEach
