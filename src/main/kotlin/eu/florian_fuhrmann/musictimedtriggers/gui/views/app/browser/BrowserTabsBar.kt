@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.styles.fixedCursorTooltipStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserGroup
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SingleTab
@@ -196,14 +197,17 @@ fun RowScope.OpenGroupsTabs(project: Project, tabsScrollState: ScrollState, open
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MoreOptionsDropdown(project: Project, closedGroups: List<BrowserGroup>) {
     // States
     var menuExpanded by remember { mutableStateOf(false) }
     var showCreatePopup by remember { mutableStateOf(false) }
     // Icon Button
-    IconButton(onClick = { menuExpanded = true }, focusable = false) {
-        Icon(AllIconsKeys.Actions.More, null)
+    Tooltip(tooltip = { Text("Open / Create Group") }, style = fixedCursorTooltipStyle) {
+        IconButton(onClick = { menuExpanded = true }, focusable = false) {
+            Icon(AllIconsKeys.Actions.More, null)
+        }
     }
     // Popups
     if(menuExpanded) {
@@ -251,15 +255,18 @@ fun MoreOptionsDropdown(project: Project, closedGroups: List<BrowserGroup>) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AddTemplateButton() {
     var expanded by remember { mutableStateOf(false) }
-    IconButton(
-        onClick = { expanded = !expanded },
-        focusable = false
-    ) {
-        Icon(AllIconsKeys.General.Add, null)
-        Icon(AllIconsKeys.General.Dropdown, null)
+    Tooltip(tooltip = { Text("Add Template") }, style = fixedCursorTooltipStyle) {
+        IconButton(
+            onClick = { expanded = !expanded },
+            focusable = false
+        ) {
+            Icon(AllIconsKeys.General.Add, null)
+            Icon(AllIconsKeys.General.Dropdown, null)
+        }
     }
     if(expanded) {
         PopupContainer(
@@ -309,24 +316,30 @@ fun AddTemplateButton() {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RemoveTemplatesButton() {
-    IconButton(
-        onClick = { ProjectManager.currentProject?.browserState?.removeSelectedTemplates() },
-        focusable = false
-    ) {
-        Icon(AllIconsKeys.General.Remove, null)
+    Tooltip(tooltip = { Text("Remove Templates") }, style = fixedCursorTooltipStyle) {
+        IconButton(
+            onClick = { ProjectManager.currentProject?.browserState?.removeSelectedTemplates() },
+            focusable = false
+        ) {
+            Icon(AllIconsKeys.General.Remove, null)
+        }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ToggleBrowserButton() {
-    IconButton(
-        onClick = { MainUiState.toggleBrowser() },
-        modifier = Modifier.fillMaxHeight().trackActivation(),
-        focusable = false
-    ) {
-        Icon(AllIconsKeys.General.PreviewHorizontally, null)
+    Tooltip(tooltip = { Text("Toggle Templates Browser") }, style = fixedCursorTooltipStyle) {
+        IconButton(
+            onClick = { MainUiState.toggleBrowser() },
+            modifier = Modifier.fillMaxHeight().trackActivation(),
+            focusable = false
+        ) {
+            Icon(AllIconsKeys.General.PreviewHorizontally, null)
+        }
     }
 }
 

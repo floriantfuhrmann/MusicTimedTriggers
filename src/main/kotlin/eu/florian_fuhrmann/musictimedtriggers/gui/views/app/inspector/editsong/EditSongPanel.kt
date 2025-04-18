@@ -1,5 +1,6 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editsong
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.addsong.AudioBannersOrEncodingInformationRows
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.replaceaudio.ReplaceAudioDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.styles.fixedCursorTooltipStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.FilePathField
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.FilePathFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
@@ -39,6 +41,7 @@ fun createAudioFilePathFieldState(project: Project, song: Song? = null) =
     )
 
 /** Panel for editing/creating a song. Used by Inspector and Dialog. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EditSongPanel(
     project: Project,
@@ -133,8 +136,8 @@ fun EditSongPanel(
                                         FilePathField(audioFilePathFieldState, modifier = Modifier.fillMaxWidth())
                                     }
                                 } else {
-                                    // Placeholder audio input with swap button
-                                    val audioFileName by derivedStateOf { song?.audioFile?.name ?: "" }
+                                    // Placeholder audio input with a swap button
+                                    val audioFileName by derivedStateOf { song.audioFile.name ?: "" }
                                     key(audioFileName) {
                                         TextField(
                                             state = rememberTextFieldState(audioFileName),
@@ -142,12 +145,13 @@ fun EditSongPanel(
                                             readOnly = true,
                                             enabled = false,
                                             trailingIcon = {
-                                                IconButton(onClick = {
-                                                    // open replace audio dialog
-                                                    require(song != null) { "Song must not be null for swap button" }
-                                                    DialogManager.openDialog(ReplaceAudioDialog(project, song))
-                                                }) {
-                                                    Icon(AllIconsKeys.Actions.SwapPanels, null)
+                                                Tooltip(tooltip = { Text("Replace Audio") }, style = fixedCursorTooltipStyle) {
+                                                    IconButton(onClick = {
+                                                        // open replace audio dialog
+                                                        DialogManager.openDialog(ReplaceAudioDialog(project, song))
+                                                    }) {
+                                                        Icon(AllIconsKeys.Actions.SwapPanels, null)
+                                                    }
                                                 }
                                             }
                                         )

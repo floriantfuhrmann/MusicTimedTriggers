@@ -37,11 +37,11 @@ object MainUiState {
 
 }
 
-enum class InspectorOption {
-    None,
-    Song,
-    PlacedTrigger,
-    TriggerTemplate
+enum class InspectorOption(val displayName: String) {
+    None(""),
+    Song("Song"),
+    PlacedTrigger("Placed Trigger"),
+    TriggerTemplate("Trigger Template")
 }
 
 enum class Theme(val displayName: String) {

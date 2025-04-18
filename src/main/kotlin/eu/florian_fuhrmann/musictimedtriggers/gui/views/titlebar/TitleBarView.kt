@@ -1,5 +1,6 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.titlebar
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +14,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.createproject.CreatePr
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.openproject.OpenProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.settings.SettingsDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.styles.dropdownLikeIconButtonStyle
+import eu.florian_fuhrmann.musictimedtriggers.gui.styles.fixedCursorTooltipStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.mix
@@ -27,6 +29,7 @@ import org.jetbrains.jewel.window.newFullscreenControls
 
 var titleBarDropdownOpened: MutableState<Boolean> = mutableStateOf(false)
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DecoratedWindowScope.TitleBarView() {
     TitleBar(
@@ -37,18 +40,20 @@ fun DecoratedWindowScope.TitleBarView() {
         Row(Modifier.align(Alignment.Start).padding(5.dp).trackActivation()) {
             // Sidebar Toggle
             if (ProjectManager.currentProject != null) {
-                IconButton(
-                    style = dropdownLikeIconButtonStyle,
-                    onClick = {
-                        MainUiState.toggleSidebar()
-                    },
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .aspectRatio(1f)
-                        .trackActivation()
-                ) {
-                    Box(Modifier.padding(5.dp).rotate(180f)) {
-                        Icon(AllIconsKeys.Actions.PreviewDetails, null, hint = Size(20))
+                Tooltip(tooltip = { Text("Toggle Sidebar") }, style = fixedCursorTooltipStyle) {
+                    IconButton(
+                        style = dropdownLikeIconButtonStyle,
+                        onClick = {
+                            MainUiState.toggleSidebar()
+                        },
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .aspectRatio(1f)
+                            .trackActivation()
+                    ) {
+                        Box(Modifier.padding(5.dp).rotate(180f)) {
+                            Icon(AllIconsKeys.Actions.PreviewDetails, null, hint = Size(20))
+                        }
                     }
                 }
             }
@@ -136,10 +141,12 @@ fun DecoratedWindowScope.TitleBarView() {
         Row(Modifier.align(Alignment.End)) {
             val project = ProjectManager.currentProject
             if(project != null) {
-                IconButton(onClick = {
-                    DialogManager.openDialog(SettingsDialog(project))
-                }, Modifier.size(40.dp).padding(5.dp)) {
-                    Icon(AllIconsKeys.General.Settings, null, hint = Size(20))
+                Tooltip(tooltip = { Text("Settings") }, style = fixedCursorTooltipStyle) {
+                    IconButton(onClick = {
+                        DialogManager.openDialog(SettingsDialog(project))
+                    }, Modifier.size(40.dp).padding(5.dp)) {
+                        Icon(AllIconsKeys.General.Settings, null, hint = Size(20))
+                    }
                 }
             }
         }

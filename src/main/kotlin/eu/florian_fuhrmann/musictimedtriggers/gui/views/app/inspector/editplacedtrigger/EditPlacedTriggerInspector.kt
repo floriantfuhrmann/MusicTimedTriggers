@@ -1,5 +1,7 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editplacedtrigger
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipPlacement
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -7,12 +9,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.styles.fixedCursorTooltipStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.configuration.ConfigurationBox
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.InspectorOption
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.ScrollableInspectorContentsContainer
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.InputFieldIconButton
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.NumberField
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.TimeNumberFieldState
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
@@ -22,7 +26,6 @@ import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ChangeListene
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.Configurable
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries.KeyframesConfigurationEntry
 import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
-import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
@@ -102,6 +105,7 @@ fun EditPlacedTriggerInspector(project: Project) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TriggerPlacementInputRow(project: Project, trigger: AbstractPlacedTrigger, triggersLine: TriggerSequenceLine) {
     // States
@@ -193,46 +197,66 @@ fun TriggerPlacementInputRow(project: Project, trigger: AbstractPlacedTrigger, t
         Column(Modifier.padding(start = 6.dp).height(IntrinsicSize.Min)) {
             Row(Modifier.padding(vertical = 6.dp)) {
                 NumberField(state = startTimeState, modifier = Modifier.fillMaxWidth(), customTrailingIcon = {
-                    IconButton(
-                        onClick = {
-                            val targetTime = if(startTimeState.isValid) startTimeState.value else null
-                            if(targetTime == null) return@IconButton
-                            project.currentSong?.jumpTo(targetTime)
-                        }
+                    Tooltip(
+                        tooltip = { Text("Jump to Start") },
+                        style = fixedCursorTooltipStyle
                     ) {
-                        Icon(AllIconsKeys.Actions.Undo, "Jump to start")
+                        InputFieldIconButton(
+                            onClick = {
+                                val targetTime = if(startTimeState.isValid) startTimeState.value else null
+                                if(targetTime == null) return@InputFieldIconButton
+                                project.currentSong?.jumpTo(targetTime)
+                            }
+                        ) {
+                            Icon(AllIconsKeys.Actions.Undo, "Jump to start")
+                        }
                     }
                 })
             }
             Row(Modifier.padding(vertical = 6.dp)) {
                 NumberField(state = endTimeState, modifier = Modifier.fillMaxWidth(), customTrailingIcon = {
-                    IconButton(
-                        onClick = {
-                            val targetTime = if(endTimeState.isValid) endTimeState.value else null
-                            if(targetTime == null) return@IconButton
-                            project.currentSong?.jumpTo(targetTime)
-                        }
+                    Tooltip(
+                        tooltip = { Text("Jump to End") },
+                        style = fixedCursorTooltipStyle
                     ) {
-                        Icon(AllIconsKeys.Actions.Redo, "Jump to end")
+                        InputFieldIconButton(
+                            onClick = {
+                                val targetTime = if (endTimeState.isValid) endTimeState.value else null
+                                if (targetTime == null) return@InputFieldIconButton
+                                project.currentSong?.jumpTo(targetTime)
+                            }
+                        ) {
+                            Icon(AllIconsKeys.Actions.Redo, "Jump to end")
+                        }
                     }
                 })
             }
             Row(Modifier.padding(vertical = 6.dp)) {
                 NumberField(state = durationState, modifier = Modifier.fillMaxWidth(), customTrailingIcon = {
                     Row {
-                        SelectableIconButton(
-                            modifier = Modifier.trackActivation(),
-                            onClick = { GlobalState.moveStartWhenChangingDuration = true },
-                            selected = GlobalState.moveStartWhenChangingDuration
+                        Tooltip(
+                            tooltip = { Text("Move Start") },
+                            style = fixedCursorTooltipStyle
                         ) {
-                            Icon(MttIcons.moveTriggerEnd, "Move start", Modifier.rotate(180f))
+                            InputFieldIconButton(
+                                onClick = { GlobalState.moveStartWhenChangingDuration = true },
+                                selectable = true,
+                                selected = GlobalState.moveStartWhenChangingDuration,
+                            ) {
+                                Icon(MttIcons.moveTriggerEnd, "Move start", Modifier.rotate(180f))
+                            }
                         }
-                        SelectableIconButton(
-                            modifier = Modifier.trackActivation(),
-                            onClick = { GlobalState.moveStartWhenChangingDuration = false },
-                            selected = !GlobalState.moveStartWhenChangingDuration
+                        Tooltip(
+                            tooltip = { Text("Move End") },
+                            style = fixedCursorTooltipStyle
                         ) {
-                            Icon(MttIcons.moveTriggerEnd, "Move end")
+                            InputFieldIconButton(
+                                onClick = { GlobalState.moveStartWhenChangingDuration = false },
+                                selectable = true,
+                                selected = !GlobalState.moveStartWhenChangingDuration,
+                            ) {
+                                Icon(MttIcons.moveTriggerEnd, "Move end")
+                            }
                         }
                     }
                 })

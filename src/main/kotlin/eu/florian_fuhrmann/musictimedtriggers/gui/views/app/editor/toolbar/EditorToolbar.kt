@@ -1,5 +1,6 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.toolbar
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
@@ -10,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.styles.fixedCursorTooltipStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
@@ -22,11 +24,13 @@ import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.PopupContainer
 import org.jetbrains.jewel.ui.component.Slider
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.Tooltip
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import kotlin.math.roundToInt
 
 var lineHeightPopupOpened by mutableStateOf(false)
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EditorToolbar(song: Song?) {
     Row(
@@ -42,19 +46,23 @@ fun EditorToolbar(song: Song?) {
         // Play / Pause Button
         if (song != null) {
             if(currentAudioPlayer.value?.playing?.value == true) {
-                IconButton(
-                    onClick = { ProjectManager.currentProject?.currentSong?.pause() },
-                    focusable = false
-                ) {
-                    Icon(AllIconsKeys.Actions.Pause, null)
+                Tooltip(tooltip = { Text("Pause") }, style = fixedCursorTooltipStyle) {
+                    IconButton(
+                        onClick = { ProjectManager.currentProject?.currentSong?.pause() },
+                        focusable = false
+                    ) {
+                        Icon(AllIconsKeys.Actions.Pause, null)
+                    }
                 }
             } else if(currentAudioPlayer.value?.playing?.value == false) {
-                IconButton(
-                    onClick = { ProjectManager.currentProject?.currentSong?.play() },
-                    focusable = false
-                ) {
+                Tooltip(tooltip = { Text("Play") }, style = fixedCursorTooltipStyle) {
+                    IconButton(
+                        onClick = { ProjectManager.currentProject?.currentSong?.play() },
+                        focusable = false
+                    ) {
 //                    Icon(AllIconsKeys.Actions.Execute, null)
-                    Icon(AllIconsKeys.Toolwindows.ToolWindowRun, null)
+                        Icon(AllIconsKeys.Toolwindows.ToolWindowRun, null)
+                    }
                 }
             }
         }
@@ -63,26 +71,41 @@ fun EditorToolbar(song: Song?) {
         // Right Tool Buttons
         if (song != null) {
             // Minimum Line Height Setting
-            IconButton(
-                onClick = {
-                    lineHeightPopupOpened = true
-                },
-                focusable = false
+            Tooltip(
+                tooltip = { Text("Minimum Line Height") },
+                style = fixedCursorTooltipStyle
             ) {
-                Icon(MttIcons.lineHeight, null)
+                IconButton(
+                    onClick = {
+                        lineHeightPopupOpened = true
+                    },
+                    focusable = false
+                ) {
+                    Icon(MttIcons.lineHeight, null)
+                }
             }
             // Zoom In / Out Buttons
-            IconButton(
-                onClick = { TimelineBackgroundRenderer.Zooming.zoomIn() },
-                focusable = false
+            Tooltip(
+                tooltip = { Text("Zoom In") },
+                style = fixedCursorTooltipStyle
             ) {
-                Icon(AllIconsKeys.General.ZoomIn, null)
+                IconButton(
+                    onClick = { TimelineBackgroundRenderer.Zooming.zoomIn() },
+                    focusable = false
+                ) {
+                    Icon(AllIconsKeys.General.ZoomIn, null)
+                }
             }
-            IconButton(
-                onClick = { TimelineBackgroundRenderer.Zooming.zoomOut() },
-                focusable = false
+            Tooltip(
+                tooltip = { Text("Zoom Out") },
+                style = fixedCursorTooltipStyle
             ) {
-                Icon(AllIconsKeys.General.ZoomOut, null)
+                IconButton(
+                    onClick = { TimelineBackgroundRenderer.Zooming.zoomOut() },
+                    focusable = false
+                ) {
+                    Icon(AllIconsKeys.General.ZoomOut, null)
+                }
             }
         }
         // End Spacer
