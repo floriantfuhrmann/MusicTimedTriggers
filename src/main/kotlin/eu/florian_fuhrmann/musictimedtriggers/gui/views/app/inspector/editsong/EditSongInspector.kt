@@ -3,6 +3,7 @@ package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editsong
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -20,7 +21,9 @@ fun EditSongInspector(project: Project, song: Song?) {
     InspectorContentsContainer("Edit Song", scrollState) {
         if(song != null) {
             // Edit Song Panel
-            EditSongPanel(project, song, scrollState)
+            key(song) {
+                EditSongPanel(project, song, scrollState)
+            }
         } else {
             // No song selected text
             Text(

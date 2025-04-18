@@ -22,12 +22,14 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.styles.fixedCursorTooltipStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.FilePathField
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.FilePathFieldState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.OpenableGroupHeader
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.inputs.InvalidInputPopup
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getAudioFormatOrNull
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.spectrogram.SpectrogramParameters
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
+import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
@@ -72,8 +74,8 @@ fun EditSongPanel(
                     Link("Apply", onClick = {
                         // get the new parameters
                         val newParams = spectrogramConfigurationState.spectrogramParameters
-                        // apply new params to song
-                        song?.updateSpectrogramParameters(newParams)
+                        // apply new params to the song
+                        song.updateSpectrogramParameters(newParams)
                         // update state since the changes are now applied
                         spectrogramConfigurationState.handleChangesApplied()
                     })
@@ -97,18 +99,21 @@ fun EditSongPanel(
                         }
                         // Inputs
                         Column {
-                            Row {
+                            Row(Modifier.padding(vertical = 6.dp)) {
                                 val focusManager = LocalFocusManager.current
                                 val updateSongNameIfNeeded = { newName: String ->
-                                    if(song?.name != newName) {
+                                    if(newName.isNotBlank() && song?.name != newName) {
                                         // update song name
                                         song?.updateName(newName)
                                     }
                                 }
+                                var nameFieldFocused by remember { mutableStateOf(false) }
                                 TextField(
                                     state = nameFieldState,
-                                    modifier = Modifier.padding(vertical = 6.dp).fillMaxWidth().onFocusChanged {
-                                        // update song name if focus is lost
+                                    outline = if(nameFieldState.text.isBlank()) Outline.Error else Outline.None,
+                                    modifier = Modifier.fillMaxWidth().onFocusChanged {
+                                        // update the song name if focus is lost
+                                        nameFieldFocused = it.isFocused
                                         if(!it.isFocused) {
                                             updateSongNameIfNeeded(nameFieldState.text.toString())
                                         }
@@ -120,6 +125,11 @@ fun EditSongPanel(
                                     },
                                     placeholder = { Text("Song Name") },
                                 )
+                                // error popup
+                                if(nameFieldState.text.isBlank() && nameFieldFocused) {
+                                    InvalidInputPopup("Song Name may not be blank")
+                                }
+                                // export name
                                 LaunchedEffect(nameFieldState) {
                                     snapshotFlow { nameFieldState.text }.filter { it.isNotBlank() }.collectLatest {
                                         // short delay
