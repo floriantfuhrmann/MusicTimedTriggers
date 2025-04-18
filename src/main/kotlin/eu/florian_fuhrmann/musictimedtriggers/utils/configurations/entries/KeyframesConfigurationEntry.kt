@@ -1,5 +1,6 @@
 package eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -20,6 +21,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import eu.florian_fuhrmann.musictimedtriggers.gui.styles.fixedCursorTooltipStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.MoveTriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
@@ -157,6 +159,7 @@ class KeyframesConfigurationEntry(
             )
         )
 
+    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun RowScope.KeyframesTableMainColumn(state: KeyframesConfigurationState) {
         // set focus manager
@@ -174,16 +177,18 @@ class KeyframesConfigurationEntry(
                 var addPopupExpanded by remember { mutableStateOf(false) }
                 val addEnabled = state.selectedKeyframeState != null
                 // Add Keyframe Button
-                IconButton(
-                    onClick = { addPopupExpanded = true },
-                    focusable = false,
-                    enabled = addEnabled,
-                    modifier = Modifier.thenIf(!addEnabled) {
-                        alpha(0.5f)
+                Tooltip(tooltip = { Text("Add Keyframe") }, style = fixedCursorTooltipStyle) {
+                    IconButton(
+                        onClick = { addPopupExpanded = true },
+                        focusable = false,
+                        enabled = addEnabled,
+                        modifier = Modifier.thenIf(!addEnabled) {
+                            alpha(0.5f)
+                        }
+                    ) {
+                        Icon(AllIconsKeys.General.Add, null)
+                        Icon(AllIconsKeys.General.Dropdown, null)
                     }
-                ) {
-                    Icon(AllIconsKeys.General.Add, null)
-                    Icon(AllIconsKeys.General.Dropdown, null)
                 }
                 // Add Keyframe Popup Menu
                 if(addPopupExpanded) {
@@ -213,15 +218,17 @@ class KeyframesConfigurationEntry(
                 }
                 // Remove Keyframe Button
                 val removeEnabled = state.selectedKeyframeState.let { it != null && !it.isFirstOrLastKeyframe() }
-                IconButton(
-                    onClick = { state.removeSelectedKeyframe() },
-                    focusable = false,
-                    enabled = removeEnabled,
-                    modifier = Modifier.thenIf(!removeEnabled) {
-                        alpha(0.5f)
+                Tooltip(tooltip = { Text("Remove Keyframe") }, style = fixedCursorTooltipStyle) {
+                    IconButton(
+                        onClick = { state.removeSelectedKeyframe() },
+                        focusable = false,
+                        enabled = removeEnabled,
+                        modifier = Modifier.thenIf(!removeEnabled) {
+                            alpha(0.5f)
+                        }
+                    ) {
+                        Icon(AllIconsKeys.General.Remove, null)
                     }
-                ) {
-                    Icon(AllIconsKeys.General.Remove, null)
                 }
             }
             // Table with Position Type and Value columns
