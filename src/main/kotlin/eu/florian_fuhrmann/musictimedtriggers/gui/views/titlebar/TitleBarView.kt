@@ -15,7 +15,6 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.settings.SettingsDialo
 import eu.florian_fuhrmann.musictimedtriggers.gui.styles.dropdownLikeIconButtonStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
-import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.mix
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme

@@ -13,6 +13,9 @@ object MttIcons {
     // Placed Trigger Duration Input
     val moveTriggerEnd = PathIconKey("icons/move_end.svg", MttIcons::class.java)
 
+    // Editor Toolbar
+    val lineHeight = PathIconKey("icons/line_height.svg", MttIcons::class.java)
+
     // Template List
     val dragHandle = PathIconKey("icons/drag_handle.svg", MttIcons::class.java)
 

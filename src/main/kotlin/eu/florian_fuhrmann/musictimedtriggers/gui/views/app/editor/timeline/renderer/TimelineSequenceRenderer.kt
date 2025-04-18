@@ -18,7 +18,7 @@ object TimelineSequenceRenderer {
     // arrays contain top y coordinates and heights of every sequence line (same index in this array as in TriggerSequence#lines)
     private var lineTopYs: Array<Int?> = Array(0) { null } // must be ascending
     private var lineHeights: Array<Int?> = Array(0) { null }
-    private var minimumLineHeight = 16 // this should be configurable in the future
+    var minimumLineHeight = 15 // configured through the editor toolbar
 
     fun getSequenceLineTopY(lineIndex: Int) = lineTopYs[lineIndex]
     fun getSequenceLineHeight(lineIndex: Int) = lineHeights[lineIndex]
