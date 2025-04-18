@@ -111,8 +111,7 @@ private fun ReorderableCollectionItemScope.SongListItem(
                 },
                 shape = RoundedCornerShape(JewelTheme.simpleListItemStyle.metrics.selectionBackgroundCornerSize)
             )
-            .padding(horizontal = 4.dp, vertical = 2.dp)
     ) {
-        Text(song.name)
+        Text(song.name, Modifier.padding(4.dp))
     }
 }
