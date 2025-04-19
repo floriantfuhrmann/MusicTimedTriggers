@@ -7,16 +7,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.configuration.ConfigurationBox
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.ScrollableInspectorContentsContainer
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ChangeListenerContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.Configurable
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Text
 import java.lang.reflect.Field
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
+@OptIn(FlowPreview::class)
 @Composable
 fun EditTemplateInspector(project: Project) {
     // selected browser template
@@ -37,8 +45,10 @@ fun EditTemplateInspector(project: Project) {
                         configuration = template.getTriggerTemplate().configuration,
                         context = object : ConfigurationContext(), ChangeListenerContext {
                             override fun onChange(field: Field, configurable: Configurable) {
-                                // update the template in the ui
+                                // update the template in the browser ui
                                 project.browserState.updateTriggerTemplate(template.getTriggerTemplate())
+                                // redraw timeline, so change is also visible there
+                                redrawTimeline()
                                 // save the group to file (should be debounced in the future)
                                 template.getTriggerTemplate().group.saveToFile(project.projectDirectory)
                             }
