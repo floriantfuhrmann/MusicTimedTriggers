@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
@@ -40,6 +42,7 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.util.thenIf
 import sh.calvin.reorderable.*
+import java.awt.event.MouseEvent
 
 @Composable
 fun TriggerTemplatesList(project: Project) {
@@ -94,16 +97,31 @@ fun TriggerTemplatesList(project: Project) {
                 Modifier
                     .background(JewelTheme.globalColors.borders.normal)
                     .fillMaxSize()
-                    .clickable(indication = null, interactionSource = null) {
-                        // only triggers when clicked outside a list item
-                        browserState.unselectAllTemplates()
+                    .clickable(indication = null, interactionSource = null) {} // empty clickable, so the column can gain focus
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                // get event and native event
+                                val event = awaitPointerEvent()
+                                val nativeEvent = (event.nativeEvent as? MouseEvent) ?: continue
+                                // check whether the event is not consumed and the primary button is pressed
+                                if(!nativeEvent.isConsumed && event.buttons.isPrimaryPressed && event.type == PointerEventType.Press) {
+                                    // unselect all templates and consume the event
+                                    browserState.unselectAllTemplates()
+                                    nativeEvent.consume()
+                                }
+                            }
+                        }
                     }.onKeyEvent {
-                        // Delete should only work when focus is on the list, so the key event lister is here
-                        if (it.type != KeyEventType.KeyUp) return@onKeyEvent false
+                        // Delete should only work when the list has focus, so the key event lister is here
+                        if (it.type != KeyEventType.KeyDown) return@onKeyEvent false
                         if (it.key == Key.Backspace || it.key == Key.Delete) {
                             // remove all selected triggers
                             browserState.removeSelectedTemplates(it.isShiftPressed && it.isAltPressed)
                             return@onKeyEvent true
+                        } else if(it.key == Key.Escape) {
+                            // unselect all templates
+                            browserState.unselectAllTemplates()
                         }
                         return@onKeyEvent false
                     },
@@ -170,24 +188,27 @@ fun TriggerTemplateItem(
                     browserState.onTemplateHoverEnter(browserTemplate)
                 }.onPointerEvent(PointerEventType.Exit) {
                     browserState.onTemplateHoverExit(browserTemplate)
-                }.onClick (
-                    matcher = PointerMatcher.mouse(PointerButton.Primary),
-                    onClick = {
-                        browserState.selectTemplate(browserTemplate, false)
-                    },
-                    onDoubleClick = {
-                        // select the template
-                        browserState.selectTemplate(browserTemplate, false)
-                        // open the template inspector
-                        MainUiState.inspectorOption = InspectorOption.TriggerTemplate
+                }
+                .pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            // get event and native event
+                            val event = awaitPointerEvent()
+                            val nativeEvent = (event.nativeEvent as? MouseEvent) ?: continue
+                            // check whether the event is not consumed and the primary button is pressed
+                            if(!nativeEvent.isConsumed && event.buttons.isPrimaryPressed && event.type == PointerEventType.Press) {
+                                // consume the event
+                                nativeEvent.consume()
+                                // select the template
+                                browserState.selectTemplate(browserTemplate, event.keyboardModifiers.isShiftPressed)
+                                // open the template inspector (for double click)
+                                if(nativeEvent.clickCount >= 2) {
+                                    MainUiState.inspectorOption = InspectorOption.TriggerTemplate
+                                }
+                            }
+                        }
                     }
-                ).onClick(
-                    keyboardModifiers = { isShiftPressed },
-                    matcher = PointerMatcher.mouse(PointerButton.Primary),
-                    onClick = {
-                        browserState.selectTemplate(browserTemplate, true)
-                    }
-                ).onDrag(
+                }.onDrag(
                     onDragStart = {
                         // select the template if not already selected
                         if (!browserState.isSelected(browserTemplate)) {
