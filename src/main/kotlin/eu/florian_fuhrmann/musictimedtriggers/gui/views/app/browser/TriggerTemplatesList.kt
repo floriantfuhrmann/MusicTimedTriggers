@@ -13,8 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
@@ -39,7 +37,6 @@ import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.util.thenIf
 import sh.calvin.reorderable.*
 import java.awt.event.MouseEvent
@@ -104,10 +101,17 @@ fun TriggerTemplatesList(project: Project) {
                                 // get event and native event
                                 val event = awaitPointerEvent()
                                 val nativeEvent = (event.nativeEvent as? MouseEvent) ?: continue
-                                // check whether the event is not consumed and the primary button is pressed
-                                if(!nativeEvent.isConsumed && event.buttons.isPrimaryPressed && event.type == PointerEventType.Press) {
-                                    // unselect all templates and consume the event
+                                // skip handling if already consumed
+                                if(nativeEvent.isConsumed) continue
+                                // check whether the event is not consumed and the primary or secondary button is pressed
+                                if((event.buttons.isPrimaryPressed || event.buttons.isSecondaryPressed) && event.type == PointerEventType.Press) {
+                                    // unselect all templates
                                     browserState.unselectAllTemplates()
+                                    // ensure no template is hovered
+                                    browserState.hoveredTemplate.value?.let {
+                                        browserState.onTemplateHoverExit(it)
+                                    }
+                                    // consume the event
                                     nativeEvent.consume()
                                 }
                             }
@@ -188,31 +192,58 @@ fun TriggerTemplateItem(
                     browserState.onTemplateHoverEnter(browserTemplate)
                 }.onPointerEvent(PointerEventType.Exit) {
                     browserState.onTemplateHoverExit(browserTemplate)
-                }
-                .pointerInput(Unit) {
+                }.pointerInput(Unit) {
                     awaitPointerEventScope {
+                        var primaryButtonPressed = false
+                        var dontUnselectOnRelease = false
                         while (true) {
                             // get event and native event
                             val event = awaitPointerEvent()
                             val nativeEvent = (event.nativeEvent as? MouseEvent) ?: continue
-                            // check whether the event is not consumed and the primary button is pressed
-                            if(!nativeEvent.isConsumed && event.buttons.isPrimaryPressed && event.type == PointerEventType.Press) {
-                                // consume the event
+                            // skip handling if already consumed
+                            if(nativeEvent.isConsumed) continue
+                            // check whether the primary button is pressed
+                            if(event.buttons.isPrimaryPressed && event.type == PointerEventType.Press) {
+                                // consume the event (and remember that the primary button is pressed)
                                 nativeEvent.consume()
-                                // select the template
-                                browserState.selectTemplate(browserTemplate, event.keyboardModifiers.isShiftPressed)
+                                primaryButtonPressed = true
+                                // select the template (if not already selected or not shift pressed) on press
+                                if(!browserState.isSelected(browserTemplate) || !event.keyboardModifiers.isShiftPressed) {
+                                    browserState.selectTemplate(browserTemplate, event.keyboardModifiers.isShiftPressed)
+                                    dontUnselectOnRelease = true
+                                }
                                 // open the template inspector (for double click)
                                 if(nativeEvent.clickCount >= 2) {
                                     MainUiState.inspectorOption = InspectorOption.TriggerTemplate
                                 }
+                            } else if(event.buttons.isSecondaryPressed && event.type == PointerEventType.Press) {
+                                // consume secondary button press on template (so it is marked as consumed, when handled by the container)
+                                nativeEvent.consume()
+                            }
+                            //if the primary button is released, unselect the template
+                            if(event.type == PointerEventType.Release && primaryButtonPressed) {
+                                // consume the event (and remember that the primary button is no longer pressed)
+                                nativeEvent.consume()
+                                primaryButtonPressed = false
+                                // unselect the template on release (if not disabled due to dragging or it just being selected by previous press)
+                                if(browserState.isSelected(browserTemplate) && !dontUnselectOnRelease) {
+                                    browserState.unselectTemplate(browserTemplate)
+                                } else {
+                                    // if not unselecting, reset the flag
+                                    dontUnselectOnRelease = false
+                                }
+                            }
+                            //if the cursor is moved while the primary button is pressed (so dragging), never unselect on release
+                            if(event.type == PointerEventType.Move && primaryButtonPressed) {
+                                dontUnselectOnRelease = true
                             }
                         }
                     }
                 }.onDrag(
                     onDragStart = {
-                        // select the template if not already selected
+                        // don't do anything if the template is not selected
                         if (!browserState.isSelected(browserTemplate)) {
-                            browserState.selectTemplate(browserTemplate, false)
+                            return@onDrag
                         }
                         // start dragging
                         browserState.startDragging()

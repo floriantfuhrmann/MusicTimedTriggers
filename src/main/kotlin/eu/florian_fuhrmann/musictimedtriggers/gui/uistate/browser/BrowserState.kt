@@ -465,7 +465,7 @@ class BrowserState(
     fun selectTemplate(template: BrowserTemplate, keepOthers: Boolean) {
         if(keepOthers) {
             if(selectedTemplates.contains(template)) {
-                //selecting something which was already selected unselects again
+                //selecting something already selected unselects again
                 selectedTemplates.remove(template)
             } else {
                 //add to selected templates
@@ -476,6 +476,10 @@ class BrowserState(
             selectedTemplates.clear()
             selectedTemplates.add(template)
         }
+    }
+
+    fun unselectTemplate(template: BrowserTemplate) {
+        selectedTemplates.remove(template)
     }
 
     fun unselectAllTemplates() {
