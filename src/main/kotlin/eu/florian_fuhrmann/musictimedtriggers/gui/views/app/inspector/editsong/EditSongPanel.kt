@@ -68,7 +68,7 @@ fun EditSongPanel(
     }
     Column {
         // Spectrogram Parameters Changes Banner
-        if (!creating && spectrogramConfigurationState.anyChanges) {
+        if (!creating && spectrogramConfigurationState.anyChanges && spectrogramConfigurationState.allInputsValid) {
             Row {
                 WarningBanner("Spectrogram Changes", actions = {
                     Link("Apply", onClick = {
