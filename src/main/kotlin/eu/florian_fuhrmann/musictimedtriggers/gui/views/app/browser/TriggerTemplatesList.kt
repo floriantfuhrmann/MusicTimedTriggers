@@ -207,41 +207,30 @@ fun TriggerTemplateItem(
                     },
                 ).padding(3.5.dp).padding(horizontal = 2.5.dp).trackActivation(),
     ) {
-        // Selection Number
-        if(selected) {
-            Column(Modifier.fillMaxHeight().padding(end = 5.dp), verticalArrangement = Arrangement.Center) {
-                Row {
-                    Box(Modifier.size(16.dp).background(textColor, CircleShape), contentAlignment = Alignment.Center) {
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = "${selectedIndex + 1}",
-                            color = backgroundColor,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            maxLines = 1,
-                            overflow = TextOverflow.Visible,
-                            letterSpacing = 0.1.sp,
-                        )
-                    }
-                }
-            }
-        }
         // Icon
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.Start,
-            modifier = Modifier.padding(end = 5.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.fillMaxHeight(),
-            ) {
+        Column(Modifier.padding(end = 5.dp).width(IntrinsicSize.Min).height(IntrinsicSize.Min)) {
+            Box {
                 Icon(
                     browserTemplate.type.iconKey,
                     null,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(24.dp).thenIf(selected) { alpha(0.5f) },
                 )
+                if(selected) {
+                    Box(Modifier.fillMaxSize()) {
+                        Box(Modifier.size(16.dp).align(Alignment.Center).background(textColor, CircleShape), contentAlignment = Alignment.Center) {
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = "${selectedIndex + 1}",
+                                color = backgroundColor,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1,
+                                overflow = TextOverflow.Visible,
+                                letterSpacing = 0.1.sp,
+                            )
+                        }
+                    }
+                }
             }
         }
         // Name
