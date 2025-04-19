@@ -62,7 +62,7 @@ class AddSongDialog(val project: Project) : Dialog("Add Song") {
                 CloseDialogButton("Cancel")
                 Spacer(Modifier.width(12.dp))
                 DefaultButton(
-                    enabled = audioEncodingAndLocationValid && nameFieldState.text.isNotBlank(),
+                    enabled = audioEncodingAndLocationValid && nameFieldState.text.isNotBlank() && spectrogramConfigurationState.allInputsValid,
                     onClick = {
                         // close dialog
                         DialogManager.closeAllDialogs()

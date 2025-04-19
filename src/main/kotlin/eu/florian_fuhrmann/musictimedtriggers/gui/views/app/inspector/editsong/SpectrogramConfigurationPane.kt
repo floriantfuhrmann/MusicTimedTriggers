@@ -307,7 +307,7 @@ fun MaxAmpRangeConfigurationRows(spectrogramConfigurationState: SpectrogramConfi
     val maxAmpRangeState = remember {
         IntNumberFieldState(
             initialValue = spectrogramConfigurationState.spectrogramParameters.maxRange,
-            validRange = 1..1000
+            validRange = 1..99999
         )
     }
     // Max Amp Range Input with Label
