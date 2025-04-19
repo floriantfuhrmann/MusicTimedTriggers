@@ -269,47 +269,23 @@ fun AddTemplateButton() {
         }
     }
     if(expanded) {
-        PopupContainer(
+        PopupMenu(
             onDismissRequest = {
                 expanded = false
+                true
             },
             horizontalAlignment = Alignment.Start
         ) {
-            Column(Modifier.width(150.dp)) {
-                TriggerType.entries.forEach { triggerType ->
-                    Row {
-                        SelectableIconButton(
-                            selected = false,
-                            onClick = {
-                                expanded = false
-                                addNewTemplate(triggerType)
-                            },
-                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Start,
-                                modifier = Modifier.fillMaxHeight().padding(5.dp)
-                            ) {
-                                //Trigger Template Icon
-                                Column {
-                                    Icon(
-                                        key = triggerType.iconKey,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                                //Trigger Template Name
-                                Column(
-                                    modifier = Modifier.padding(start = 5.dp)
-                                ) {
-                                    Text(triggerType.displayName)
-                                }
-                                //Spacer
-                                Column(modifier = Modifier.weight(1f)) {  }
-                            }
-                        }
-                    }
+            TriggerType.entries.forEach { triggerType ->
+                selectableItem(
+                    selected = false,
+                    onClick = {
+                        expanded = false
+                        addNewTemplate(triggerType)
+                    },
+                    iconKey = triggerType.iconKey,
+                ) {
+                    Text(triggerType.displayName)
                 }
             }
         }
