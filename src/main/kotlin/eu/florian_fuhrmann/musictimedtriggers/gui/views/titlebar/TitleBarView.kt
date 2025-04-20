@@ -13,6 +13,7 @@ import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.createproject.CreateProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.openproject.OpenProjectDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.settings.SettingsDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.styles.MenuStyles
 import eu.florian_fuhrmann.musictimedtriggers.gui.styles.dropdownLikeIconButtonStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.styles.fixedCursorTooltipStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
@@ -21,8 +22,10 @@ import eu.florian_fuhrmann.musictimedtriggers.utils.color.mix
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Size
+import org.jetbrains.jewel.ui.theme.dropdownStyle
 import org.jetbrains.jewel.window.DecoratedWindowScope
 import org.jetbrains.jewel.window.TitleBar
 import org.jetbrains.jewel.window.newFullscreenControls
@@ -58,68 +61,77 @@ fun DecoratedWindowScope.TitleBarView() {
                 }
             }
             //Dropdown
-            Dropdown(Modifier.height(30.dp).trackActivation(), menuContent = {
-                //track if the dropdown is opened
-                passiveItem {
-                    DisposableEffect(this) {
-                        titleBarDropdownOpened.value = true
-                        onDispose {
-                            titleBarDropdownOpened.value = false
+            Dropdown(
+                modifier = Modifier.height(30.dp).trackActivation(),
+                style = DropdownStyle(
+                    colors = JewelTheme.dropdownStyle.colors,
+                    metrics = JewelTheme.dropdownStyle.metrics,
+                    icons = JewelTheme.dropdownStyle.icons,
+                    menuStyle = MenuStyles.spaciousMenuStyle
+                ),
+                menuContent = {
+                    //track if the dropdown is opened
+                    passiveItem {
+                        DisposableEffect(this) {
+                            titleBarDropdownOpened.value = true
+                            onDispose {
+                                titleBarDropdownOpened.value = false
+                            }
                         }
                     }
-                }
-                //Project Settings Item
-                val project = ProjectManager.currentProject
-                if(project != null) {
+                    //Project Settings Item
+                    val project = ProjectManager.currentProject
+                    if(project != null) {
+                        selectableItem(
+                            selected = false,
+                            onClick = {
+                                DialogManager.openDialog(SettingsDialog(project))
+                            },
+                            iconKey = AllIconsKeys.General.Settings
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.trackActivation()
+                            ) {
+                                Text("Project Settings")
+                            }
+                        }
+                    }
+                    //Open Project Item
                     selectableItem(
                         selected = false,
                         onClick = {
-                            DialogManager.openDialog(SettingsDialog(project))
+                            DialogManager.openDialog(OpenProjectDialog())
                         },
-                        iconKey = AllIconsKeys.General.Settings
+                        iconKey = AllIconsKeys.Actions.MenuOpen
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.trackActivation()
                         ) {
-                            Text("Project Settings")
+                            Text("Open Project")
+                        }
+                    }
+                    //Create Project Item
+                    selectableItem(
+                        selected = false,
+                        onClick = {
+                            DialogManager.openDialog(CreateProjectDialog())
+                        },
+                        iconKey = AllIconsKeys.General.Add
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.trackActivation()
+                        ) {
+                            Text("Create Project")
                         }
                     }
                 }
-                //Open Project Item
-                selectableItem(
-                    selected = false,
-                    onClick = {
-                        DialogManager.openDialog(OpenProjectDialog())
-                    },
-                    iconKey = AllIconsKeys.Actions.MenuOpen
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.trackActivation()
-                    ) {
-                        Text("Open Project")
-                    }
-                }
-                //Create Project Item
-                selectableItem(
-                    selected = false,
-                    onClick = {
-                        DialogManager.openDialog(CreateProjectDialog())
-                    },
-                    iconKey = AllIconsKeys.General.Add
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.trackActivation()
-                    ) {
-                        Text("Create Project")
-                    }
-                }
-            }) {
+            ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(3.dp),
                     verticalAlignment = Alignment.CenterVertically,
