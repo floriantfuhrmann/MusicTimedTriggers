@@ -544,7 +544,7 @@ object MoveTriggersManager {
                         // get the triggers line
                         val line = sequence.findLineOf(it) ?: throw IllegalStateException("Updating move for a trigger without a line in sequence")
                         // calculate by how much we should move end time to the right
-                        val extendTime = (desiredEndTime - it.endTime).coerceAtMost(line.getFreeDurationFrom(it.endTime))
+                        val extendTime = (desiredEndTime - it.endTime).coerceAtMost(line.getFreeDurationFrom(it.endTime, true))
                         // update the triggers end time
                         if (extendTime > 0) {
                             it.duration += extendTime
