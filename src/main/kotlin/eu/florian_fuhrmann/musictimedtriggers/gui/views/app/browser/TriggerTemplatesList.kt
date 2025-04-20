@@ -196,6 +196,7 @@ fun TriggerTemplateItem(
                     awaitPointerEventScope {
                         var primaryButtonPressed = false
                         var dontUnselectOnRelease = false
+                        var singleSelectOnRelease = false
                         while (true) {
                             // get event and native event
                             val event = awaitPointerEvent()
@@ -207,10 +208,14 @@ fun TriggerTemplateItem(
                                 // consume the event (and remember that the primary button is pressed)
                                 nativeEvent.consume()
                                 primaryButtonPressed = true
-                                // select the template (if not already selected or not shift pressed) on press
-                                if(!browserState.isSelected(browserTemplate) || !event.keyboardModifiers.isShiftPressed) {
+                                // select the template (if not already selected) on press
+                                if(!browserState.isSelected(browserTemplate)) {
                                     browserState.selectTemplate(browserTemplate, event.keyboardModifiers.isShiftPressed)
                                     dontUnselectOnRelease = true
+                                } else if(!event.keyboardModifiers.isShiftPressed) {
+                                    // if not shift clicking on an already selected template, it should be single selected on release (if not disabled by dragging)
+                                    dontUnselectOnRelease = true
+                                    singleSelectOnRelease = true
                                 }
                                 // open the template inspector (for double click)
                                 if(nativeEvent.clickCount >= 2) {
@@ -232,10 +237,16 @@ fun TriggerTemplateItem(
                                     // if not unselecting, reset the flag
                                     dontUnselectOnRelease = false
                                 }
+                                // single select on release if indicated by the flag
+                                if(singleSelectOnRelease) {
+                                    browserState.selectTemplate(browserTemplate, false)
+                                    singleSelectOnRelease = false
+                                }
                             }
                             //if the cursor is moved while the primary button is pressed (so dragging), never unselect on release
                             if(event.type == PointerEventType.Move && primaryButtonPressed) {
                                 dontUnselectOnRelease = true
+                                singleSelectOnRelease = false
                             }
                         }
                     }
