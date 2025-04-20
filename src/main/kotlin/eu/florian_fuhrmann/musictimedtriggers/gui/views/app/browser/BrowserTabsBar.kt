@@ -11,57 +11,66 @@ import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material.DropdownMenu
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.edittemplategroup.EditTemplateGroupDialog
-import eu.florian_fuhrmann.musictimedtriggers.gui.styles.outlinedButtonStyleWithNoPadding
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.styles.fixedCursorTooltipStyle
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserGroup
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SingleTab
+import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggerType
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
-import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
-import org.jetbrains.jewel.ui.theme.dropdownStyle
-import sh.calvin.reorderable.*
+import sh.calvin.reorderable.ReorderableRow
+import sh.calvin.reorderable.ReorderableScope
 
 @Composable
-fun BrowserTabsBar() {
-    val openedGroups by remember {
-        derivedStateOf {
-            ProjectManager.currentProject?.browserState?.openedGroups?.value ?: emptyList()
-        }
-    }
+fun BrowserTabsBar(project: Project) {
     val closedGroups: List<BrowserGroup> by remember {
         derivedStateOf {
-            ProjectManager.currentProject?.browserState?.allGroups?.value?.filter {
-                ProjectManager.currentProject?.browserState?.openedGroups?.value?.contains(it) == false
-            } ?: emptyList()
+            project.browserState.allGroups.value.filter {
+                !project.browserState.openedGroups.value.contains(it)
+            }
         }
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         // Opened Groups Tabs
-        OpenGroupsTabs(this, openedGroups)
-        // More Options
-        MoreOptionsDropdown(closedGroups)
-        // Add Templates Dropdown
-        AddTemplateButton()
-        // Collapse Browser Button
-        ToggleBrowserButton()
+        OpenGroupsTabs(project, project.browserState.tabsScrollState, project.browserState.openedGroups.value)
+        // Tools
+        Row(Modifier.padding(top = 5.dp, bottom = 5.dp, end = 5.dp).height(26.dp)) {
+            // More Options
+            MoreOptionsDropdown(project, closedGroups)
+            // Divider
+            Divider(org.jetbrains.jewel.ui.Orientation.Vertical, Modifier.fillMaxHeight().padding(horizontal = 4.dp))
+            // Remove Templates Button
+            RemoveTemplatesButton()
+            // Add Templates Dropdown
+            AddTemplateButton()
+            // Divider
+            Divider(org.jetbrains.jewel.ui.Orientation.Vertical, Modifier.fillMaxHeight().padding(horizontal = 4.dp))
+            // Collapse Browser Button
+            ToggleBrowserButton()
+        }
     }
 }
 
@@ -72,22 +81,22 @@ fun CollapsedBrowserBar() {
             .background(JewelTheme.globalColors.borders.normal)
             .padding(top = 1.dp)
             .background(JewelTheme.globalColors.panelBackground)
-            .padding(0.dp),
+            .padding(horizontal = 5.dp)
+            .height(IntrinsicSize.Min),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Spacer to align the buttons to the right
         Spacer(Modifier.weight(1f))
         // Expand Browser Button
-        ExpandBrowserButton()
+        ToggleBrowserButton()
     }
 }
 
 @Composable
-fun OpenGroupsTabs(scope: RowScope, openedGroups: List<BrowserGroup>) {
-    val tabsScrollState = rememberScrollState()
+fun RowScope.OpenGroupsTabs(project: Project, tabsScrollState: ScrollState, openedGroups: List<BrowserGroup>) {
     var tabsHovered by remember { mutableStateOf(false) }
     //Column with tabs
-    Column(with(scope) { Modifier.weight(1f).height(JewelTheme.defaultTabStyle.metrics.tabHeight) }) {
+    Column(Modifier.weight(1f).height(JewelTheme.defaultTabStyle.metrics.tabHeight)) {
         // This is similar to TabStrip from org.jetbrains.jewel.ui.component, but modified to be reorderable
         Box(
             Modifier.focusable(true, remember { MutableInteractionSource() }).onHover {
@@ -123,18 +132,62 @@ fun OpenGroupsTabs(scope: RowScope, openedGroups: List<BrowserGroup>) {
                 ReorderableRow(
                     list = openedGroups,
                     onSettle = { fromIndex, toIndex ->
-                        ProjectManager.currentProject?.browserState?.moveGroup(fromIndex, toIndex)
+                        project.browserState.moveGroup(fromIndex, toIndex)
                     }
-                ) { _, item, _ ->
+                ) { index, item, _ ->
                     // Item content
                     key(item.uuid) {
-                        TabDragHandle(
-                            this, item, item == ProjectManager.currentProject?.browserState?.selectedGroup?.value,
-                            onClick = {
-                                ProjectManager.currentProject?.browserState?.selectGroup(item)
+                        BrowserTab(
+                            scope = this,
+                            browserGroup = item,
+                            selected = item == project.browserState.selectedGroup.value,
+                            hasTabsToTheLeft = item != openedGroups.firstOrNull() && openedGroups.size > 1,
+                            hasTabsToTheRight = item != openedGroups.lastOrNull() && openedGroups.size > 1,
+                            onClick = { project.browserState.selectGroup(item) },
+                            onClose = { project.browserState.closeGroup(item) },
+                            onCloseOthers = {
+                                project.browserState.closeMultipleGroups(
+                                    groupsToClose = openedGroups.filter { it != item },
+                                    selectedReplacement = item
+                                )
                             },
-                            onClose = {
-                                ProjectManager.currentProject?.browserState?.closeGroup(item)
+                            onCloseAll = { project.browserState.closeMultipleGroups(openedGroups) },
+                            onCloseLeft = {
+                                project.browserState.closeMultipleGroups(
+                                    groupsToClose = openedGroups.subList(0, index),
+                                    selectedReplacement = item
+                                )
+                            },
+                            onCloseRight = {
+                                project.browserState.closeMultipleGroups(
+                                    groupsToClose = openedGroups.subList(index + 1, openedGroups.size),
+                                    selectedReplacement = item
+                                )
+                            },
+                            onRename = { newName ->
+                                // get the trigger template group
+                                val triggerTemplateGroup = project.triggersManager.getTemplateGroup(item.uuid)
+                                check(triggerTemplateGroup != null) { "Could not find template group for ${item.uuid}" }
+                                // update the name
+                                project.triggersManager.updateTriggerTemplateGroup(triggerTemplateGroup, newName)
+                            },
+                            onDelete = {
+                                // get the trigger template group
+                                val triggerTemplateGroup = project.triggersManager.getTemplateGroup(item.uuid)
+                                check(triggerTemplateGroup != null) { "Could not find template group for ${item.uuid}" }
+                                // require the group to be empty
+                                if(triggerTemplateGroup.templates.isNotEmpty()) {
+                                    BasicAlert(
+                                        type = BasicAlert.Type.Error,
+                                        title = "Group not empty",
+                                        buttons = { OKButton() }
+                                    ) {
+                                        Text("Please remove all templates from the group before deleting it.")
+                                    }.show()
+                                } else {
+                                    //delete the group
+                                    project.triggersManager.deleteTriggerTemplateGroup(triggerTemplateGroup)
+                                }
                             }
                         )
                     }
@@ -144,176 +197,232 @@ fun OpenGroupsTabs(scope: RowScope, openedGroups: List<BrowserGroup>) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MoreOptionsDropdown(closedGroups: List<BrowserGroup>) {
-    Column(modifier = Modifier.padding(start = 5.dp, end = 5.dp)) {
-        Dropdown(
-            menuContent = {
-                selectableItem(
-                    selected = false,
-                    onClick = {
-                        val selectedUuid = ProjectManager.currentProject?.browserState?.selectedGroup?.value?.uuid
-                        if(selectedUuid != null) {
-                            val templateGroup = ProjectManager.currentProject?.triggersManager?.getTemplateGroup(selectedUuid)
-                            if(templateGroup != null) {
-                                DialogManager.openDialog(EditTemplateGroupDialog(false, templateGroup))
-                            }
-                        }
-                    },
-                    iconKey = MttIcons.pencilOutline,
-                ) {
-                    Text("Edit Group")
+fun MoreOptionsDropdown(project: Project, closedGroups: List<BrowserGroup>) {
+    // States
+    var menuExpanded by remember { mutableStateOf(false) }
+    var showCreatePopup by remember { mutableStateOf(false) }
+    // Icon Button
+    Tooltip(tooltip = { Text("Open / Create Group") }, style = fixedCursorTooltipStyle) {
+        IconButton(onClick = { menuExpanded = true }, focusable = false) {
+            Icon(AllIconsKeys.Actions.More, null)
+        }
+    }
+    // Popups
+    if(menuExpanded) {
+        // Menu with closed groups and create group option
+        PopupMenu(
+            onDismissRequest = {
+                menuExpanded = false
+                true
+            }, content = {
+                // Open Group
+                closedGroups.forEach {
+                    selectableItem(
+                        selected = false,
+                        onClick = { project.browserState.openGroup(it, scrollToBack = true) }
+                    ) {
+                        Text(it.name.value)
+                    }
                 }
+                if(closedGroups.isNotEmpty()) {
+                    separator()
+                }
+                // Create New Group
                 selectableItem(
                     selected = false,
                     onClick = {
-                        DialogManager.openDialog(EditTemplateGroupDialog(true, null))
+                        showCreatePopup = true
                     },
-                    iconKey = MttIcons.plusLine,
+                    iconKey = AllIconsKeys.General.Add,
                 ) {
                     Text("Create Group")
                 }
-                submenu(
-                    enabled = closedGroups.isNotEmpty(),
-                    submenu = {
-                        closedGroups.forEach {
-                            selectableItem(
-                                selected = false,
-                                onClick = {
-                                    ProjectManager.currentProject?.browserState?.openGroup(it)
-                                }
-                            ) {
-                                Text(it.name.value)
-                            }
-                        }
-                    }
-                ) {
-                    Text("Open Group")
-                }
+            },
+            horizontalAlignment = Alignment.Start
+        )
+    } else if (showCreatePopup) {
+        // Create Group Popup
+        CreateRenameGroupPopup(
+            creating = true,
+            onClose = { showCreatePopup = false },
+            onDone = { newName ->
+                // create group
+                project.triggersManager.createNewTriggerTemplateGroup(newName)
             }
-        ) {
-            Text("More")
-        }
+        )
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AddTemplateButton() {
-    Column(modifier = Modifier.padding(end = 5.dp)) {
-        var expanded by remember { mutableStateOf(false) }
-        OutlinedButton(
-            modifier = Modifier.size(JewelTheme.dropdownStyle.metrics.minSize.height),
-            onClick = {
-                expanded = !expanded
-            },
-            style = outlinedButtonStyleWithNoPadding
+    var expanded by remember { mutableStateOf(false) }
+    Tooltip(tooltip = { Text("Add Template") }, style = fixedCursorTooltipStyle) {
+        IconButton(
+            onClick = { expanded = !expanded },
+            focusable = false
         ) {
-            Box(modifier = Modifier.padding(5.dp)) {
-                Icon(AllIconsKeys.General.Add, null)
-            }
+            Icon(AllIconsKeys.General.Add, null)
+            Icon(AllIconsKeys.General.Dropdown, null)
         }
-        DropdownMenu(
-            expanded = expanded,
+    }
+    if(expanded) {
+        PopupMenu(
             onDismissRequest = {
                 expanded = false
+                true
             },
-            modifier = Modifier.background(JewelTheme.globalColors.panelBackground)
+            horizontalAlignment = Alignment.Start
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(start = 5.dp, end = 5.dp)
-            ) {
-                TriggerType.entries.forEach { triggerType ->
-                    Row {
-                        SelectableIconButton(
-                            selected = false,
-                            onClick = {
-                                expanded = false
-                                openNewEditDialog(triggerType)
-                            },
-                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Start,
-                                modifier = Modifier.fillMaxHeight().padding(5.dp)
-                            ) {
-                                //Trigger Template Icon
-                                Column {
-                                    Icon(
-                                        key = triggerType.iconKey,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                                //Trigger Template Name
-                                Column(
-                                    modifier = Modifier.padding(start = 5.dp)
-                                ) {
-                                    Text(triggerType.displayName)
-                                }
-                                //Spacer
-                                Column(modifier = Modifier.weight(1f)) {  }
-                            }
-                        }
-                    }
+            TriggerType.entries.forEach { triggerType ->
+                selectableItem(
+                    selected = false,
+                    onClick = {
+                        expanded = false
+                        addNewTemplate(triggerType)
+                    },
+                    iconKey = triggerType.iconKey,
+                ) {
+                    Text(triggerType.displayName)
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun RemoveTemplatesButton() {
+    Tooltip(tooltip = { Text("Remove Templates") }, style = fixedCursorTooltipStyle) {
+        IconButton(
+            onClick = { ProjectManager.currentProject?.browserState?.removeSelectedTemplates() },
+            focusable = false
+        ) {
+            Icon(AllIconsKeys.General.Remove, null)
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ToggleBrowserButton() {
-    Column(modifier = Modifier.padding(end = 5.dp)) {
-        OutlinedButton(
-            modifier = Modifier.size(JewelTheme.dropdownStyle.metrics.minSize.height).trackActivation(),
+    Tooltip(tooltip = { Text("Toggle Templates Browser") }, style = fixedCursorTooltipStyle) {
+        IconButton(
             onClick = { MainUiState.toggleBrowser() },
-            style = outlinedButtonStyleWithNoPadding
+            modifier = Modifier.fillMaxHeight().trackActivation(),
+            focusable = false
         ) {
-            Box(modifier = Modifier.padding(5.dp).rotate(180f)) {
-                Icon(AllIconsKeys.FileTypes.UiForm, null)
-            }
+            Icon(AllIconsKeys.General.PreviewHorizontally, null)
         }
     }
 }
 
 @Composable
-fun ExpandBrowserButton() {
-    IconButton(
-        onClick = { MainUiState.toggleBrowser() },
-        modifier = Modifier.fillMaxHeight().trackActivation()
-    ) {
-        Icon(AllIconsKeys.FileTypes.UiForm, null)
-    }
-}
-
-@Composable
-private fun TabDragHandle(
+private fun BrowserTab(
     scope: ReorderableScope,
     browserGroup: BrowserGroup,
     selected: Boolean,
+    hasTabsToTheLeft: Boolean,
+    hasTabsToTheRight: Boolean,
     onClick: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onCloseOthers: () -> Unit,
+    onCloseAll: () -> Unit,
+    onCloseLeft: () -> Unit,
+    onCloseRight: () -> Unit,
+    onRename: (String) -> Unit,
+    onDelete: () -> Unit
 ) {
-    SingleTab(
-        modifier = with(scope) { Modifier.draggableHandle() },
-        editorStyle = false,
-        selected = selected,
-        closable = true,
-        onClose = onClose,
-        onClick = onClick
+    // Popup for renaming the group
+    var showRenamePopup by remember { mutableStateOf(false) }
+    if (showRenamePopup) {
+        CreateRenameGroupPopup(
+            creating = false,
+            initialName = browserGroup.name.value,
+            onClose = { showRenamePopup = false },
+            onDone = onRename
+        )
+    }
+    // Context Menu Area for the tab
+    ContextMenuArea(
+        items = {
+            listOfNotNull(
+                ContextMenuItem("Close") { onClose.invoke() },
+                if(hasTabsToTheLeft || hasTabsToTheRight) ContextMenuItem("Close Other Tabs") { onCloseOthers.invoke() } else null,
+                ContextMenuItem("Close All Tabs") { onCloseAll.invoke() },
+                if(hasTabsToTheLeft) ContextMenuItem("Close Tabs to the Left") { onCloseLeft.invoke() } else null,
+                if(hasTabsToTheRight) ContextMenuItem("Close Tabs to the Right") { onCloseRight.invoke() } else null,
+                ContextMenuDivider,
+                ContextMenuItem("Rename") { showRenamePopup = true },
+                ContextMenuItem("Delete") { onDelete.invoke() }
+            )
+        }
     ) {
-        Text(browserGroup.name.value)
+        // Tab
+        SingleTab(
+            modifier = with(scope) { Modifier.draggableHandle() },
+            editorStyle = false,
+            selected = selected,
+            closable = true,
+            onClose = onClose,
+            onClick = onClick
+        ) {
+            Text(browserGroup.name.value)
+        }
     }
 }
 
-fun openNewEditDialog(triggerType: TriggerType) {
-    //get currently selected group
-    val selectGroupUuid = ProjectManager.currentProject?.browserState?.selectedGroup?.value?.uuid ?: return
-    val triggerTemplateGroup = ProjectManager.currentProject?.triggersManager?.getTemplateGroup(selectGroupUuid) ?: return
-    //create a new template (but not yet added to the group)
+@Composable
+fun CreateRenameGroupPopup(
+    creating: Boolean,
+    initialName: String = "",
+    onClose: () -> Unit,
+    onDone: (String) -> Unit
+) {
+    val textFieldState = rememberTextFieldState(initialName)
+    PopupContainer(
+        onDismissRequest = { onClose() },
+        horizontalAlignment = if(creating) Alignment.CenterHorizontally else Alignment.Start,
+        popupProperties = PopupProperties(focusable = true)
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            Row {
+                Text(if(creating) "Create Group" else "Rename Group", fontWeight = FontWeight.SemiBold)
+            }
+            Row(Modifier.padding(top = 12.dp)) {
+                val focusRequester = remember { FocusRequester() }
+                TextField(
+                    modifier = Modifier.focusRequester(focusRequester),
+                    state = textFieldState,
+                    outline = if(textFieldState.text.isBlank()) Outline.Error else Outline.None,
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                    onKeyboardAction = {
+                        // call onDone (if a valid name is given)
+                        textFieldState.text.toString().let {
+                            if(it.isBlank()) return@TextField
+                            onDone(it.trim())
+                        }
+                        // close popup
+                        onClose()
+                    }
+                )
+                LaunchedEffect(Unit) {
+                    focusRequester.requestFocus()
+                }
+            }
+        }
+    }
+}
+
+fun addNewTemplate(triggerType: TriggerType) {
+    // get project
+    val project = ProjectManager.currentProject ?: return
+    // get currently selected group
+    val selectGroupUuid = project.browserState.selectedGroup.value?.uuid ?: return
+    val triggerTemplateGroup = project.triggersManager.getTemplateGroup(selectGroupUuid) ?: return
+    // create a new template and add it to the group
     val triggerTemplate = AbstractTriggerTemplate.create(triggerType, triggerTemplateGroup)
-    //open edit dialog (when done editing the edit dialog should add the template to the group)
-    triggerTemplate.openEditDialog(true)
+    project.triggersManager.addTriggerTemplate(triggerTemplate, selectNewTemplates = true)
 }

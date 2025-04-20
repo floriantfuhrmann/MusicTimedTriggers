@@ -1,11 +1,9 @@
 package eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.Configurable
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.RequireCustom
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.VisibleWhen
@@ -18,12 +16,14 @@ class BooleanConfigurationEntry(
     configuration: Configuration,
     field: Field,
     configurable: Configurable,
+    context: ConfigurationContext,
     customCheckers: List<RequireCustom>,
     visibleWhen: VisibleWhen?,
 ) : AbstractConfigurationEntry<Boolean>(
     configuration,
     field,
     configurable,
+    context,
     customCheckers,
     visibleWhen
 ) {
@@ -31,9 +31,10 @@ class BooleanConfigurationEntry(
     @Composable
     override fun Content() {
         var checked by remember { mutableStateOf(field.getBoolean(configuration)) }
-        Tooltip(tooltip = {
-            Text(configurable.description)
-        }) {
+        Tooltip(
+            tooltip = { Text(configurable.description) },
+            enabled = configurable.description.isNotEmpty()
+        ) {
             CheckboxRow(
                 text = configurable.displayName,
                 checked = checked,
@@ -42,8 +43,7 @@ class BooleanConfigurationEntry(
                     //set field and call change callback
                     field.setBoolean(configuration, it)
                     handleValueChanged()
-                },
-                modifier = Modifier.padding(top = 5.dp)
+                }
             )
         }
     }

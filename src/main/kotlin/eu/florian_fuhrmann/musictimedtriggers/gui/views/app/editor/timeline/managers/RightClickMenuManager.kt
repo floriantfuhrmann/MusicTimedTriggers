@@ -1,12 +1,14 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers
 
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.renamesequenceline.RenameSequenceLineDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineSequenceRenderer.getSequenceLineAt
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.placed.AbstractPlacedIntensityTrigger
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries.KeyframesConfigurationEntry
+import org.jetbrains.jewel.ui.component.Text
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import javax.swing.JMenuItem
@@ -40,8 +42,10 @@ object RightClickMenuManager {
                     //only enable if keyframe can be inserted at index
                     isEnabled = clickedTrigger.keyframes().canInsertAt(clickedKeyframeIndex, clickedTrigger.duration)
                     addActionListener {
-                        // insert new keyframe and redraw timeline, so the new keyframe is shown
+                        // insert new keyframe
                         clickedTrigger.keyframes().insertNewAtIndex(clickedKeyframeIndex)
+                        // redraw timeline and reimport keyframe table, so changes are shown
+                        KeyframesConfigurationEntry.reimportKeyframeTable()
                         redrawTimeline()
                     }
                 })
@@ -50,8 +54,10 @@ object RightClickMenuManager {
                     //only enable if keyframe can be inserted at index
                     isEnabled = clickedTrigger.keyframes().canInsertAt(clickedKeyframeIndex + 1, clickedTrigger.duration)
                     addActionListener {
-                        // insert new keyframe and redraw timeline, so the new keyframe is shown
+                        // insert new keyframe
                         clickedTrigger.keyframes().insertNewAtIndex(clickedKeyframeIndex + 1)
+                        // redraw timeline and reimport keyframe table, so changes are shown
+                        KeyframesConfigurationEntry.reimportKeyframeTable()
                         redrawTimeline()
                     }
                 })
@@ -60,8 +66,10 @@ object RightClickMenuManager {
                     //only enable when not first or last index
                     isEnabled = clickedTrigger.keyframes().canRemoveAt(clickedKeyframeIndex)
                     addActionListener {
-                        //delete keyframe and redraw timeline
+                        //delete keyframe
                         clickedTrigger.keyframes().removeAtIndex(clickedKeyframeIndex)
+                        // redraw timeline and reimport keyframe table, so changes are shown
+                        KeyframesConfigurationEntry.reimportKeyframeTable()
                         redrawTimeline()
                     }
                 })
@@ -70,13 +78,6 @@ object RightClickMenuManager {
                 if(!TriggerSelectionManager.isSelected(clickedTrigger)) {
                     TriggerSelectionManager.selectTrigger(clickedTrigger, e.isShiftDown)
                 }
-                //Edit Option
-                menu.add(JMenuItem("Edit").apply {
-                    addActionListener {
-                        //open edit dialog for the clicked trigger
-                        clickedTrigger.openEditDialog()
-                    }
-                })
                 //Delete Option
                 menu.add(JMenuItem("Delete").apply {
                     addActionListener {
@@ -116,16 +117,20 @@ object RightClickMenuManager {
                 })
                 menu.add(JMenuItem("Delete").apply {
                     addActionListener {
-                        DialogManager.alert(
-                            Alert(
+                        BasicAlert(
+                            type = BasicAlert.Type.Warning,
                             title = "Delete ${line.name}?",
-                            text = "Are you sure you want to delete Sequence Line ${line.name} containing ${line.getTriggersCount()} placed Triggers?",
-                            onDismiss = {},
-                            dismissText = "Cancel",
-                            onConfirm = {
-                                sequence.removeLine(lineIndex)
+                            buttons = {
+                                CancelButton()
+                                CancelButtonFocused()
+                                OKButton(onClick = {
+                                    close()
+                                    sequence.removeLine(lineIndex)
+                                }, label = "Confirm")
                             }
-                        ))
+                        ) {
+                            Text("Are you sure you want to delete Sequence Line ${line.name} containing ${line.getTriggersCount()} placed Triggers?")
+                        }.show()
                     }
                 })
             }

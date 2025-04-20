@@ -79,6 +79,19 @@ class TriggerSequence(
         }
     }
 
+    /**
+     * Find the line and index of the given trigger in the lines' trigger list.
+     */
+    fun findLineAndIndexOf(trigger: AbstractPlacedTrigger): Pair<TriggerSequenceLine, Int>? {
+        lines.forEach { line ->
+            val index = line.indexOfTriggerAt(trigger.startTime)
+            if(line.getTriggerByIndex(index) == trigger) {
+                return Pair(line, index)
+            }
+        }
+        return null
+    }
+
     fun findLineIndexOf(trigger: AbstractPlacedTrigger): Int? {
         lines.forEachIndexed { index, line ->
             if(line.getTriggerAt(trigger.startTime) == trigger) return index
@@ -95,6 +108,15 @@ class TriggerSequence(
             if(line.getTriggerAt(trigger.startTime) == trigger) return index
         }
         return null
+    }
+
+    /**
+     * Get all triggers in the given period.
+     * @param period The period to search for triggers in.
+     * @return A list of all triggers in the given period.
+     */
+    fun getPlacedTriggersInPeriod(period: ClosedFloatingPointRange<Double>) = lines.flatMap { line ->
+        line.getTriggersInPeriod(period.start, period.endInclusive, false)
     }
 
     // Saving and Loading

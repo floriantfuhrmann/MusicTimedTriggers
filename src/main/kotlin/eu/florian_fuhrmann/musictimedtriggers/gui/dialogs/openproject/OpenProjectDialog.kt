@@ -15,7 +15,7 @@ class OpenProjectDialog : Dialog(windowed = false) {
             title = "Select Project Directory"
         ) { path ->
             //close dialog again
-            DialogManager.closeDialog()
+            DialogManager.closeAllDialogs()
             //open project
             if(path == null) return@DirectoryPicker
             ProjectManager.openProject(File(path))

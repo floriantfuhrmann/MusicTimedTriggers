@@ -6,80 +6,108 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.DialogWindow
+import androidx.compose.ui.window.FrameWindowScope
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.rememberDialogState
 import androidx.compose.ui.zIndex
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.AbstractAlert
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.CustomAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.AlertsManager
 import java.awt.Dimension
 
 object DialogManager {
-    private var openedDialog: Dialog? by mutableStateOf(null)
+    private var openedDialogs: MutableList<Dialog> = mutableStateListOf()
+    val anyDialogOpened by derivedStateOf { openedDialogs.isNotEmpty() }
     private var alwaysOnTop: Boolean by mutableStateOf(true)
-    private var alerts: MutableList<AbstractAlert> = mutableStateListOf()
-    val anyAlerts = derivedStateOf { alerts.isNotEmpty() } //tracks whether any alerts are currently visible
 
-    fun openDialog(dialog: Dialog) {
+    /**
+     * Opens a dialog and closes all other dialogs if [closeOthers] is true.
+     * @param dialog The dialog to open.
+     * @param closeOthers Whether to close all other dialogs or not.
+     */
+    fun openDialog(dialog: Dialog, closeOthers: Boolean = true) {
         alwaysOnTop = true
-        openedDialog = dialog
+        if (closeOthers) {
+            closeAllDialogs()
+        }
+        openedDialogs.add(dialog)
     }
-    fun closeDialog() {
-        openedDialog?.onClose?.let { it() }
-        openedDialog = null
+
+    /**
+     * Closes a dialog if it is opened.
+     * @param dialog The dialog to close.
+     * @return true if the dialog was closed, false if it was not opened.
+     */
+    fun closeDialog(dialog: Dialog): Boolean {
+        if (openedDialogs.contains(dialog)) {
+            openedDialogs.remove(dialog)
+            dialog.onClose?.let { it() }
+            return true
+        } else {
+            return false
+        }
     }
+
+    /**
+     * Closes all opened dialogs.
+     */
+    fun closeAllDialogs() {
+        openedDialogs.forEach {
+            it.onClose?.let { it() }
+        }
+        openedDialogs.clear()
+    }
+
     fun allowNotOnTop() {
         alwaysOnTop = false
     }
+
     fun requireOnTop() {
         alwaysOnTop = true
     }
 
-    fun alert(alert: AbstractAlert) {
-        alerts.add(alert)
-    }
-    fun closeAlert() {
-        alerts.removeFirst()
-    }
-
     @Composable
-    fun DialogContainer() {
-        // shadow the openedDialog variable to prevent it from changing while the dialog is being displayed
-        val openedDialog = openedDialog
-        if(openedDialog != null) {
-            if(openedDialog.windowed) {
+    fun DialogContainer(frameWindowScope: FrameWindowScope) {
+        openedDialogs.forEach { dialog ->
+            if(dialog.windowed) {
                 // DialogWindow is used to create a windowed dialog
                 DialogWindow(
-                    onCloseRequest = { closeDialog() },
-                    alwaysOnTop = alwaysOnTop && alerts.isEmpty(),
-                    title = openedDialog.title()
+                    state = rememberDialogState(
+                        getCenteredAbsolutePosition(frameWindowScope, dialog.defaultWidth, dialog.defaultHeight),
+                        dialog.defaultWidth, dialog.defaultHeight
+                    ),
+                    onCloseRequest = { closeDialog(dialog) },
+                    alwaysOnTop = alwaysOnTop,
+                    title = dialog.title()
                 ) {
                     this.window.minimumSize = Dimension(350, 350)
-                    openedDialog.Content()
-                    if(alerts.isNotEmpty()) {
-                        key(alerts.first()) {
-                            alerts.first().Content(alerts.size)
-                        }
+                    // Dialog Content
+                    dialog.Content()
+                    // Alerts Container (only for the last dialog)
+                    if(dialog == openedDialogs.lastOrNull()) {
+                        AlertsManager.AlertsContainer(this@DialogWindow)
                     }
                 }
                 // put a box behind the dialog to prevent the user from interacting with the main window
-                Box(modifier = Modifier.zIndex(2f).fillMaxSize().background(Color.Black.copy(alpha = 0.5f))) {
-                    // empty box
+                if(dialog == openedDialogs.lastOrNull()) {
+                    Box(modifier = Modifier.zIndex(2f).fillMaxSize().background(Color.Black.copy(alpha = 0.5f))) {
+                        // empty box
+                    }
                 }
             } else {
                 // non-windowed dialogs are displayed inline
-                openedDialog.Content()
+                dialog.Content()
             }
         }
-        if(openedDialog == null || !openedDialog.windowed) {
-            if(alerts.isNotEmpty()) {
-                key(alerts.first()) {
-                    alerts.first().Content(alerts.size)
-                }
-                LaunchedEffect(alerts.first()) {
-                    if (alerts.first() is CustomAlert) {
-                        (alerts.first() as CustomAlert).focusRequester?.requestFocus()
-                    }
-                }
-            }
+    }
+
+    @Composable
+    fun getCenteredAbsolutePosition(frameWindowScope: FrameWindowScope, width: Dp, height: Dp): WindowPosition.Absolute {
+        return with(frameWindowScope) {
+            WindowPosition.Absolute(
+                x = Dp(window.locationOnScreen.x + window.size.width / 2.0f) - width / 2.0f,
+                y = Dp(window.locationOnScreen.y + window.size.height / 2.0f) - height / 2.0f
+            )
         }
     }
 

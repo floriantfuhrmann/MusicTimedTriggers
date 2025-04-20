@@ -1,24 +1,37 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser
 
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.triggerusages.TriggerUsagesDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.ReceiveDraggedTemplatesManger
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggerType
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.groups.TriggerTemplateGroup
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
 import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
 import eu.florian_fuhrmann.musictimedtriggers.windowState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.jewel.ui.component.Link
+import org.jetbrains.jewel.ui.component.Text
 import java.io.File
 import java.util.*
 
@@ -126,12 +139,14 @@ class BrowserState(
         return json
     }
 
+    // Coroutine Scope (set during composition)
     var currentCoroutineScope: CoroutineScope? = null
 
     // State
     var openedGroups: MutableState<List<BrowserGroup>> = mutableStateOf(emptyList())
     var selectedGroup: MutableState<BrowserGroup?> = mutableStateOf(null)
     var allGroups: MutableState<List<BrowserGroup>> = mutableStateOf(emptyList())
+    var tabsScrollState = ScrollState(0)
 
     val templates: MutableList<BrowserTemplate> = mutableStateListOf()
     val templatesLazyListState = LazyListState(0, 0)
@@ -140,6 +155,10 @@ class BrowserState(
     private var clipboard: List<AbstractTriggerTemplate> = emptyList()
 
     // Groups
+
+    private fun getBrowserGroupByUuid(uuid: UUID): BrowserGroup? {
+        return allGroups.value.find { it.uuid == uuid }
+    }
 
     fun getSelectedTriggerTemplateGroup(): TriggerTemplateGroup? {
         if(selectedGroup.value == null) return null
@@ -161,9 +180,15 @@ class BrowserState(
     }
 
     /**
-     * Opens a group, if it is not already opened. Also Saves the Project.
+     * Opens a group, if it is not already opened. Also Saves the Project (when
+     * [saveToFile] is true).
+     *
+     * @param browserGroup the group to open
+     * @param saveToFile if true, the browser state will be saved to file
+     * @param scrollToBack if true, the tabs bar will be scrolled to the back
+     *    (so the newly opened group is visible)
      */
-    fun openGroup(browserGroup: BrowserGroup) {
+    fun openGroup(browserGroup: BrowserGroup, saveToFile: Boolean = true, scrollToBack: Boolean = true) {
         if (!openedGroups.value.contains(browserGroup)) {
             //add group to opened list
             openedGroups.value = openedGroups.value.toMutableList().apply { add(browserGroup) }
@@ -173,8 +198,17 @@ class BrowserState(
             updateAllGroupTriggers(triggersManager.getTemplateGroup(browserGroup.uuid)!!)
             //also make sure initially no triggers are selected
             unselectAllTemplates()
+            //scroll all the way to the back, so the opened group is visible
+            if(scrollToBack) {
+                currentCoroutineScope?.launch {
+                    delay(5) // small delay so the tabs bar has already been recomposed with the added group before scrolling
+                    tabsScrollState.animateScrollTo(tabsScrollState.maxValue)
+                }
+            }
             //save state to file
-            saveToFileInCurrentProjectDirectory()
+            if(saveToFile) {
+                saveToFileInCurrentProjectDirectory()
+            }
         }
     }
 
@@ -193,23 +227,64 @@ class BrowserState(
      * Closes the [browserGroup]'s Tab. Also Saves the Project.
      */
     fun closeGroup(browserGroup: BrowserGroup) {
+        //abort if the group is not opened
+        if(!openedGroups.value.contains(browserGroup)) return
+        //check whether the group is selected
+        val isSelected = selectedGroup.value?.uuid == browserGroup.uuid
+        //get index in opened groups (used to open a neighboring group if the selected group is closed)
+        val previousIndexOfClosedGroup = openedGroups.value.indexOf(browserGroup)
         //remove the group from opened groups list
         openedGroups.value = openedGroups.value.toMutableList().apply { remove(browserGroup) }
         //make sure the group is not selected
-        if(selectedGroup.value?.uuid == browserGroup.uuid) {
+        if(isSelected) {
             selectedGroup.value = null
             //and if it was selected then also unselect all triggers and update template list
             unselectAllTemplates()
             updateAllGroupTriggers(null)
+            //open the previous group if there is one
+            openedGroups.value.getOrNull(if (previousIndexOfClosedGroup > 0) previousIndexOfClosedGroup - 1 else previousIndexOfClosedGroup)?.let {
+                selectGroup(it, saveToFile = false)
+            }
         }
         //save state to file
         saveToFileInCurrentProjectDirectory()
     }
 
     /**
-     * Selects the [browserGroup]'s Tab in the Tab Bar. Also Saves the Project.
+     * Closes multiple groups. Also Saves the Project (when [saveToFile] is
+     * true).
+     *
+     * @param groupsToClose the groups to close
+     * @param selectedReplacement the group to select as a replacement of the
+     *    currently selected group, if it was closed. or null if no group
+     *    should be selected as replacement
+     * @param saveToFile if true, the browser state will be saved to file
      */
-    fun selectGroup(browserGroup: BrowserGroup) {
+    fun closeMultipleGroups(groupsToClose: List<BrowserGroup>, selectedReplacement: BrowserGroup? = null, saveToFile: Boolean = true) {
+        //remove the groups from opened groups list
+        openedGroups.value = openedGroups.value.toMutableList().apply { removeAll(groupsToClose) }
+        //make sure the group is not selected
+        if(groupsToClose.contains(selectedGroup.value)) {
+            selectedGroup.value = null
+            //and if it was selected then also unselect all triggers and update template list
+            unselectAllTemplates()
+            updateAllGroupTriggers(null)
+            //open the replacement group if there is one
+            selectedReplacement?.let {
+                selectGroup(it, saveToFile = false)
+            }
+        }
+        //save state to file
+        if(saveToFile) {
+            saveToFileInCurrentProjectDirectory()
+        }
+    }
+
+    /**
+     * Selects the [browserGroup]'s Tab in the Tab Bar. Also Saves the Project
+     * (when [saveToFile] is true).
+     */
+    fun selectGroup(browserGroup: BrowserGroup, saveToFile: Boolean = true) {
         if(selectedGroup.value != browserGroup) {
             //set selected group
             selectedGroup.value = browserGroup
@@ -218,7 +293,9 @@ class BrowserState(
             //and make sure no templates are selected anymore
             unselectAllTemplates()
             //save state to file
-            saveToFileInCurrentProjectDirectory()
+            if(saveToFile) {
+                saveToFileInCurrentProjectDirectory()
+            }
         }
     }
 
@@ -237,6 +314,11 @@ class BrowserState(
         updateAllGroupTriggers(triggerTemplateGroup)
         //also make sure no templates are selected
         unselectAllTemplates()
+        //scroll all the way to the back, so the new group is visible
+        currentCoroutineScope?.launch {
+            delay(5) // small delay so the tabs bar has already been recomposed with the new group before scrolling
+            tabsScrollState.animateScrollTo(tabsScrollState.maxValue)
+        }
         //save state to file
         saveToFileInCurrentProjectDirectory()
     }
@@ -307,17 +389,25 @@ class BrowserState(
     /**
      * Adds a new trigger template
      */
-    fun newTriggerTemplate(triggerTemplate: AbstractTriggerTemplate, scrollTo: Boolean = true) {
-        newTriggerTemplates(listOf(triggerTemplate), scrollTo)
+    fun newTriggerTemplate(triggerTemplate: AbstractTriggerTemplate, scrollTo: Boolean = true, select: Boolean = true) {
+        newTriggerTemplates(listOf(triggerTemplate), scrollTo, select)
     }
 
     /**
      * Adds multiple new trigger template
      * @param scrollTo if true scrolls to the first new template
      */
-    fun newTriggerTemplates(newTriggerTemplates: List<AbstractTriggerTemplate>, scrollTo: Boolean = true) {
-        //add templates to templates list
-        templates.addAll(newTriggerTemplates.map { BrowserTemplate.fromTriggerTemplate(it) })
+    fun newTriggerTemplates(newTriggerTemplates: List<AbstractTriggerTemplate>, scrollTo: Boolean = true, select: Boolean = true) {
+        // create new browser templates from trigger templates
+        val newBrowserTemplates = newTriggerTemplates.map { BrowserTemplate.fromTriggerTemplate(it) }
+        // add templates to templates list
+        templates.addAll(newBrowserTemplates)
+        // select the new templates
+        if(select) {
+            selectedTemplates.clear()
+            selectedTemplates.addAll(newBrowserTemplates)
+        }
+        // scroll to the new templates
         if(scrollTo) {
             currentCoroutineScope?.launch {
                 templatesLazyListState.animateScrollToItem(templates.size - newTriggerTemplates.size, 0)
@@ -339,6 +429,25 @@ class BrowserState(
         templates.add(toIndex, movedTemplate)
     }
 
+    fun selectGroupAndTemplate(groupUuid: UUID, templateUuid: UUID) {
+        // get group
+        val group = getBrowserGroupByUuid(groupUuid)
+        check(group != null) { "Couldn't find BrowserGroup with uuid $groupUuid" }
+        // open the group (if it is not already opened)
+        openGroup(group, saveToFile = false, scrollToBack = true)
+        // select the group (if it is not already selected)
+        selectGroup(group, saveToFile = true)
+        // get browser template
+        val browserTemplate = getBrowserTemplateByUuid(templateUuid)
+        check(browserTemplate != null) { "Couldn't find BrowserTemplate with uuid $templateUuid" }
+        // select the template
+        selectTemplate(browserTemplate, false)
+        // scroll to the template
+        currentCoroutineScope?.launch {
+            templatesLazyListState.animateScrollToItem(templates.indexOf(browserTemplate), 0)
+        }
+    }
+
     // Tracking hovered Template
 
     fun onTemplateHoverEnter(template: BrowserTemplate) {
@@ -356,7 +465,7 @@ class BrowserState(
     fun selectTemplate(template: BrowserTemplate, keepOthers: Boolean) {
         if(keepOthers) {
             if(selectedTemplates.contains(template)) {
-                //selecting something which was already selected unselects again
+                //selecting something already selected unselects again
                 selectedTemplates.remove(template)
             } else {
                 //add to selected templates
@@ -367,6 +476,10 @@ class BrowserState(
             selectedTemplates.clear()
             selectedTemplates.add(template)
         }
+    }
+
+    fun unselectTemplate(template: BrowserTemplate) {
+        selectedTemplates.remove(template)
     }
 
     fun unselectAllTemplates() {
@@ -400,12 +513,15 @@ class BrowserState(
 
     fun paste() {
         val targetGroup = getSelectedTriggerTemplateGroup() ?: return
-        triggersManager.addTriggerTemplates(clipboard.map {
-            //update group for trigger template in clipboard
-            it.group = targetGroup
-            //return trigger template
-            it
-        })
+        triggersManager.addTriggerTemplates(
+            addedTriggerTemplates = clipboard.map {
+                //update group for trigger template in clipboard
+                it.group = targetGroup
+                //return trigger template
+                it
+            },
+            selectNewTemplates = false
+        )
         //replace all with copies so templates can be pasted again
         clipboard = clipboard.map { it.copy() }
     }
@@ -463,6 +579,66 @@ class BrowserState(
         draggingOnTimeline.value = false
         //drag indicator no longer needs to be shown
         redrawTimeline()
+    }
+
+    // Actions
+
+    fun removeSelectedTemplates(skipConfirmation: Boolean = false) {
+        // ensure that at least one template is selected
+        if (selectedTemplates.isEmpty()) {
+            return
+        }
+        // get current project
+        val project = ProjectManager.currentProject ?: throw IllegalStateException("No project currently open")
+        // collect triggers to remove
+        val selectedTemplates = selectedTemplates.map { it.getTriggerTemplate() }
+        // search for usages of the selected templates
+        val usages = project.triggersManager.searchUsagesOfTriggerTemplates(project, selectedTemplates)
+        // create onConfirm function
+        val onConfirm: () -> Unit = {
+            // remove placed triggers in usages and collect set of affected lines
+            val affectedLines = mutableSetOf<TriggerSequenceLine>()
+            usages.forEach {
+                TriggerSelectionManager.deselectTrigger(it.placedTrigger, false)
+                it.line.removeTrigger(it.placedTrigger)
+                affectedLines.add(it.line)
+            }
+            // redraw timeline because some placed triggers currently visible might have been removed
+            redrawTimeline()
+            // save the affected lines
+            affectedLines.forEach { it.saveToFile() }
+            // remove the templates
+            project.triggersManager.removeTriggerTemplates(selectedTemplates) // also saves the affected groups
+        }
+        // show confirmation dialog if needed
+        if (skipConfirmation) {
+            onConfirm.invoke()
+        } else {
+            // Confirmation dialog
+            BasicAlert(
+                type = BasicAlert.Type.Warning,
+                title = "Confirm Deletion",
+                buttons = {
+                    CancelButton()
+                    CancelButtonFocused()
+                    OKButton(onClick = {
+                        //close alert and invoke onConfirm to delete templates
+                        close()
+                        onConfirm.invoke()
+                    }, label = "Delete")
+                }
+            ) {
+                Row {
+                    Text("Continuing with deletion will also remove ${usages.size} placed triggers across ${usages.distinctBy { it.song }.size.let { if(it == 1) "one song" else "$it songs" }}.")
+                }
+                Row(Modifier.padding(top = 6.dp)) {
+                    Link(text = "View Usages...", onClick = {
+                        close()
+                        DialogManager.openDialog(TriggerUsagesDialog(TriggerUsagesDialog.Type.DeleteTemplates, usages, onConfirm))
+                    })
+                }
+            }.show()
+        }
     }
 
 }

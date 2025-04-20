@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.Configurable
 import org.jetbrains.jewel.ui.component.Text
 import java.lang.reflect.Field
@@ -11,11 +12,13 @@ import java.lang.reflect.Field
 class ErrorConfigurationEntry(
     configuration: Configuration,
     field: Field,
-    configurable: Configurable
+    configurable: Configurable,
+    context: ConfigurationContext
 ) : AbstractConfigurationEntry<Any>(
     configuration,
     field,
-    configurable
+    configurable,
+    context,
 ) {
     @Composable
     override fun Content() {

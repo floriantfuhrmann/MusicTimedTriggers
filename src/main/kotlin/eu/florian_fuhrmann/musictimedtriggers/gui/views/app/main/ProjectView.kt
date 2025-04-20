@@ -5,26 +5,34 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.InspectorOption
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.CollapsedBrowserBar
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.browser.TriggerBrowser
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.SongEditor
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TimelineFocusManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.InspectorBar
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editplacedtrigger.EditPlacedTriggerInspector
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.editsong.EditSongInspector
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.inspector.edittemplate.EditTemplateInspector
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.sidebar.Sidebar
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import org.jetbrains.compose.splitpane.*
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.component.Text
 
 @OptIn(ExperimentalSplitPaneApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun OpenedProjectView(project: Project) {
     // Splitter States
-    val sidebarSplitterState = rememberSplitPaneState()
-    val verticalSplitterState = rememberSplitPaneState()
+    val sidebarSplitterState = rememberSplitPaneState(0.2f)
+    val verticalSplitterState = rememberSplitPaneState(0.2f)
+    val inspectorSplitterState = rememberSplitPaneState(0.8f)
     // Main Window Content
     // Container Box (mainly for tracking clicks anywhere on the main window so the timeline can lose focus)
     Box(
@@ -36,17 +44,25 @@ fun OpenedProjectView(project: Project) {
             }.trackActivation()
     )
     {
-        if(MainUiState.sidebarExpanded) {
-            HorizontalSplitPane(splitPaneState = sidebarSplitterState) {
-                first(130.dp) {
-                    SidebarContainer(project)
-                }
-                second(170.dp) {
-                    EditorWithBrowserContainer(project, verticalSplitterState)
+        Row {
+            Column(Modifier.weight(1f)) {
+                if(MainUiState.sidebarExpanded) {
+                    HorizontalSplitPane(splitPaneState = sidebarSplitterState) {
+                        first(100.dp) {
+                            SidebarContainer(project)
+                        }
+                        second(500.dp) {
+                            Column(Modifier.weight(1f)) {
+                                EditorWithBrowserAndInspectorContainer(project, inspectorSplitterState, verticalSplitterState)
+                            }
+                        }
+                    }
+                } else {
+                    EditorWithBrowserAndInspectorContainer(project, inspectorSplitterState, verticalSplitterState)
                 }
             }
-        } else {
-            EditorWithBrowserContainer(project, verticalSplitterState)
+            // Inspector Bar
+            InspectorBar()
         }
     }
 }
@@ -66,7 +82,35 @@ fun SidebarContainer(project: Project) {
 
 @OptIn(ExperimentalSplitPaneApi::class)
 @Composable
-fun EditorWithBrowserContainer(project: Project, verticalSplitterState: SplitPaneState) {
+fun ColumnScope.EditorWithBrowserAndInspectorContainer(project: Project, inspectorSplitterState: SplitPaneState, verticalSplitterState: SplitPaneState) {
+    if(MainUiState.inspectorOption != InspectorOption.None) {
+        HorizontalSplitPane(splitPaneState = inspectorSplitterState) {
+            first(200.dp) {
+                Column(Modifier.weight(1f)) {
+                    EditorWithBrowserContainer(project, verticalSplitterState)
+                }
+            }
+            second(200.dp) {
+                when(MainUiState.inspectorOption) {
+                    InspectorOption.Song -> EditSongInspector(project, project.currentSong)
+                    InspectorOption.TriggerTemplate -> EditTemplateInspector(project)
+                    InspectorOption.PlacedTrigger -> EditPlacedTriggerInspector(project)
+                    else -> {
+                        Box(Modifier.fillMaxSize().background(Color.Yellow).padding(5.dp)) {
+                            Text(text = "Todo: Inspector Contents", color = Color.Black)
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        EditorWithBrowserContainer(project, verticalSplitterState)
+    }
+}
+
+@OptIn(ExperimentalSplitPaneApi::class)
+@Composable
+fun ColumnScope.EditorWithBrowserContainer(project: Project, verticalSplitterState: SplitPaneState) {
     if(MainUiState.browserExpanded) {
         VerticalSplitPane(
             splitPaneState = verticalSplitterState,
@@ -85,13 +129,9 @@ fun EditorWithBrowserContainer(project: Project, verticalSplitterState: SplitPan
             }
         }
     } else {
-        Column {
-            Row(Modifier.weight(1f).fillMaxWidth()) {
-                SongEditor(project)
-            }
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-                CollapsedBrowserBar()
-            }
+        Row(Modifier.weight(1f).fillMaxWidth()) {
+            SongEditor(project)
         }
+        CollapsedBrowserBar()
     }
 }

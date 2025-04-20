@@ -6,14 +6,10 @@ import androidx.compose.runtime.setValue
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.unusedfiles.UnusedFilesDialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
-import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.AudioPlayer
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
 import eu.florian_fuhrmann.musictimedtriggers.utils.gson.GSON_PRETTY
 import java.io.File
@@ -32,27 +28,12 @@ class Project(
     fun getCacheDirectory(): File = File(projectDirectory, "Cache")
     fun isFileInsideProjectDirectory(file: File) =
         file.canonicalPath.startsWith(projectDirectory.canonicalPath + File.separator)
-
-    fun scanForUnusedAudioFiles() {
-        //find unused files
-        val unusedAudioFiles = getAudioDirectory().listFiles()?.filter { file ->
-            //check if no song has this file as audio file
-            songs.none { song ->
-                song.audioFile == file
-            }
-        }?.toList()
-        if (unusedAudioFiles?.isNotEmpty() == true) {
-            //Open UnusedFiles Dialog
-            DialogManager.openDialog(UnusedFilesDialog(unusedAudioFiles))
+    fun isFileInsideAudioDirectory(file: File, allowSubDirectories: Boolean = true) =
+        if(allowSubDirectories) {
+            file.canonicalPath.startsWith(getAudioDirectory().canonicalPath + File.separator)
         } else {
-            //alert
-            DialogManager.alert(
-                Alert(title = "No unused files found",
-                    text = "No unused Audio Files where found in ${getAudioDirectory().canonicalPath}",
-                    onDismiss = {})
-            )
+            File(getAudioDirectory(), file.name).canonicalPath == file.canonicalPath
         }
-    }
 
     // UI States
 
@@ -108,16 +89,7 @@ class Project(
         saveSonglistToFile()
         //delete the corresponding sequence
         song.sequence.removeSaveFiles()
-        //alert
-        DialogManager.alert(
-            Alert(
-            title = "Song deleted",
-            text = "Song ${song.name} has been deleted. Do you want to scan the Audio directory for unused files?",
-            dismissText = "No",
-            onDismiss = {},
-            confirmText = "Yes",
-            onConfirm = { scanForUnusedAudioFiles() }
-        ))
+        //maybe show an unused files notification here in the future
     }
 
     /**
@@ -125,9 +97,11 @@ class Project(
      * songlist (like name, audio file, spectrogram parameters) and saves the
      * songlist to file.
      */
-    fun updateSong(song: Song) {
+    fun updateSong(song: Song, redraw: Boolean = true) {
         //refresh ui
-        redrawTimeline()
+        if(redraw) {
+            redrawTimeline()
+        }
         //save project
         saveSonglistToFile()
     }

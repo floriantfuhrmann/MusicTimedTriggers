@@ -1,5 +1,8 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.renderer.TimelineBackgroundRenderer.durationToWidth
@@ -581,6 +584,8 @@ object MoveTriggersManager {
         updateTriggerHover(e, false)
         // update cursor
         updateCursor()
+        // also update selected trigger state, so position changes are visible in inspector
+        TriggerSelectionManager.updateSingleSelectedTriggerState()
         // also save all lines (keeping track of which lines were affected during the move might be something for the future)
         val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: throw IllegalStateException("No sequence")
         sequence.lines.forEach { it.saveToFile() }
@@ -588,8 +593,8 @@ object MoveTriggersManager {
 
     // Keyframe Movement
 
-    private const val KEYFRAMES_PREVENT_CROWDING_TIME_PERIOD_IN_SECONDS = 0.039_999_999_999_999 // slightly less than 40ms
-    private const val KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS = 0.02 // 20ms
+    private const val KEYFRAMES_PREVENT_CROWDING_TIME_PERIOD_IN_SECONDS = 2*Keyframes.MINIMUM_POSITION_DISTANCE_IN_SECONDS - 0.000_000_001 // previous: 0.039_999_999_999_999 = slightly less than 40ms
+    private const val KEYFRAMES_MINIMUM_DISTANCE_IN_SECONDS = Keyframes.MINIMUM_POSITION_DISTANCE_IN_SECONDS // previous: 0.02 = 20ms
     val isMovingKeyframes: Boolean
         get() = keyframeMoveCaptain != null
     private var keyframeMoveCaptain: Keyframes.Keyframe? = null
@@ -674,7 +679,6 @@ object MoveTriggersManager {
                     val keyframeBeforeNewPosition = parentKeyframes.keyframesList[indexOfKeyframeAfterNewPosition - 1]
                     // don't allow move if these are too close
                     if(keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent) < KEYFRAMES_PREVENT_CROWDING_TIME_PERIOD_IN_SECONDS) {
-                        println("Forbidden because difference is only: ${keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent)}")
                         // so jumping between these keyframes is not allowed, instead move as close to the previous keyframe as possible
                         keyframe.position = minPositionWithoutJumping
                         return@forEach
@@ -719,7 +723,6 @@ object MoveTriggersManager {
                     val keyframeBeforeNewPosition = parentKeyframes.keyframesList[indexOfKeyframeAfterNewPosition - 1]
                     // don't allow move if these are too close
                     if(keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent) < KEYFRAMES_PREVENT_CROWDING_TIME_PERIOD_IN_SECONDS) {
-                        println("Forbidden because difference is only: ${keyframeAfterNewPosition.absoluteSecondPosition(keyframeParent) - keyframeBeforeNewPosition.absoluteSecondPosition(keyframeParent)}")
                         // so jumping between these keyframes is not allowed, instead move as close to the next keyframe as possible
                         keyframe.position = maxPositionWithoutJumping
                         return@forEach
@@ -748,6 +751,7 @@ object MoveTriggersManager {
         redrawTimeline()
     }
 
+    var endKeyframeMoveCounter: Int by mutableStateOf(0)
     fun endKeyframeMove(e: MouseEvent) {
         // do one last update
         updateKeyframesMove(e)
@@ -757,6 +761,8 @@ object MoveTriggersManager {
         keyframeMoveOffsets = emptyMap()
         // update cursor
         updateCursor()
+        // increment endKeyframeMoveCounter to trigger a recomposition
+        endKeyframeMoveCounter++
         // save affected lines
         val affectedLines = mutableSetOf<TriggerSequenceLine>()
         val sequence = ProjectManager.currentProject?.currentSong?.sequence ?: throw IllegalStateException("No sequence")
@@ -765,7 +771,6 @@ object MoveTriggersManager {
         }
         affectedLines.forEach { line ->
             line.saveToFile()
-            println("Saved line: ${line.name}")
         }
     }
 

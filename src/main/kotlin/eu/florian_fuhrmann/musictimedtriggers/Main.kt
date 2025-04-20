@@ -13,7 +13,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
-import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.IntUiThemes
+import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.Theme
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.MainUiState
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.main.App
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.EditTriggersManager
@@ -37,7 +37,6 @@ var windowState = WindowState()
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     // Init Stuff
-    println("Hello World")
     System.setProperty("compose.swing.render.on.graphics", "true")
     System.setProperty("sun.java2d.opengl", "true")
     configureSwingGlobalsForCompose(
@@ -59,9 +58,9 @@ fun main() {
                 ComponentStyling.decoratedWindow(
                     titleBarStyle =
                         when (MainUiState.theme) {
-                            IntUiThemes.Light -> TitleBarStyle.lightWithLightHeader()
-                            IntUiThemes.Dark -> TitleBarStyle.dark()
-                            IntUiThemes.System ->
+                            Theme.Light -> TitleBarStyle.lightWithLightHeader()
+                            Theme.Dark -> TitleBarStyle.dark()
+                            Theme.System ->
                                 if (MainUiState.theme.isDark()) {
                                     TitleBarStyle.dark()
                                 } else {
@@ -83,9 +82,6 @@ fun main() {
                     if (it.key == Key.Backspace || it.key == Key.Delete) {
                         EditTriggersManager.deleteSelectedTriggers()
                         return@DecoratedWindow true
-                    } else if (it.key == Key.Enter) {
-                        EditTriggersManager.editSelectedTrigger()
-                        return@DecoratedWindow true
                     }
                     return@DecoratedWindow false
                 },
@@ -103,7 +99,7 @@ fun main() {
                                 .fillMaxSize(fraction = (1 / scaleFactor))
                                 .scale(scaleFactor),
                     ) {
-                        App()
+                        App(this@DecoratedWindow)
                     }
                 }
             }

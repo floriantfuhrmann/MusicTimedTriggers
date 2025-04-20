@@ -19,7 +19,7 @@ class Spectrogram(val project: Project, private val audioFile: File, private val
     var imagesAvailable = false
 
     fun getIdString(): String {
-        return "spectrogram_${sha256(audioFile.canonicalPath)}_${params.sha512Hash()}"
+        return "spectrogram_${sha256(audioFile.canonicalPath)}_${params.sha256Hash()}"
     }
 
     private var loadOrGenerateImagesJob: Job? = null

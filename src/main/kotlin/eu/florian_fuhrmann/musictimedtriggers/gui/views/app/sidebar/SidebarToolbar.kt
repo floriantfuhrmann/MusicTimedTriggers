@@ -1,18 +1,28 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.sidebar
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editsong.EditSongDialog
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.editsong.openDeleteSongDialog
-import eu.florian_fuhrmann.musictimedtriggers.gui.views.components.SimpleIconButton
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.addsong.AddSongDialog
+import eu.florian_fuhrmann.musictimedtriggers.gui.styles.fixedCursorTooltipStyle
+import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
-import eu.florian_fuhrmann.musictimedtriggers.utils.icons.MttIcons
+import eu.florian_fuhrmann.musictimedtriggers.song.Song
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.component.Icon
+import org.jetbrains.jewel.ui.component.IconButton
+import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.Tooltip
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SidebarToolbar() {
     // ensure there is a project opened
@@ -23,44 +33,49 @@ fun SidebarToolbar() {
         modifier = Modifier
             .background(JewelTheme.globalColors.panelBackground)
             .fillMaxWidth()
-            .padding(3.dp)
-            .height(26.dp)
+            .padding(horizontal = 5.dp, vertical = 5.dp)
+            .height(26.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        SimpleIconButton(
-            modifier = Modifier.aspectRatio(1f),
-            forceHoverHandCursor = true,
-            iconKey =  MttIcons.plus,
-            onClick = {
-                DialogManager.openDialog(EditSongDialog(project = project, add = true))
+        Text("Songs", fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.weight(1f))
+        Tooltip(tooltip = { Text("Add Song") }, style = fixedCursorTooltipStyle) {
+            IconButton(
+                onClick = { DialogManager.openDialog(AddSongDialog(project = project)) },
+                focusable = false
+            ) {
+                Icon(AllIconsKeys.General.Add, null)
             }
-        )
-        SimpleIconButton(
-            modifier = Modifier.aspectRatio(1f),
-            forceHoverHandCursor = true,
-            iconKey =  MttIcons.minus,
-            enabled = project.currentSong != null,
-            onClick = {
-                openDeleteSongDialog(project, project.currentSong)
+        }
+        Tooltip(tooltip = { Text("Delete Song") }, style = fixedCursorTooltipStyle) {
+            IconButton(
+                onClick = { openDeleteSongDialog(project, project.currentSong) },
+                focusable = false
+            ) {
+                Icon(AllIconsKeys.General.Remove, null)
             }
-        )
-        SimpleIconButton(
-            modifier = Modifier.aspectRatio(1f),
-            forceHoverHandCursor = true,
-            iconKey =  MttIcons.editBox,
-            enabled = ProjectManager.currentProject?.currentSong != null,
-            onClick = {
-                if(ProjectManager.currentProject!!.currentSong != null) {
-                    //open song edit dialog
-                    DialogManager.openDialog(
-                        EditSongDialog(
-                            project = project,
-                            add = false,
-                            song = project.currentSong!!
-                        )
-                    )
-                }
-            }
-        )
-        Spacer(modifier = Modifier.weight(1f))
+        }
     }
+}
+
+fun openDeleteSongDialog(project: Project, song: Song?) {
+    //show confirmation alert
+    BasicAlert(
+        type = BasicAlert.Type.Warning,
+        title = "Confirm Deletion",
+        buttons = {
+            CancelButton()
+            CancelButtonFocused()
+            OKButton(onClick = {
+                // close alert
+                close()
+                // delete song
+                if (song != null) {
+                    project.deleteSong(song)
+                }
+            }, label = "Confirm")
+        }
+    ) {
+        Text("Are you sure you want to delete Song ${song?.name}?")
+    }.show()
 }

@@ -1,8 +1,7 @@
 package eu.florian_fuhrmann.musictimedtriggers.triggers.placed
 
 import com.google.gson.JsonObject
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.configuration.ConfigurationDialog
+import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
 import eu.florian_fuhrmann.musictimedtriggers.triggers.templates.AbstractTriggerTemplate
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
@@ -62,23 +61,6 @@ abstract class AbstractPlacedTrigger(
      */
     open fun update(timePosition: Double) {}
 
-    /**
-     * Called when the User wants to edit this Placed Trigger (normally through the Timeline)
-     * By Default a ConfigurationDialog will be opened with the configuration
-     */
-    fun openEditDialog() {
-        if(configuration != null) {
-            DialogManager.openDialog(
-                ConfigurationDialog(
-                    configuration = configuration,
-                    context = PlacedTriggerConfigurationContext(this),
-                    heading = "Configuring Placed Trigger ${name()}",
-                    showCancelButton = false
-                )
-            )
-        }
-    }
-
     fun toJson(): JsonObject {
         val json = JsonObject()
         json.addProperty("startTime", startTime)
@@ -90,7 +72,11 @@ abstract class AbstractPlacedTrigger(
         return json
     }
 
-    class PlacedTriggerConfigurationContext(val placedTrigger: AbstractPlacedTrigger) : ConfigurationContext()
+    /**
+     * Configuration context for this trigger. This is used to pass the trigger and the sequence to the configuration ui.
+     * The line is not passed, as the trigger may be moved between lines, but not between sequences.
+     */
+    open class PlacedTriggerConfigurationContext(val sequence: TriggerSequence, val placedTrigger: AbstractPlacedTrigger) : ConfigurationContext()
 
     companion object {
         const val DEFAULT_TRIGGER_DURATION = 1.0

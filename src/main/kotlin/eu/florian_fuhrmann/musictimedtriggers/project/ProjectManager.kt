@@ -3,12 +3,12 @@ package eu.florian_fuhrmann.musictimedtriggers.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
 import eu.florian_fuhrmann.musictimedtriggers.gui.uistate.browser.BrowserState
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
 import eu.florian_fuhrmann.musictimedtriggers.utils.color.GenericColor
+import org.jetbrains.jewel.ui.component.Text
 import java.io.File
 
 object ProjectManager {
@@ -42,13 +42,13 @@ object ProjectManager {
     fun openProject(projectDirectory: File) {
         //make sure the file is a valid project directory
         if (!isValidProjectDirectory(projectDirectory)) {
-            DialogManager.alert(
-                Alert(
-                    title = "Invalid Project Directory",
-                    text = "The directory you selected is not a valid Project Directory",
-                    onDismiss = {}
-                )
-            )
+            BasicAlert(
+                type = BasicAlert.Type.Error,
+                title = "Invalid Project Directory",
+                buttons = { OKButton() }
+            ) {
+                Text("The directory you selected is not a valid Project Directory")
+            }.show()
             return
         }
         // Open Project

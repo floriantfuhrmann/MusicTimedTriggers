@@ -36,7 +36,7 @@ class RenameSequenceLineDialog(private val line: TriggerSequenceLine) : Dialog("
         //Done Callback
         val onDone = {
             //close dialog and update name
-            DialogManager.closeDialog()
+            DialogManager.closeAllDialogs()
             line.updateName(nameTextFieldValue.text)
         }
         //UI

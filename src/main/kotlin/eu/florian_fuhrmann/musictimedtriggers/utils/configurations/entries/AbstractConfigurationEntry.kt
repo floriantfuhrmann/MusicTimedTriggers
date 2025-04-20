@@ -3,7 +3,9 @@ package eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ChangeListenerContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.Configuration
+import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.ConfigurationContext
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.CheckResult
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.Configurable
 import eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations.RequireCustom
@@ -14,9 +16,10 @@ abstract class AbstractConfigurationEntry<T : Any>(
     val configuration: Configuration,
     val field: Field,
     val configurable: Configurable,
+    val context: ConfigurationContext,
     private val customCheckers: List<RequireCustom> = emptyList(),
     private val visibleWhen: VisibleWhen? = null,
-    val visible: MutableState<Boolean> = mutableStateOf( true )
+    val visible: MutableState<Boolean> = mutableStateOf(true)
 ) {
     init {
         //update visible in init to get initial visible value
@@ -34,13 +37,15 @@ abstract class AbstractConfigurationEntry<T : Any>(
         } ?: CheckResult(true, "")
     }
 
-    /**
-     * Called when the value for this entry is changed
-     */
+    /** Called when the value for this entry is changed */
     fun handleValueChanged() {
         //recheck visible for alle entries
         configuration.entries?.forEach {
             it.updateVisible()
+        }
+        //notify change to context
+        if (context is ChangeListenerContext) {
+            context.onChange(field, configurable)
         }
     }
 

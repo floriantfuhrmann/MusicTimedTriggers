@@ -1,2 +1,0 @@
-Icons in this directory are from: https://uxwing.com/
-Link should be in an About Dialog when implemented.

@@ -1,10 +1,10 @@
 package eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers
 
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.alerts.Alert
-import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
+import eu.florian_fuhrmann.musictimedtriggers.gui.alerts.BasicAlert
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequenceLine
+import org.jetbrains.jewel.ui.component.Text
 
 object EditTriggersManager {
 
@@ -27,13 +27,15 @@ object EditTriggersManager {
             line.saveToFile()
         } else {
             // Confirm Deletion first
-            DialogManager.alert(
-                Alert(
-                    title = "Delete ${TriggerSelectionManager.selectedTriggers.size} placed Triggers?",
-                    text = "Are you sure you want to delete ${TriggerSelectionManager.selectedTriggers.size} placed Triggers?",
-                    onDismiss = {},
-                    dismissText = "Cancel",
-                    onConfirm = {
+            BasicAlert(
+                type = BasicAlert.Type.Warning,
+                title = "Delete ${TriggerSelectionManager.selectedTriggers.size} placed Triggers?",
+                buttons = {
+                    CancelButton()
+                    CancelButtonFocused()
+                    OKButton(onClick = {
+                        //close alert
+                        close()
                         //init set containing affected lines
                         val affectedLines = mutableSetOf<TriggerSequenceLine>()
                         //remove selected triggers
@@ -49,15 +51,11 @@ object EditTriggersManager {
                         redrawTimeline()
                         //also save the affected lines
                         affectedLines.forEach { it.saveToFile() }
-                    }
-                )
-            )
-        }
-    }
-
-    fun editSelectedTrigger() {
-        if (TriggerSelectionManager.selectedTriggers.size == 1) {
-            TriggerSelectionManager.selectedTriggers.first().openEditDialog()
+                    }, label = "Confirm")
+                }
+            ) {
+                Text("Are you sure you want to delete ${TriggerSelectionManager.selectedTriggers.size} placed Triggers?")
+            }.show()
         }
     }
 

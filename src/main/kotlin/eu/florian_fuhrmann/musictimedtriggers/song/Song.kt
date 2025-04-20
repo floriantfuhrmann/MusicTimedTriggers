@@ -5,10 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
+import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.managers.TriggerSelectionManager
 import eu.florian_fuhrmann.musictimedtriggers.gui.views.app.editor.timeline.redrawTimeline
 import eu.florian_fuhrmann.musictimedtriggers.project.Project
 import eu.florian_fuhrmann.musictimedtriggers.project.ProjectManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.TickingManager
+import eu.florian_fuhrmann.musictimedtriggers.triggers.TriggersManager
 import eu.florian_fuhrmann.musictimedtriggers.triggers.sequence.TriggerSequence
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.getDurationOrNull
 import eu.florian_fuhrmann.musictimedtriggers.utils.audio.player.currentAudioPlayer
@@ -21,14 +23,16 @@ import java.util.UUID
 class Song (
     private val project: Project,
     name: String,
-    var audioFile: File,
+    audioFile: File,
     var spectrogramParams: SpectrogramParameters,
     val sequence: TriggerSequence
 ) {
 
     var name: String by mutableStateOf(name)
+    var audioFile: File by mutableStateOf(audioFile)
     var spectrogram: Spectrogram? = Spectrogram.createSpectrogram(project, audioFile, spectrogramParams)
 
+    @Deprecated("Use independent update functions instead")
     fun edit(newName: String, newAudioFile: File, newSpectrogramParams: SpectrogramParameters) {
         //update values
         name = newName
@@ -52,12 +56,72 @@ class Song (
         project.updateSong(this)
     }
 
+    fun updateName(newName: String) {
+        //update value
+        name = newName
+        //save songlist
+        project.updateSong(this, false)
+    }
+
+    fun updateSpectrogramParameters(newSpectrogramParams: SpectrogramParameters) {
+        //update value
+        spectrogramParams = newSpectrogramParams
+        //create new spectrogram
+        val newSpectrogram = Spectrogram.createSpectrogram(project, audioFile, spectrogramParams)
+        require(newSpectrogram != null) { "Spectrogram creation failed!" }
+        //remember old spectrogram
+        val oldSpectrogram = spectrogram
+        //update spectrogram reference
+        spectrogram = newSpectrogram
+        //generate images (if song is opened)
+        if(isOpened()) {
+            newSpectrogram.loadOrGenerateImages()
+        }
+        //unload images of old spectrogram (to also cancel possibly still active generation)
+        oldSpectrogram?.unloadImages()
+        //notify project (so project can be saved)
+        project.updateSong(this)
+    }
+
+    fun replaceAudioFile(newAudioFile: File) {
+        //update value
+        audioFile = newAudioFile
+        //create new spectrogram
+        val newSpectrogram = Spectrogram.createSpectrogram(project, audioFile, spectrogramParams)
+        require(newSpectrogram != null) { "Spectrogram creation failed!" }
+        //remember old spectrogram
+        val oldSpectrogram = spectrogram
+        //update spectrogram reference
+        spectrogram = newSpectrogram
+        //generate images (if song is opened)
+        if(isOpened()) {
+            newSpectrogram.loadOrGenerateImages()
+        }
+        //unload images of old spectrogram (to also cancel possibly still active generation)
+        oldSpectrogram?.unloadImages()
+        //reopen the audio player
+        if(isOpened()) {
+            val previousSecondPosition = currentAudioPlayer.value?.secondPosition ?: 0.0
+            openAudioPlayer(newAudioFile)
+            if(previousSecondPosition <= (currentAudioPlayer.value?.secondDuration ?: 0.0)) {
+                currentAudioPlayer.value?.secondPosition = previousSecondPosition
+            } else {
+                currentAudioPlayer.value?.secondPosition = currentAudioPlayer.value?.secondDuration ?: 0.0
+            }
+        }
+        //notify project (so project can be saved)
+        project.updateSong(this, true)
+    }
+
+    // Opening and Closing
+
     /**
      * Called when this song will no longer be the currentSong (so when this song is being closed)
      * (called before currentSong reference has been set)
      */
     fun closing() {
-
+        // clear editors selection manager
+        TriggerSelectionManager.deselectAllTriggersAndKeyframes(redraw = false)
     }
 
     /**
@@ -94,6 +158,8 @@ class Song (
         return ProjectManager.currentProject?.currentSong == this
     }
 
+    // Playback
+
     /**
      * Starts audio playback and starts ticking triggers
      */
@@ -117,6 +183,27 @@ class Song (
     fun isPlaying(): Boolean {
         return currentAudioPlayer.value?.playing?.value ?: false
     }
+
+    fun jumpTo(time: Double, redraw: Boolean = true) {
+        //jump to time
+        currentAudioPlayer.value?.secondPosition = time
+        //redraw timeline
+        if(redraw) {
+            redrawTimeline()
+        }
+    }
+
+    // Utility
+
+    fun searchUsagesAfterTime(time: Double): List<TriggersManager.TriggerUsage> {
+        return sequence.lines.flatMap { line ->
+            line.getTriggersInPeriod(time, Double.POSITIVE_INFINITY, false).map {
+                TriggersManager.TriggerUsage(it, line, this)
+            }
+        }
+    }
+
+    // Serialization
 
     /**
      * Creates json for entry in songlist containing properties like name, path
@@ -144,7 +231,7 @@ class Song (
     }
 
     companion object {
-        fun createSong(project: Project, name: String, audioFile: File) {
+        fun createSong(project: Project, name: String, audioFile: File, spectrogramParams: SpectrogramParameters = SpectrogramParameters(), openAfterCreation: Boolean = false) {
             //create the songs trigger sequence
             val sequence = TriggerSequence.createSequence(project, getDurationOrNull(audioFile) ?: 0.0)
             //create song instance
@@ -152,13 +239,17 @@ class Song (
                 project,
                 name,
                 audioFile,
-                SpectrogramParameters(),
+                spectrogramParams,
                 sequence
             )
             //save newly created sequence to file
             sequence.saveAll(createDirectory = true)
             //add to project
             project.addNewSongToSonglist(song)
+            //open song if requested
+            if(openAfterCreation) {
+                project.openSong(song)
+            }
         }
 
         /**

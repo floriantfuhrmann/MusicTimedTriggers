@@ -2,6 +2,11 @@ package eu.florian_fuhrmann.musictimedtriggers.utils.configurations.annotations
 
 import kotlin.reflect.KClass
 
+/**
+ * Annotation to mark a configurable as requiring a custom checker for the input.
+ *
+ * Example: [eu.florian_fuhrmann.musictimedtriggers.utils.configurations.entries.NotBlankChecker]
+ */
 @Target(AnnotationTarget.FIELD)
 @Repeatable
 annotation class RequireCustom(val checker: KClass<out CustomChecker<out Any>>)

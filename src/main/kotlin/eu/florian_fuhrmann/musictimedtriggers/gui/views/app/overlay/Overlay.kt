@@ -74,8 +74,7 @@ private fun DraggedTemplate(browserTemplate: BrowserTemplate) {
                 Icon(
                     browserTemplate.type.iconKey,
                     null,
-                    modifier = Modifier.size(24.dp),
-                    tint = MainUiState.theme.iconColor()
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }

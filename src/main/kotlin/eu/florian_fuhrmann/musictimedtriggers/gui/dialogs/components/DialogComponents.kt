@@ -8,14 +8,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.Dialog
 import eu.florian_fuhrmann.musictimedtriggers.gui.dialogs.DialogManager
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.util.thenIf
 
 @Composable
 fun DialogFrame(
+    scrollable: Boolean = true,
     leftButtons: @Composable () -> Unit = {},
     rightButtons: @Composable () -> Unit = {},
     dialogContent: @Composable () -> Unit
@@ -25,12 +28,13 @@ fun DialogFrame(
             .background(JewelTheme.globalColors.panelBackground)
             .fillMaxSize()
             .padding(5.dp)
-            .trackActivation()
     ) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
-                .verticalScroll(rememberScrollState())
+                .thenIf(scrollable) {
+                    verticalScroll(rememberScrollState())
+                }
                 .trackActivation(),
             verticalArrangement = Arrangement.Bottom
         ) {
@@ -77,10 +81,14 @@ fun DialogFrame(
 }
 
 @Composable
-fun CloseDialogButton(text: String = "Close", modifier: Modifier = Modifier) {
+fun CloseDialogButton(text: String = "Close", modifier: Modifier = Modifier, dialog: Dialog? = null) {
     OutlinedButton(
         onClick = {
-            DialogManager.closeDialog()
+            if(dialog != null) {
+                DialogManager.closeDialog(dialog)
+            } else {
+                DialogManager.closeAllDialogs()
+            }
         },
         modifier = modifier.trackActivation()
     ) {
